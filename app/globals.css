@@ -513,13 +513,16 @@ img { display: block; max-width: 100%; }
   display: grid;
   gap: 14px;
 }
-.capture-group--overworld .capture-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.capture-group--city .capture-grid,
-.capture-group--characters .capture-grid {
+.capture-group--overworld .capture-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.capture-group--city .capture-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   width: min(940px, 100%);
 }
 .capture-group--city .capture-grid { margin-left: auto; }
+.capture-group--characters .capture-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(1080px, 100%);
+}
 .capture-group--menus .capture-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   width: min(620px, 100%);
@@ -595,7 +598,7 @@ footer > a:hover { color: var(--gold-bright); }
   .build-heading-copy { max-width: 620px; }
   .combat-feature { margin-top: 58px; }
   .capture-group-heading { grid-template-columns: minmax(160px, .65fr) 1fr auto; }
-  .capture-group--overworld .capture-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .capture-group--overworld .capture-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pursuits-heading { position: static; }
   .pursuit-stack { margin-top: 20px; }
   .studio-layout { gap: 48px; }

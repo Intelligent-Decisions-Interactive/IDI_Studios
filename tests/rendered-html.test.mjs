@@ -18,6 +18,8 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /world-starved-wyrm/);
   assert.match(page, /battle-skirmish/);
   assert.match(page, /city-university/);
+  assert.match(page, /world-blackstone-warehouse/);
+  assert.match(page, /barracks-roster/);
   assert.match(page, /Overworld/);
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
