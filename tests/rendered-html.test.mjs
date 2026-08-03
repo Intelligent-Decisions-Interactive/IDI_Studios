@@ -138,9 +138,13 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
 
   assert.equal(wrangler.name, "idi-studios");
   assert.equal(wrangler.main, "./worker/index.ts");
+  assert.equal(wrangler.assets.directory, "./dist/client");
   assert.equal(wrangler.assets.binding, "ASSETS");
   assert.equal(wrangler.assets.run_worker_first, true);
-  assert.equal(packageJson.scripts.deploy, "npm run build && wrangler deploy");
+  assert.equal(
+    packageJson.scripts.deploy,
+    "npm run build && wrangler deploy --config dist/server/wrangler.json",
+  );
   assert.match(viteSource, /cloudflare\(\{/);
   assert.doesNotMatch(viteSource, /hostingConfig|localBindingConfig|config:\s*localBindingConfig/);
 });
