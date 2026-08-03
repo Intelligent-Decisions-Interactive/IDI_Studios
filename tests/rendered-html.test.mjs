@@ -5,7 +5,10 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 
 test("keeps the IDI Studios voice and Conquest focus in the homepage source", async () => {
-  const page = await readFile(new URL("app/page.tsx", root), "utf8");
+  const [page, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
 
   assert.match(page, /Worlds worth/);
   assert.match(page, /Conquest:/);
@@ -18,6 +21,11 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /Overworld/);
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
+  assert.match(styles, /hero-worlds-worth-mastering/);
+  assert.match(page, /realm-development/);
+  assert.match(page, /formation-command/);
+  assert.match(page, /ascension-event/);
+  assert.match(page, /Visual direction, not in-game footage/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });

@@ -17,6 +17,7 @@
 /.next/
 /.vinext/
 /out/
+/.pnpm-store/
 
 # misc
 .DS_Store

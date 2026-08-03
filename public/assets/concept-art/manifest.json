@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "dimensions": {
+    "width": 1672,
+    "height": 941,
+    "aspectRatio": "16:9"
+  },
+  "assets": [
+    {
+      "id": "hero-worlds-worth-mastering",
+      "path": "/assets/concept-art/hero-worlds-worth-mastering.webp",
+      "role": "homepage hero",
+      "alt": "An armored commander surveys a blackstone citadel and disciplined army beneath a stormy sky.",
+      "focalPoint": "76% 50%",
+      "copySafeArea": "left 42%"
+    },
+    {
+      "id": "realm-development",
+      "path": "/assets/concept-art/realm-development.webp",
+      "role": "realm development section",
+      "alt": "A thriving fortified realm rises around a monumental blackstone keep after rain.",
+      "focalPoint": "67% 47%",
+      "copySafeArea": "upper left"
+    },
+    {
+      "id": "formation-command",
+      "path": "/assets/concept-art/formation-command.webp",
+      "role": "formation combat section",
+      "alt": "A field commander directs disciplined infantry, archers, and cavalry before battle.",
+      "focalPoint": "69% 57%",
+      "copySafeArea": "upper right"
+    },
+    {
+      "id": "ascension-event",
+      "path": "/assets/concept-art/ascension-event.webp",
+      "role": "ascension section",
+      "alt": "A lone commander stands within ancient golden rings as a supernatural column of light opens above a ruined summit.",
+      "focalPoint": "50% 49%",
+      "copySafeArea": "outer left and right"
+    }
+  ]
+}

@@ -91,45 +91,16 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 72% 41%, rgba(189, 150, 55, .17), transparent 0 18%, transparent 38%),
-    linear-gradient(115deg, #07090c 0 48%, #151b22 48% 67%, #0a0d11 67%),
-    var(--black);
-}
-.hero-art::before {
-  content: "IDI";
-  position: absolute;
-  right: -2vw;
-  top: 50%;
-  color: rgba(217, 213, 199, .045);
-  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-  font-size: 34vw;
-  letter-spacing: -.03em;
-  line-height: .7;
-  transform: translateY(-42%);
-}
-.hero-art::after {
-  content: "";
-  position: absolute;
-  right: 8vw;
-  top: 19%;
-  width: min(36vw, 560px);
-  aspect-ratio: 1;
-  border: 1px solid rgba(189, 150, 55, .18);
-  box-shadow:
-    0 0 0 42px rgba(217, 213, 199, .018),
-    0 0 0 43px rgba(189, 150, 55, .08),
-    0 0 0 96px rgba(217, 213, 199, .012),
-    0 0 0 97px rgba(189, 150, 55, .05);
-  transform: rotate(45deg);
+  background: var(--black) url("/assets/concept-art/hero-worlds-worth-mastering.webp") 76% 50% / cover no-repeat;
+  transform: scale(1.015);
 }
 .hero-scrim {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(7, 9, 12, .98) 0 34%, rgba(7, 9, 12, .52) 65%, rgba(7, 9, 12, .75) 100%),
-    linear-gradient(0deg, rgba(7, 9, 12, .98), transparent 43%),
-    radial-gradient(circle at 72% 39%, transparent 0 18%, rgba(7, 9, 12, .32) 55%, rgba(7, 9, 12, .78));
+    linear-gradient(90deg, rgba(7, 9, 12, .97) 0 25%, rgba(7, 9, 12, .72) 42%, rgba(7, 9, 12, .22) 68%, rgba(7, 9, 12, .35) 100%),
+    linear-gradient(0deg, rgba(7, 9, 12, .94), transparent 44%),
+    linear-gradient(180deg, rgba(7, 9, 12, .34), transparent 24%);
 }
 .hero-scrim::after {
   content: "";
@@ -166,6 +137,7 @@ img { display: block; max-width: 100%; }
 .scribble--light { color: var(--gold-bright); }
 .hero h1,
 .conquest h2,
+.world-vision h2,
 .current-build h2,
 .pursuits h2,
 .studio h2,
@@ -177,7 +149,7 @@ img { display: block; max-width: 100%; }
   line-height: .86;
   text-transform: uppercase;
 }
-.hero h1 { max-width: 980px; font-size: clamp(5rem, 10.3vw, 11rem); }
+.hero h1 { max-width: 780px; font-size: clamp(5rem, 8.5vw, 9.5rem); }
 .hero h1 span { display: block; margin-left: 0; color: var(--gold-bright); font-style: normal; }
 .hero-copy {
   max-width: 610px;
@@ -209,22 +181,6 @@ img { display: block; max-width: 100%; }
 .rough-button:hover { filter: brightness(1.15); transform: translateY(-2px); }
 .quiet-link { color: rgba(217, 213, 199, .68); font-size: .7rem; font-weight: 900; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
 .quiet-link:hover { color: var(--gold-bright); }
-.hero-stamp {
-  position: absolute;
-  z-index: 2;
-  right: 5vw;
-  top: 24%;
-  width: 210px;
-  padding: 17px 19px;
-  border: 1px solid rgba(217, 213, 199, .34);
-  border-left: 4px solid var(--gold);
-  background: linear-gradient(135deg, rgba(31, 38, 46, .92), rgba(8, 11, 15, .84));
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .8), 0 18px 42px rgba(0, 0, 0, .3);
-  color: var(--bone);
-  text-transform: uppercase;
-}
-.hero-stamp span { display: block; margin-bottom: 9px; color: var(--ash); font-size: .56rem; font-weight: 900; letter-spacing: .17em; }
-.hero-stamp strong { font-family: "Arial Narrow", "Segoe UI", sans-serif; font-size: 1.13rem; line-height: 1.1; letter-spacing: .06em; }
 .hero-coordinate { position: absolute; z-index: 2; right: 44px; bottom: 26px; margin: 0; color: rgba(217, 213, 199, .32); font-size: .58rem; font-weight: 800; letter-spacing: .18em; }
 
 .ticker {
@@ -256,6 +212,7 @@ img { display: block; max-width: 100%; }
 .conquest-emblem img { width: min(350px, 85%); margin: 0 auto; filter: drop-shadow(0 25px 28px rgba(0, 0, 0, .5)); }
 .conquest-emblem p { margin: 10px 0 0; color: var(--ash); font-size: .64rem; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
 .conquest h2,
+.world-vision h2,
 .current-build h2,
 .pursuits h2,
 .studio h2,
@@ -281,6 +238,124 @@ img { display: block; max-width: 100%; }
 .game-notes { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; border: 1px solid var(--line); }
 .game-notes span { padding: 16px; border-right: 1px solid var(--line); background: #10151b; color: var(--bone); font-size: .63rem; font-weight: 900; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
 .game-notes span:last-child { border-right: 0; }
+
+.world-vision {
+  position: relative;
+  padding: 132px 0 148px;
+  overflow: hidden;
+  background: var(--black);
+}
+.world-vision::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(189, 150, 55, .08), transparent 28%),
+    repeating-linear-gradient(90deg, transparent 0 119px, rgba(217, 213, 199, .018) 120px);
+}
+.world-vision .shell { position: relative; z-index: 1; }
+.vision-heading {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  align-items: end;
+  gap: 8vw;
+}
+.vision-heading-copy { padding-bottom: 5px; }
+.vision-heading-copy p {
+  max-width: 560px;
+  margin: 0;
+  color: rgba(217, 213, 199, .72);
+  font-size: 1.04rem;
+  line-height: 1.72;
+}
+.vision-heading-copy em { color: var(--bone); }
+.vision-heading-copy span {
+  display: block;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--gold-bright);
+  font-size: .63rem;
+  font-weight: 900;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.vision-sequence {
+  display: grid;
+  gap: 22px;
+  margin-top: 74px;
+}
+.vision-card {
+  position: relative;
+  height: clamp(380px, 36vw, 540px);
+  overflow: hidden;
+  border: 1px solid rgba(189, 150, 55, .32);
+  background: #080b0f;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, .28);
+}
+.vision-card::before {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 5px;
+  pointer-events: none;
+  border: 1px solid rgba(217, 213, 199, .07);
+}
+.vision-card figure,
+.vision-card img { width: 100%; height: 100%; margin: 0; }
+.vision-card img {
+  object-fit: cover;
+  transition: transform 700ms cubic-bezier(.2, .7, .2, 1);
+}
+.vision-card:hover img { transform: scale(1.018); }
+.vision-card figure::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 7, 10, .92), rgba(5, 7, 10, .48) 38%, transparent 68%),
+    linear-gradient(0deg, rgba(5, 7, 10, .94), transparent 58%);
+}
+.vision-card--realm img { object-position: 67% 47%; }
+.vision-card--formation img { object-position: 69% 57%; }
+.vision-card--ascension img { object-position: 50% 49%; }
+.vision-card-copy {
+  position: absolute;
+  z-index: 4;
+  left: clamp(28px, 5vw, 70px);
+  bottom: clamp(28px, 4vw, 58px);
+  max-width: 540px;
+  padding-left: 20px;
+  border-left: 3px solid var(--gold);
+}
+.vision-card-copy > span {
+  display: block;
+  margin-bottom: 14px;
+  color: var(--gold-bright);
+  font-size: .6rem;
+  font-weight: 900;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.vision-card-copy h3 {
+  max-width: 520px;
+  margin: 0;
+  color: var(--bone);
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+  font-size: clamp(3rem, 5vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: -.015em;
+  line-height: .9;
+  text-transform: uppercase;
+}
+.vision-card-copy p {
+  max-width: 440px;
+  margin: 18px 0 0;
+  color: rgba(217, 213, 199, .76);
+  font-size: .95rem;
+  line-height: 1.58;
+}
 
 .current-build {
   position: relative;
@@ -507,13 +582,15 @@ footer > a:hover { color: var(--gold-bright); }
   :root { --shell: min(100% - 48px, 780px); }
   .site-header { grid-template-columns: 1fr auto; padding: 0 24px; }
   .site-header nav { display: none; }
-  .hero-stamp { right: 4vw; top: 17%; }
   .conquest-intro,
+  .vision-heading,
   .build-heading,
   .pursuits .shell,
   .studio-layout { grid-template-columns: 1fr; }
   .conquest-intro { gap: 48px; }
   .conquest-emblem img { width: 280px; }
+  .vision-heading { gap: 44px; }
+  .vision-heading-copy { max-width: 620px; }
   .build-heading { gap: 44px; }
   .build-heading-copy { max-width: 620px; }
   .combat-feature { margin-top: 58px; }
@@ -534,8 +611,13 @@ footer > a:hover { color: var(--gold-bright); }
   .studio-name { font-size: .56rem; letter-spacing: .2em; }
   .header-contact { font-size: .56rem; letter-spacing: .09em; }
   .hero { min-height: auto; }
-  .hero-art::before { right: -10vw; font-size: 52vw; }
-  .hero-art::after { right: -6vw; top: 24%; width: 66vw; }
+  .hero-art { background-position: 72% 50%; transform: scale(1.01); }
+  .hero-scrim {
+    background:
+      linear-gradient(90deg, rgba(7, 9, 12, .92), rgba(7, 9, 12, .68) 66%, rgba(7, 9, 12, .42)),
+      linear-gradient(0deg, rgba(7, 9, 12, .96), rgba(7, 9, 12, .18) 62%),
+      linear-gradient(180deg, rgba(7, 9, 12, .45), transparent 24%);
+  }
   .hero-content { padding: 124px 0 104px; }
   .overline,
   .scribble { gap: 6px; margin-bottom: 18px; font-size: .57rem; letter-spacing: .1em; }
@@ -544,14 +626,15 @@ footer > a:hover { color: var(--gold-bright); }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 20px; margin-top: 28px; }
   .rough-button { width: 100%; justify-content: space-between; }
   .quiet-link { padding-left: 2px; }
-  .hero-stamp { display: none; }
   .hero-coordinate { right: 14px; bottom: 16px; font-size: .53rem; }
   .conquest,
+  .world-vision,
   .current-build,
   .pursuits,
   .studio,
   .contact { padding: 76px 0; }
   .conquest h2,
+  .world-vision h2,
   .current-build h2,
   .pursuits h2,
   .studio h2,
@@ -568,6 +651,19 @@ footer > a:hover { color: var(--gold-bright); }
   .game-notes { grid-template-columns: repeat(2, 1fr); }
   .game-notes span { padding: 14px 8px; border-bottom: 1px solid var(--line); font-size: .57rem; letter-spacing: .08em; }
   .game-notes span:nth-child(2) { border-right: 0; }
+  .vision-heading { gap: 24px; }
+  .vision-heading-copy p { font-size: .96rem; line-height: 1.65; }
+  .vision-heading-copy span { margin-top: 18px; }
+  .vision-sequence { gap: 14px; margin-top: 46px; }
+  .vision-card { height: 450px; }
+  .vision-card figure::after {
+    background:
+      linear-gradient(90deg, rgba(5, 7, 10, .8), rgba(5, 7, 10, .18) 78%),
+      linear-gradient(0deg, rgba(5, 7, 10, .98), rgba(5, 7, 10, .18) 72%);
+  }
+  .vision-card-copy { left: 22px; right: 22px; bottom: 28px; max-width: none; padding-left: 14px; }
+  .vision-card-copy h3 { font-size: clamp(2.65rem, 13vw, 4rem); }
+  .vision-card-copy p { margin-top: 14px; font-size: .86rem; line-height: 1.5; }
   .build-heading { gap: 24px; }
   .build-heading-copy p { font-size: .96rem; line-height: 1.65; }
   .build-heading-copy span { margin-top: 18px; }

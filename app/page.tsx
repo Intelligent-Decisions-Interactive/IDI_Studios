@@ -76,8 +76,8 @@ export default function Home() {
         <a className="brand-link" href="#top"><StudioMark /></a>
         <nav aria-label="Primary navigation">
           <a href="#conquest">The game</a>
+          <a href="#vision">The vision</a>
           <a href="#current-build">Current build</a>
-          <a href="#approach">How we build</a>
         </nav>
         <a className="header-contact" href="mailto:hello@idistudios.io">
           Say hello <span aria-hidden="true">↗</span>
@@ -102,10 +102,6 @@ export default function Home() {
               <a className="rough-button" href="#conquest">Explore Conquest <span aria-hidden="true">↓</span></a>
               <a className="quiet-link" href="#current-build">See the current build <span aria-hidden="true">↗</span></a>
             </div>
-          </div>
-          <div className="hero-stamp" aria-hidden="true">
-            <span>Now building</span>
-            <strong>Conquest:<br />Ascension</strong>
           </div>
           <p className="hero-coordinate">IDI / 001 / EST. 2026</p>
         </section>
@@ -152,6 +148,71 @@ export default function Home() {
               <span>Formation tactics</span>
               <span>Strange factions</span>
               <span>Earned progression</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="world-vision" id="vision" aria-labelledby="vision-title">
+          <div className="shell">
+            <div className="vision-heading">
+              <div>
+                <p className="scribble scribble--light">Concept art / Target experience</p>
+                <h2 id="vision-title">Build the realm.<br />Earn the impossible.</h2>
+              </div>
+              <div className="vision-heading-copy">
+                <p>
+                  These frames establish the intended scale, atmosphere, and emotional
+                  range of <em>Conquest: Ascension</em>. The playable Android build follows below.
+                </p>
+                <span>Visual direction, not in-game footage.</span>
+              </div>
+            </div>
+
+            <div className="vision-sequence">
+              <article className="vision-card vision-card--realm">
+                <figure>
+                  <img
+                    src="/assets/concept-art/realm-development.webp"
+                    alt="A thriving fortified realm rises around a monumental blackstone keep after rain"
+                    loading="lazy"
+                  />
+                </figure>
+                <div className="vision-card-copy">
+                  <span>01 / Build</span>
+                  <h3>Raise Blackstone Hold.</h3>
+                  <p>Turn claimed ground into a deliberate, living center of power.</p>
+                </div>
+              </article>
+
+              <article className="vision-card vision-card--formation">
+                <figure>
+                  <img
+                    src="/assets/concept-art/formation-command.webp"
+                    alt="A field commander directs disciplined infantry, archers, and cavalry before battle"
+                    loading="lazy"
+                  />
+                </figure>
+                <div className="vision-card-copy">
+                  <span>02 / Command</span>
+                  <h3>Win before blades meet.</h3>
+                  <p>Read the terrain, shape the formation, and commit to the order.</p>
+                </div>
+              </article>
+
+              <article className="vision-card vision-card--ascension">
+                <figure>
+                  <img
+                    src="/assets/concept-art/ascension-event.webp"
+                    alt="A lone commander stands within ancient golden rings as a supernatural column of light opens above a ruined summit"
+                    loading="lazy"
+                  />
+                </figure>
+                <div className="vision-card-copy">
+                  <span>03 / Ascend</span>
+                  <h3>Go beyond conquest.</h3>
+                  <p>Power is not the end state. It is the price of becoming something else.</p>
+                </div>
+              </article>
             </div>
           </div>
         </section>
