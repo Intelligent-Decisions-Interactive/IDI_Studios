@@ -518,7 +518,6 @@ img { display: block; max-width: 100%; }
   grid-template-columns: repeat(4, minmax(0, 1fr));
   width: min(1080px, 100%);
 }
-.capture-group--city .capture-grid { margin-left: auto; }
 .capture-group--characters .capture-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   width: min(1080px, 100%);
@@ -526,8 +525,10 @@ img { display: block; max-width: 100%; }
 .capture-group--menus .capture-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   width: min(1080px, 100%);
-  margin-left: auto;
 }
+.capture-group--city .capture-grid,
+.capture-group--characters .capture-grid,
+.capture-group--menus .capture-grid { margin: 0 auto; }
 .system-shot { box-shadow: none; }
 .system-shot figcaption {
   padding: 14px 12px 15px;

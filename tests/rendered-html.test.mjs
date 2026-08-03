@@ -27,6 +27,7 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
   assert.match(styles, /hero-worlds-worth-mastering/);
+  assert.match(styles, /\.capture-group--city \.capture-grid,\s*\.capture-group--characters \.capture-grid,\s*\.capture-group--menus \.capture-grid \{ margin: 0 auto; \}/);
   assert.match(page, /realm-development/);
   assert.match(page, /formation-command/);
   assert.match(page, /ascension-event/);
