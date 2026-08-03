@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --black: #060807;
-  --ink: #0b0e0c;
-  --iron: #121713;
-  --iron-light: #202820;
-  --steel: #394239;
+  --black: #07090c;
+  --ink: #0c0f13;
+  --iron: #151a20;
+  --iron-light: #252c34;
+  --steel: #46515d;
   --bone: #d9d5c7;
-  --ash: #969d94;
+  --ash: #9ba3ac;
   --gold: #bd9637;
   --gold-bright: #d0aa4b;
-  --moss: #46513f;
+  --slate: #66717d;
   --line: rgba(217, 213, 199, .16);
   --shell: min(1340px, calc(100vw - 96px));
 }
@@ -51,7 +51,7 @@ img { display: block; max-width: 100%; }
   min-height: 76px;
   padding: 0 44px;
   border-bottom: 1px solid rgba(189, 150, 55, .18);
-  background: rgba(6, 8, 7, .86);
+  background: rgba(7, 9, 12, .88);
   backdrop-filter: blur(14px);
 }
 .brand-link { justify-self: start; text-decoration: none; }
@@ -98,9 +98,9 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(6, 8, 7, .98) 0 34%, rgba(6, 8, 7, .52) 65%, rgba(6, 8, 7, .75) 100%),
-    linear-gradient(0deg, rgba(6, 8, 7, .98), transparent 43%),
-    radial-gradient(circle at 72% 39%, transparent 0 18%, rgba(6, 8, 7, .32) 55%, rgba(6, 8, 7, .78));
+    linear-gradient(90deg, rgba(7, 9, 12, .98) 0 34%, rgba(7, 9, 12, .52) 65%, rgba(7, 9, 12, .75) 100%),
+    linear-gradient(0deg, rgba(7, 9, 12, .98), transparent 43%),
+    radial-gradient(circle at 72% 39%, transparent 0 18%, rgba(7, 9, 12, .32) 55%, rgba(7, 9, 12, .78));
 }
 .hero-scrim::after {
   content: "";
@@ -189,7 +189,7 @@ img { display: block; max-width: 100%; }
   padding: 17px 19px;
   border: 1px solid rgba(217, 213, 199, .34);
   border-left: 4px solid var(--gold);
-  background: linear-gradient(135deg, rgba(25, 31, 26, .9), rgba(7, 9, 8, .8));
+  background: linear-gradient(135deg, rgba(31, 38, 46, .92), rgba(8, 11, 15, .84));
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .8), 0 18px 42px rgba(0, 0, 0, .3);
   color: var(--bone);
   text-transform: uppercase;
@@ -205,7 +205,7 @@ img { display: block; max-width: 100%; }
   padding: 13px 0;
   border-top: 1px solid rgba(189, 150, 55, .5);
   border-bottom: 1px solid rgba(189, 150, 55, .5);
-  background: #0c110d;
+  background: #0f141a;
   color: var(--bone);
 }
 .ticker > div { display: flex; width: max-content; align-items: center; gap: 26px; animation: ticker 26s linear infinite; }
@@ -252,7 +252,7 @@ img { display: block; max-width: 100%; }
 .conquest-poster img { width: 100%; max-height: 770px; object-fit: cover; filter: saturate(.72) contrast(1.08); }
 .conquest-poster figcaption { display: flex; justify-content: space-between; gap: 20px; padding: 17px 18px 10px; color: rgba(217, 213, 199, .48); font-size: .61rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .game-notes { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 18px; border: 1px solid var(--line); }
-.game-notes span { padding: 16px; border-right: 1px solid var(--line); background: #0d110e; color: var(--bone); font-size: .63rem; font-weight: 900; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
+.game-notes span { padding: 16px; border-right: 1px solid var(--line); background: #10151b; color: var(--bone); font-size: .63rem; font-weight: 900; letter-spacing: .12em; text-align: center; text-transform: uppercase; }
 .game-notes span:last-child { border-right: 0; }
 
 .pursuits { padding: 150px 0 170px; background: var(--black); }
@@ -266,22 +266,22 @@ img { display: block; max-width: 100%; }
   padding: 38px 42px;
   border: 1px solid rgba(217, 213, 199, .14);
   border-left: 5px solid var(--gold);
-  background: linear-gradient(110deg, #1b211c, #0f1310);
+  background: linear-gradient(110deg, #202731, #11161c);
   color: var(--bone);
   box-shadow: inset 0 1px rgba(255, 255, 255, .025);
 }
-.pursuit--bone { border-left-color: #7e897c; }
-.pursuit--red { border-left-color: var(--moss); }
+.pursuit--bone { border-left-color: #87919c; }
+.pursuit--red { border-left-color: var(--slate); }
 .pursuit > span { position: absolute; right: 28px; top: 24px; color: var(--gold); font-size: 1.15rem; }
 .pursuit h3 { max-width: 560px; margin: 0 0 22px; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(2.5rem, 4vw, 4.4rem); font-weight: 900; letter-spacing: .01em; line-height: .9; text-transform: uppercase; }
 .pursuit p { max-width: 530px; margin: 0; color: var(--ash); font-size: .98rem; line-height: 1.68; }
 
-.field-notes { padding: 150px 0 175px; background: #191e1a; color: var(--bone); }
+.field-notes { padding: 150px 0 175px; background: #1b2128; color: var(--bone); }
 .notes-heading { display: grid; grid-template-columns: 1fr 1.2fr .8fr; gap: 5vw; align-items: end; }
 .notes-heading .scribble { align-self: start; }
 .notes-heading > p:last-child { margin: 0 0 6px; color: var(--ash); line-height: 1.72; }
 .notes-gallery { display: grid; grid-template-columns: 1.5fr .65fr .65fr; gap: 22px; align-items: end; margin-top: 95px; }
-.note-card { position: relative; margin: 0; padding: 8px 8px 16px; border: 1px solid rgba(189, 150, 55, .32); background: #0a0d0b; box-shadow: 0 20px 45px rgba(0, 0, 0, .28); }
+.note-card { position: relative; margin: 0; padding: 8px 8px 16px; border: 1px solid rgba(189, 150, 55, .32); background: #0c1015; box-shadow: 0 20px 45px rgba(0, 0, 0, .28); }
 .note-card::before { content: ""; position: absolute; inset: 3px; pointer-events: none; border: 1px solid rgba(217, 213, 199, .05); }
 .note-card img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.68) contrast(1.08); }
 .note-card--map img { aspect-ratio: 16 / 10; }
@@ -289,16 +289,16 @@ img { display: block; max-width: 100%; }
 .note-card--leaders img { aspect-ratio: 9 / 16; object-position: top; }
 .note-card figcaption { padding: 14px 6px 0; color: rgba(217, 213, 199, .58); font-size: .61rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 
-.studio { position: relative; overflow: hidden; padding: 170px 0; background: #252c25; }
+.studio { position: relative; overflow: hidden; padding: 170px 0; background: #29313a; }
 .studio::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(120deg, transparent 0 31px, rgba(189, 150, 55, .035) 32px); }
 .studio-layout { position: relative; z-index: 2; display: grid; grid-template-columns: 1.15fr .85fr; gap: 8vw; align-items: end; }
 .studio-copy > p { margin: 0 0 28px; color: rgba(217, 213, 199, .72); font-size: 1.03rem; line-height: 1.75; }
 .studio-copy .lead { color: var(--bone); }
-.studio-aside { margin-top: 50px !important; padding: 18px 20px; border: 1px solid rgba(189, 150, 55, .3); border-left: 4px solid var(--gold); background: rgba(5, 7, 6, .24); font-size: .68rem !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.studio-aside { margin-top: 50px !important; padding: 18px 20px; border: 1px solid rgba(189, 150, 55, .3); border-left: 4px solid var(--gold); background: rgba(7, 10, 14, .28); font-size: .68rem !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
 .studio-ghost { position: absolute; right: -3vw; bottom: -10vw; color: rgba(0, 0, 0, .17); font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: 37vw; font-weight: 900; letter-spacing: -.03em; line-height: .7; }
 
 .contact { position: relative; overflow: hidden; padding: 170px 0; background: var(--black); color: var(--bone); }
-.contact::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(6, 8, 7, .88), rgba(6, 8, 7, .94)), url("/assets/conquest-hero.png") center / cover no-repeat; filter: saturate(.55); }
+.contact::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(7, 9, 12, .88), rgba(7, 9, 12, .94)), url("/assets/conquest-hero.png") center / cover no-repeat; filter: saturate(.55); }
 .contact-inner { position: relative; z-index: 1; text-align: center; }
 .contact h2 em { color: var(--gold-bright); }
 .contact-inner > p:not(.scribble) { max-width: 580px; margin: 34px auto 42px; color: var(--ash); font-size: 1.05rem; line-height: 1.65; }
