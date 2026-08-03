@@ -46,7 +46,7 @@ export default function Home() {
           <div className="hero-art" aria-hidden="true" />
           <div className="hero-scrim" aria-hidden="true" />
           <div className="hero-content">
-            <p className="overline">Independent game makers / somewhere in the fog</p>
+            <p className="overline">Creator-led / independently built / in active development</p>
             <h1 id="hero-title">
               Worlds worth
               <span>mastering.</span>
@@ -165,7 +165,7 @@ export default function Home() {
           <div className="studio-ghost" aria-hidden="true">IDI</div>
           <div className="shell studio-layout">
             <div>
-              <p className="scribble scribble--light">About this operation</p>
+              <p className="scribble scribble--light">Inside the workshop</p>
               <h2 id="studio-title">Small studio.<br /><em>Big world.</em></h2>
             </div>
             <div className="studio-copy">
