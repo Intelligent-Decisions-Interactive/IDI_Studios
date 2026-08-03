@@ -20,7 +20,7 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /city-university/);
   assert.match(page, /world-blackstone-warehouse/);
   assert.match(page, /barracks-roster/);
-  assert.match(page, /account-realm-overview/);
+  assert.match(page, /barracks-training/);
   assert.match(page, /Overworld/);
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
@@ -36,9 +36,11 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.doesNotMatch(overworldGroup, /world-blackstone-warehouse/);
   assert.match(cityGroup, /world-blackstone-warehouse/);
   assert.doesNotMatch(characterGroup, /army-setup|barracks-roster/);
+  assert.match(characterGroup, /barracks-training/);
   assert.match(menusGroup, /army-setup/);
   assert.match(menusGroup, /barracks-roster/);
-  assert.match(menusGroup, /account-realm-overview/);
+  assert.match(page, /conquest-wordmark/);
+  assert.doesNotMatch(page, /account-realm-overview/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });

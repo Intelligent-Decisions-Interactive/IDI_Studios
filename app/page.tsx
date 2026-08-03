@@ -54,6 +54,7 @@ const captureGroups = [
     captures: [
       { src: "/assets/current-build/leader-kael-varyn.jpg", title: "Leader profile", alt: "Conquest leader profile for Kael Varyn" },
       { src: "/assets/current-build/equipment.jpg", title: "Equipment", alt: "Conquest equipment selection and refinement screen" },
+      { src: "/assets/current-build/barracks-training.jpg", title: "Barracks training", alt: "Conquest Barracks Training screen showing a Shieldbearer troop selection" },
     ],
   },
   {
@@ -65,7 +66,6 @@ const captureGroups = [
       { src: "/assets/current-build/research-development.jpg", title: "Research & development", alt: "Conquest research and development branches" },
       { src: "/assets/current-build/army-setup.jpg", title: "Army setup", alt: "Conquest army setup screen with deployed formations" },
       { src: "/assets/current-build/barracks-roster.jpg", title: "Barracks", alt: "Conquest Barracks screen showing trained troop families and resources" },
-      { src: "/assets/current-build/account-realm-overview.jpg", title: "Account & realm", alt: "Conquest verified account screen showing Blackstone Hold realm progression and resources" },
     ],
   },
 ];
@@ -121,7 +121,7 @@ export default function Home() {
           <div className="shell">
             <div className="conquest-intro">
               <div className="conquest-emblem">
-                <img src="/assets/conquest-mark.png" alt="Conquest: Ascension emblem" />
+                <img src="/assets/conquest-wordmark.png" alt="Conquest: Ascension wordmark" />
                 <p>First original world</p>
               </div>
               <div className="conquest-copy">

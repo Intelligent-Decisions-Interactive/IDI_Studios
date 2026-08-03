@@ -209,7 +209,7 @@ img { display: block; max-width: 100%; }
 }
 .conquest-intro { position: relative; z-index: 1; display: grid; grid-template-columns: .7fr 1.3fr; gap: 8vw; align-items: center; }
 .conquest-emblem { text-align: center; }
-.conquest-emblem img { width: min(350px, 85%); margin: 0 auto; filter: drop-shadow(0 25px 28px rgba(0, 0, 0, .5)); }
+.conquest-emblem img { width: min(560px, 100%); margin: 0 auto; filter: drop-shadow(0 25px 28px rgba(0, 0, 0, .5)); }
 .conquest-emblem p { margin: 10px 0 0; color: var(--ash); font-size: .64rem; font-weight: 900; letter-spacing: .2em; text-transform: uppercase; }
 .conquest h2,
 .world-vision h2,
@@ -520,12 +520,12 @@ img { display: block; max-width: 100%; }
 }
 .capture-group--city .capture-grid { margin-left: auto; }
 .capture-group--characters .capture-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(620px, 100%);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(940px, 100%);
 }
 .capture-group--menus .capture-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  width: min(1240px, 100%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(1080px, 100%);
   margin-left: auto;
 }
 .system-shot { box-shadow: none; }
@@ -591,7 +591,7 @@ footer > a:hover { color: var(--gold-bright); }
   .pursuits .shell,
   .studio-layout { grid-template-columns: 1fr; }
   .conquest-intro { gap: 48px; }
-  .conquest-emblem img { width: 280px; }
+  .conquest-emblem img { width: min(500px, 90%); }
   .vision-heading { gap: 44px; }
   .vision-heading-copy { max-width: 620px; }
   .build-heading { gap: 44px; }
@@ -599,7 +599,6 @@ footer > a:hover { color: var(--gold-bright); }
   .combat-feature { margin-top: 58px; }
   .capture-group-heading { grid-template-columns: minmax(160px, .65fr) 1fr auto; }
   .capture-group--overworld .capture-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .capture-group--menus .capture-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pursuits-heading { position: static; }
   .pursuit-stack { margin-top: 20px; }
   .studio-layout { gap: 48px; }
@@ -644,7 +643,7 @@ footer > a:hover { color: var(--gold-bright); }
   .studio h2,
   .contact h2 { font-size: clamp(3.35rem, 16vw, 5rem); line-height: .88; }
   .conquest-intro { gap: 34px; }
-  .conquest-emblem img { width: 210px; }
+  .conquest-emblem img { width: min(340px, 100%); }
   .conquest-copy .lead,
   .studio-copy .lead { font-size: 1.22rem; line-height: 1.4; }
   .conquest-copy > p:not(.scribble) { font-size: .96rem; line-height: 1.65; }
