@@ -138,7 +138,7 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
 
   assert.equal(wrangler.name, "idi-studios");
   assert.equal(wrangler.main, "./worker/index.ts");
-  assert.equal(wrangler.assets.directory, "./dist/client");
+  assert.equal(wrangler.assets.directory, "./public");
   assert.equal(wrangler.assets.binding, "ASSETS");
   assert.equal(wrangler.assets.run_worker_first, true);
   assert.equal(
