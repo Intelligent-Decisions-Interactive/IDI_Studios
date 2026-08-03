@@ -34,7 +34,6 @@ const captureGroups = [
       { src: "/assets/current-build/world-desert-tile.jpg", title: "Desert exploration", alt: "Conquest desert world tile with an army formation" },
       { src: "/assets/current-build/world-dragonkin-host.jpg", title: "Neutral encounter", alt: "Dragonkin Host encounter on the Conquest world map" },
       { src: "/assets/current-build/world-blackstone-hold.jpg", title: "Player settlement", alt: "Blackstone Hold selected on the Conquest world map" },
-      { src: "/assets/current-build/world-blackstone-warehouse.jpg", title: "Blackstone Hold", alt: "Blackstone Hold map centered on a ruined warehouse awaiting repair" },
     ],
   },
   {
@@ -45,6 +44,7 @@ const captureGroups = [
       { src: "/assets/current-build/city-university.jpg", title: "University", alt: "Blackstone Hold construction map centered on the University district" },
       { src: "/assets/current-build/city-civic-center.jpg", title: "Civic center", alt: "Blackstone Hold construction map centered on the Civic Center" },
       { src: "/assets/current-build/city-housing.jpg", title: "Housing quarter", alt: "Blackstone Hold housing quarter and surrounding settlement" },
+      { src: "/assets/current-build/world-blackstone-warehouse.jpg", title: "Ruined warehouse", alt: "Blackstone Hold map centered on a ruined warehouse awaiting repair" },
     ],
   },
   {
@@ -54,8 +54,6 @@ const captureGroups = [
     captures: [
       { src: "/assets/current-build/leader-kael-varyn.jpg", title: "Leader profile", alt: "Conquest leader profile for Kael Varyn" },
       { src: "/assets/current-build/equipment.jpg", title: "Equipment", alt: "Conquest equipment selection and refinement screen" },
-      { src: "/assets/current-build/army-setup.jpg", title: "Army setup", alt: "Conquest army setup screen with deployed formations" },
-      { src: "/assets/current-build/barracks-roster.jpg", title: "Barracks", alt: "Conquest Barracks screen showing trained troop families and resources" },
     ],
   },
   {
@@ -65,6 +63,8 @@ const captureGroups = [
     captures: [
       { src: "/assets/current-build/campaign.jpg", title: "Campaign", alt: "Conquest campaign progression and permanent quests" },
       { src: "/assets/current-build/research-development.jpg", title: "Research & development", alt: "Conquest research and development branches" },
+      { src: "/assets/current-build/army-setup.jpg", title: "Army setup", alt: "Conquest army setup screen with deployed formations" },
+      { src: "/assets/current-build/barracks-roster.jpg", title: "Barracks", alt: "Conquest Barracks screen showing trained troop families and resources" },
     ],
   },
 ];

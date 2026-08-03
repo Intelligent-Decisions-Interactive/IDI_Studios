@@ -28,6 +28,15 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /formation-command/);
   assert.match(page, /ascension-event/);
   assert.match(page, /Visual direction, not in-game footage/);
+  const overworldGroup = page.match(/id: "overworld"[\s\S]*?(?=id: "city")/)?.[0] ?? "";
+  const cityGroup = page.match(/id: "city"[\s\S]*?(?=id: "characters")/)?.[0] ?? "";
+  const characterGroup = page.match(/id: "characters"[\s\S]*?(?=id: "menus")/)?.[0] ?? "";
+  const menusGroup = page.match(/id: "menus"[\s\S]*?(?=\];)/)?.[0] ?? "";
+  assert.doesNotMatch(overworldGroup, /world-blackstone-warehouse/);
+  assert.match(cityGroup, /world-blackstone-warehouse/);
+  assert.doesNotMatch(characterGroup, /army-setup|barracks-roster/);
+  assert.match(menusGroup, /army-setup/);
+  assert.match(menusGroup, /barracks-roster/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });
