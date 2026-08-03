@@ -143,11 +143,12 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
   assert.equal(wrangler.main, "./dist/server/index.js");
   assert.equal(wrangler.assets.directory, "./dist/client");
   assert.equal(wrangler.assets.binding, "ASSETS");
-  assert.equal(wrangler.assets.run_worker_first, true);
+  assert.equal(wrangler.assets.run_worker_first, undefined);
   assert.equal(wrangler.build.command, "npm run build");
   assert.equal(wrangler.no_bundle, true);
   assert.equal(viteWrangler.main, "./worker/index.ts");
   assert.equal(viteWrangler.assets.directory, "./public");
+  assert.equal(viteWrangler.assets.run_worker_first, undefined);
   assert.equal(packageJson.scripts.deploy, "wrangler deploy");
   assert.match(viteSource, /cloudflare\(\{/);
   assert.match(viteSource, /configPath: "\.\/wrangler\.vite\.jsonc"/);
