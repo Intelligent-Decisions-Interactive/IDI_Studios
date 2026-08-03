@@ -65,6 +65,7 @@ const captureGroups = [
       { src: "/assets/current-build/research-development.jpg", title: "Research & development", alt: "Conquest research and development branches" },
       { src: "/assets/current-build/army-setup.jpg", title: "Army setup", alt: "Conquest army setup screen with deployed formations" },
       { src: "/assets/current-build/barracks-roster.jpg", title: "Barracks", alt: "Conquest Barracks screen showing trained troop families and resources" },
+      { src: "/assets/current-build/account-realm-overview.jpg", title: "Account & realm", alt: "Conquest verified account screen showing Blackstone Hold realm progression and resources" },
     ],
   },
 ];

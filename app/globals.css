@@ -524,8 +524,8 @@ img { display: block; max-width: 100%; }
   width: min(620px, 100%);
 }
 .capture-group--menus .capture-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  width: min(1080px, 100%);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: min(1240px, 100%);
   margin-left: auto;
 }
 .system-shot { box-shadow: none; }
@@ -599,6 +599,7 @@ footer > a:hover { color: var(--gold-bright); }
   .combat-feature { margin-top: 58px; }
   .capture-group-heading { grid-template-columns: minmax(160px, .65fr) 1fr auto; }
   .capture-group--overworld .capture-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .capture-group--menus .capture-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pursuits-heading { position: static; }
   .pursuit-stack { margin-top: 20px; }
   .studio-layout { gap: 48px; }
