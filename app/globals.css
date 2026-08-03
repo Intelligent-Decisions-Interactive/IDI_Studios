@@ -13,10 +13,16 @@
   --slate: #66717d;
   --line: rgba(217, 213, 199, .16);
   --shell: min(1340px, calc(100vw - 96px));
+  --anchor-offset: 88px;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--anchor-offset);
+}
+section[id]:not(#top),
+#content { scroll-margin-top: var(--anchor-offset); }
 body {
   margin: 0;
   overflow-x: hidden;
