@@ -10,9 +10,9 @@
     "build": "vinext build",
     "preview": "vinext start",
     "start": "vinext start",
-    "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",
-    "cf:dev": "wrangler dev",
-    "cf:types": "wrangler types",
+    "deploy": "wrangler deploy",
+    "cf:dev": "wrangler dev --config wrangler.vite.jsonc",
+    "cf:types": "wrangler types --config wrangler.vite.jsonc",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"

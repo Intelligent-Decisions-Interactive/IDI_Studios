@@ -128,23 +128,28 @@ test("protects and operates the beta administration console", async () => {
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {
-  const [wranglerSource, packageSource, viteSource] = await Promise.all([
-    readFile(new URL("wrangler.jsonc", root), "utf8"),
-    readFile(new URL("package.json", root), "utf8"),
-    readFile(new URL("vite.config.ts", root), "utf8"),
-  ]);
+  const [wranglerSource, viteWranglerSource, packageSource, viteSource] =
+    await Promise.all([
+      readFile(new URL("wrangler.jsonc", root), "utf8"),
+      readFile(new URL("wrangler.vite.jsonc", root), "utf8"),
+      readFile(new URL("package.json", root), "utf8"),
+      readFile(new URL("vite.config.ts", root), "utf8"),
+    ]);
   const wrangler = JSON.parse(wranglerSource);
+  const viteWrangler = JSON.parse(viteWranglerSource);
   const packageJson = JSON.parse(packageSource);
 
   assert.equal(wrangler.name, "idi-studios");
-  assert.equal(wrangler.main, "./worker/index.ts");
-  assert.equal(wrangler.assets.directory, "./public");
+  assert.equal(wrangler.main, "./dist/server/index.js");
+  assert.equal(wrangler.assets.directory, "./dist/client");
   assert.equal(wrangler.assets.binding, "ASSETS");
   assert.equal(wrangler.assets.run_worker_first, true);
-  assert.equal(
-    packageJson.scripts.deploy,
-    "npm run build && wrangler deploy --config dist/server/wrangler.json",
-  );
+  assert.equal(wrangler.build.command, "npm run build");
+  assert.equal(wrangler.no_bundle, true);
+  assert.equal(viteWrangler.main, "./worker/index.ts");
+  assert.equal(viteWrangler.assets.directory, "./public");
+  assert.equal(packageJson.scripts.deploy, "wrangler deploy");
   assert.match(viteSource, /cloudflare\(\{/);
+  assert.match(viteSource, /configPath: "\.\/wrangler\.vite\.jsonc"/);
   assert.doesNotMatch(viteSource, /hostingConfig|localBindingConfig|config:\s*localBindingConfig/);
 });
