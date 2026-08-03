@@ -597,10 +597,6 @@ body.beta-modal-open { overflow: hidden; }
 .beta-form input:focus, .beta-form textarea:focus { border-color: var(--gold); background: rgba(255, 255, 255, .05); box-shadow: 0 0 0 2px rgba(189, 150, 55, .16); }
 .beta-form-wide { grid-column: 1 / -1; }
 .beta-form-trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
-.beta-form-verification { min-height: 66px; margin-top: 18px; }
-.beta-form-verification[hidden] { display: none; }
-.beta-form-verification > div { max-width: 100%; }
-.beta-form-verification > span { display: block; margin-top: 8px; color: rgba(217, 213, 199, .5); font-size: .68rem; }
 .beta-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 22px; }
 .beta-form-footer p { max-width: 390px; margin: 0; color: rgba(217, 213, 199, .5); font-size: .72rem; line-height: 1.5; }
 .beta-form button { display: inline-flex; align-items: center; justify-content: space-between; gap: 28px; min-width: 235px; padding: 16px 20px; border: 1px solid var(--gold); border-radius: 0; background: transparent; color: var(--gold-bright); cursor: pointer; font: inherit; font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }

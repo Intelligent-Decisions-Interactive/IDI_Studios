@@ -74,15 +74,11 @@ test("stores beta applications and sends Resend notifications", async () => {
   assert.match(form, /event\.key === "Escape"/);
   assert.match(form, /previousFocusRef/);
   assert.match(form, /You&apos;re on/);
-  assert.match(form, /cloudflare\.com\/turnstile/);
-  assert.match(form, /turnstileRequired/);
+  assert.doesNotMatch(form, /cloudflare\.com\/turnstile|turnstile/i);
   assert.match(emailHelper, /api\.resend\.com\/emails/);
   assert.match(emailHelper, /RESEND_API_KEY/);
-  assert.match(route, /siteverify/);
-  assert.match(route, /TURNSTILE_SECRET_KEY/);
-  assert.match(route, /0x4AAAAAAEFhAAW5N5kUh-aO/);
-  assert.match(route, /private TURNSTILE_SECRET_KEY/);
-  assert.match(form, /errorCode\?\.startsWith\("110200"\)/);
+  assert.doesNotMatch(route, /siteverify|TURNSTILE|turnstile/i);
+  assert.match(route, /A filled honeypot indicates an automated submission/);
   assert.match(schema, /beta_access_requests/);
   assert.match(schema, /beta_access_request_events/);
   assert.equal(JSON.parse(hosting).d1, "DB");

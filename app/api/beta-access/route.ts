@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
 import {
   getBetaEmailConfig,
@@ -15,75 +14,12 @@ type BetaAccessPayload = {
   androidDevice?: unknown;
   testingFocus?: unknown;
   website?: unknown;
-  turnstileToken?: unknown;
-};
-
-type RuntimeEnv = {
-  TURNSTILE_SECRET_KEY?: string;
-};
-
-type TurnstileResult = {
-  success?: boolean;
-  action?: string;
-  hostname?: string;
-  "error-codes"?: string[];
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Public widget identifier. The private TURNSTILE_SECRET_KEY belongs only in
-// the Cloudflare Worker environment and must never be returned to the browser.
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
-}
-
-function turnstileSecret() {
-  return (env as unknown as RuntimeEnv).TURNSTILE_SECRET_KEY?.trim() || "";
-}
-
-function allowedTurnstileHostname(hostname: string) {
-  const normalized = hostname.trim().toLowerCase();
-  return (
-    normalized === "idistudios.io" ||
-    normalized.endsWith(".idistudios.io") ||
-    normalized === "idistudios.sofakingbannon.chatgpt.site" ||
-    normalized === "localhost"
-  );
-}
-
-async function verifyTurnstile(token: string, remoteIp: string) {
-  const secret = turnstileSecret();
-  if (!secret) return true;
-  if (!token) return false;
-
-  const body = new FormData();
-  body.set("secret", secret);
-  body.set("response", token);
-  if (remoteIp) body.set("remoteip", remoteIp);
-  body.set("idempotency_key", crypto.randomUUID());
-
-  const response = await fetch(
-    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    { method: "POST", body },
-  );
-  if (!response.ok) return false;
-
-  const result = (await response.json()) as TurnstileResult;
-  return Boolean(
-    result.success &&
-      result.action === "beta_access" &&
-      result.hostname &&
-      allowedTurnstileHostname(result.hostname),
-  );
-}
-
-export async function GET() {
-  const required = Boolean(turnstileSecret());
-  return Response.json({
-    turnstileRequired: required,
-    turnstileSiteKey: required ? TURNSTILE_SITE_KEY : null,
-  });
 }
 
 export async function POST(request: Request) {
@@ -101,22 +37,10 @@ export async function POST(request: Request) {
     const email = clean(payload.email, 160).toLowerCase();
     const androidDevice = clean(payload.androidDevice, 120);
     const testingFocus = clean(payload.testingFocus, 1200);
-    const turnstileToken = clean(payload.turnstileToken, 2048);
 
     if (!name || !EMAIL_PATTERN.test(email) || !androidDevice || !testingFocus) {
       return Response.json(
         { error: "Complete every field with a valid email address." },
-        { status: 400 },
-      );
-    }
-
-    const verified = await verifyTurnstile(
-      turnstileToken,
-      request.headers.get("CF-Connecting-IP") || "",
-    );
-    if (!verified) {
-      return Response.json(
-        { error: "Complete the security check and try again." },
         { status: 400 },
       );
     }
