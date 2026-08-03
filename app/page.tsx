@@ -6,6 +6,8 @@ const StudioMark = () => (
   </span>
 );
 
+const betaRequestHref = "mailto:development@idistudios.io?subject=Conquest%3A%20Ascension%20Beta%20Access%20Request&body=Name%3A%0AAndroid%20device%3A%0AWhat%20would%20you%20most%20like%20to%20test%3F%3A%0A";
+
 const pursuits = [
   {
     title: "Defeats that teach.",
@@ -83,8 +85,8 @@ export default function Home() {
           <a href="#vision">The vision</a>
           <a href="#current-build">Current build</a>
         </nav>
-        <a className="header-contact" href="mailto:development@idistudios.io">
-          Say hello <span aria-hidden="true">↗</span>
+        <a className="header-contact" href={betaRequestHref}>
+          Request beta <span aria-hidden="true">↗</span>
         </a>
       </header>
 
@@ -103,7 +105,7 @@ export default function Home() {
               teach, and victory has a reason. Our first world is <em>Conquest: Ascension</em>.
             </p>
             <div className="hero-actions">
-              <a className="rough-button" href="#conquest">Explore Conquest <span aria-hidden="true">↓</span></a>
+              <a className="rough-button" href={betaRequestHref}>Request beta access <span aria-hidden="true">↗</span></a>
               <a className="quiet-link" href="#current-build">See the current build <span aria-hidden="true">↗</span></a>
             </div>
           </div>
@@ -327,10 +329,13 @@ export default function Home() {
 
         <section className="contact" aria-labelledby="contact-title">
           <div className="shell contact-inner">
-            <p className="scribble">Stay close to the build</p>
-            <h2 id="contact-title">Come watch us<br /><em>build it.</em></h2>
-            <p>For development updates, press, publishing, and studio inquiries.</p>
-            <a href="mailto:development@idistudios.io">development@idistudios.io <span aria-hidden="true">↗</span></a>
+            <p className="scribble">Limited Android testing waves</p>
+            <h2 id="contact-title">Request beta<br /><em>access.</em></h2>
+            <p>Tell us what Android device you use and what you most want to test in Conquest: Ascension.</p>
+            <div className="contact-actions">
+              <a href={betaRequestHref}>Request beta access <span aria-hidden="true">↗</span></a>
+              <a className="contact-secondary" href="mailto:development@idistudios.io">Studio inquiries <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
         </section>
       </div>

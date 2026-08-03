@@ -16,6 +16,9 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /Small studio/);
   assert.match(page, /development@idistudios\.io/);
   assert.doesNotMatch(page, /hello@idistudios\.io/);
+  assert.match(page, /Request beta access/);
+  assert.match(page, /Beta%20Access%20Request/);
+  assert.match(page, /Android%20device/);
   assert.match(page, /world-starved-wyrm/);
   assert.match(page, /battle-skirmish/);
   assert.match(page, /city-university/);
