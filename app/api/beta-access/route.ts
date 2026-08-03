@@ -30,7 +30,7 @@ type TurnstileResult = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAL-8NdrZ1QrJmHV0qw5FyZM";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";

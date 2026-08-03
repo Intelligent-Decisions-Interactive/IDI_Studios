@@ -26,7 +26,7 @@ type TurnstileApi = {
       size: "flexible";
       callback: (token: string) => void;
       "expired-callback": () => void;
-      "error-callback": () => void;
+      "error-callback": (errorCode?: string) => boolean | void;
     },
   ) => string;
   reset: (widgetId?: string) => void;
@@ -181,10 +181,18 @@ export function BetaAccessModal() {
               setVerificationReady(false);
               setMessage("The security check expired. Complete it again.");
             },
-            "error-callback": () => {
+            "error-callback": (errorCode) => {
               turnstileTokenRef.current = "";
               setVerificationReady(false);
-              setMessage("The security check could not be completed.");
+              console.warn(
+                `Cloudflare Turnstile could not initialize${errorCode ? ` (${errorCode})` : ""}.`,
+              );
+              setMessage(
+                errorCode?.startsWith("110200")
+                  ? "Beta requests are not authorized on this hostname yet."
+                  : "The security check could not be completed.",
+              );
+              return true;
             },
           },
         );
