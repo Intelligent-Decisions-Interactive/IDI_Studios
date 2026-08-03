@@ -658,7 +658,7 @@ footer > a:hover { color: var(--gold-bright); }
   .hero-content { padding: 124px 0 104px; }
   .overline,
   .scribble { gap: 6px; margin-bottom: 18px; font-size: .57rem; letter-spacing: .1em; }
-  .hero h1 { font-size: clamp(3.7rem, 19vw, 5.4rem); line-height: .87; }
+  .hero h1 { font-size: clamp(3.4rem, 17vw, 4.5rem); line-height: .87; }
   .hero-copy { margin-top: 26px; padding-left: 14px; font-size: .98rem; line-height: 1.6; }
   .hero-actions { align-items: stretch; flex-direction: column; gap: 20px; margin-top: 28px; }
   .rough-button { width: 100%; justify-content: space-between; }
@@ -682,7 +682,7 @@ footer > a:hover { color: var(--gold-bright); }
   .studio-copy .lead { font-size: 1.22rem; line-height: 1.4; }
   .conquest-copy > p:not(.scribble) { font-size: .96rem; line-height: 1.65; }
   .conquest-signal { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 46px; }
-  .conquest-signal span { min-height: 124px; padding: 20px 14px; border-bottom: 1px solid var(--line); font-size: clamp(1.7rem, 9vw, 2.7rem); }
+  .conquest-signal span { min-height: 124px; padding: 20px 12px; border-bottom: 1px solid var(--line); font-size: clamp(1.55rem, 7.2vw, 2rem); letter-spacing: 0; }
   .conquest-signal small { left: 14px; top: 14px; }
   .conquest-signal span:nth-child(2) { border-right: 0; }
   .game-notes { grid-template-columns: repeat(2, 1fr); }
