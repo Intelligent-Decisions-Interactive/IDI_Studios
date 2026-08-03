@@ -16,7 +16,68 @@ type BetaAccessTriggerProps = {
   className?: string;
 };
 
+type TurnstileApi = {
+  render: (
+    container: HTMLElement,
+    options: {
+      sitekey: string;
+      action: string;
+      theme: "dark";
+      size: "flexible";
+      callback: (token: string) => void;
+      "expired-callback": () => void;
+      "error-callback": () => void;
+    },
+  ) => string;
+  reset: (widgetId?: string) => void;
+  remove: (widgetId: string) => void;
+};
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
 const OPEN_BETA_EVENT = "idi:open-beta-access";
+const TURNSTILE_SCRIPT_ID = "cloudflare-turnstile-script";
+const TURNSTILE_SCRIPT_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
+
+function loadTurnstile() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+
+  turnstileScriptPromise = new Promise<TurnstileApi>((resolve, reject) => {
+    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as
+      | HTMLScriptElement
+      | null;
+    const script = existing || document.createElement("script");
+
+    function handleLoad() {
+      if (window.turnstile) resolve(window.turnstile);
+      else reject(new Error("Security verification did not initialize."));
+    }
+
+    function handleError() {
+      turnstileScriptPromise = null;
+      reject(new Error("Security verification could not be loaded."));
+    }
+
+    script.addEventListener("load", handleLoad, { once: true });
+    script.addEventListener("error", handleError, { once: true });
+    if (!existing) {
+      script.id = TURNSTILE_SCRIPT_ID;
+      script.src = TURNSTILE_SCRIPT_URL;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  });
+
+  return turnstileScriptPromise;
+}
 
 export function BetaAccessTrigger({ children, className }: BetaAccessTriggerProps) {
   return (
@@ -36,11 +97,25 @@ export function BetaAccessModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
+  const [turnstileRequired, setTurnstileRequired] = useState(false);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationReady, setVerificationReady] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const successHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const turnstileContainerRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetRef = useRef<string | null>(null);
+  const turnstileTokenRef = useRef("");
+
+  function removeTurnstile() {
+    if (turnstileWidgetRef.current && window.turnstile) {
+      window.turnstile.remove(turnstileWidgetRef.current);
+    }
+    turnstileWidgetRef.current = null;
+    turnstileTokenRef.current = "";
+  }
 
   useEffect(() => {
     function openModal() {
@@ -58,13 +133,95 @@ export function BetaAccessModal() {
     return () => document.body.classList.remove("beta-modal-open");
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+
+    async function prepareVerification() {
+      setVerificationLoading(true);
+      setVerificationReady(false);
+      try {
+        const response = await fetch("/api/beta-access", {
+          credentials: "same-origin",
+        });
+        const config = (await response.json()) as {
+          turnstileRequired?: boolean;
+          turnstileSiteKey?: string | null;
+        };
+        if (!response.ok) throw new Error("Security configuration is unavailable.");
+        if (cancelled) return;
+
+        const required = config.turnstileRequired === true;
+        setTurnstileRequired(required);
+        if (!required) {
+          setVerificationReady(true);
+          return;
+        }
+        if (!config.turnstileSiteKey) {
+          throw new Error("Security verification is not configured.");
+        }
+
+        const turnstile = await loadTurnstile();
+        if (cancelled || !turnstileContainerRef.current) return;
+        removeTurnstile();
+        turnstileWidgetRef.current = turnstile.render(
+          turnstileContainerRef.current,
+          {
+            sitekey: config.turnstileSiteKey,
+            action: "beta_access",
+            theme: "dark",
+            size: "flexible",
+            callback: (token) => {
+              turnstileTokenRef.current = token;
+              setVerificationReady(true);
+              setMessage("");
+            },
+            "expired-callback": () => {
+              turnstileTokenRef.current = "";
+              setVerificationReady(false);
+              setMessage("The security check expired. Complete it again.");
+            },
+            "error-callback": () => {
+              turnstileTokenRef.current = "";
+              setVerificationReady(false);
+              setMessage("The security check could not be completed.");
+            },
+          },
+        );
+      } catch (error) {
+        if (!cancelled) {
+          setTurnstileRequired(true);
+          setVerificationReady(false);
+          setState("error");
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "Security verification is unavailable.",
+          );
+        }
+      } finally {
+        if (!cancelled) setVerificationLoading(false);
+      }
+    }
+
+    void prepareVerification();
+    return () => {
+      cancelled = true;
+      removeTurnstile();
+    };
+  }, [isOpen]);
+
   function closeModal() {
+    removeTurnstile();
     setIsOpen(false);
     window.requestAnimationFrame(() => previousFocusRef.current?.focus());
     window.setTimeout(() => {
       formRef.current?.reset();
       setState("idle");
       setMessage("");
+      setTurnstileRequired(false);
+      setVerificationLoading(false);
+      setVerificationReady(true);
     }, 180);
   }
 
@@ -99,12 +256,21 @@ export function BetaAccessModal() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (turnstileRequired && !turnstileTokenRef.current) {
+      setState("error");
+      setMessage("Complete the security check before submitting.");
+      return;
+    }
+
     setState("submitting");
     setMessage("");
 
     const form = event.currentTarget;
     const formData = new FormData(form);
-    const payload = Object.fromEntries(formData.entries());
+    const payload = {
+      ...Object.fromEntries(formData.entries()),
+      turnstileToken: turnstileTokenRef.current,
+    };
 
     try {
       const response = await fetch("/api/beta-access", {
@@ -122,6 +288,7 @@ export function BetaAccessModal() {
       }
 
       form.reset();
+      removeTurnstile();
       setState("success");
       setMessage(
         result.emailSent
@@ -132,6 +299,11 @@ export function BetaAccessModal() {
     } catch (error) {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Please try again.");
+      turnstileTokenRef.current = "";
+      setVerificationReady(!turnstileRequired);
+      if (turnstileWidgetRef.current) {
+        window.turnstile?.reset(turnstileWidgetRef.current);
+      }
     }
   }
 
@@ -168,8 +340,12 @@ export function BetaAccessModal() {
         {state === "success" ? (
           <div className="beta-success">
             <p className="scribble">Request received</p>
-            <h2 id="beta-access-title" tabIndex={-1} ref={successHeadingRef}>You&apos;re on<br /><em>the list.</em></h2>
-            <p>Your Conquest: Ascension beta request has been submitted. {message}</p>
+            <h2 id="beta-access-title" tabIndex={-1} ref={successHeadingRef}>
+              You&apos;re on<br /><em>the list.</em>
+            </h2>
+            <p>
+              Your Conquest: Ascension beta request has been submitted. {message}
+            </p>
             <button type="button" className="beta-modal-action" onClick={closeModal}>
               Close <span aria-hidden="true">×</span>
             </button>
@@ -211,9 +387,26 @@ export function BetaAccessModal() {
                   <input name="website" type="text" tabIndex={-1} autoComplete="off" />
                 </label>
               </div>
+
+              <div
+                className="beta-form-verification"
+                hidden={!turnstileRequired}
+                aria-busy={verificationLoading}
+              >
+                <div ref={turnstileContainerRef} />
+                {verificationLoading ? <span>Loading security check…</span> : null}
+              </div>
+
               <div className="beta-form-footer">
                 <p>One request per player. Testing access is limited and not guaranteed.</p>
-                <button type="submit" disabled={state === "submitting"}>
+                <button
+                  type="submit"
+                  disabled={
+                    state === "submitting" ||
+                    verificationLoading ||
+                    (turnstileRequired && !verificationReady)
+                  }
+                >
                   {state === "submitting" ? "Sending request…" : "Request beta access"}
                   <span aria-hidden="true">↗</span>
                 </button>

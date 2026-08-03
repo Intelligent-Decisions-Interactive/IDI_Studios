@@ -54,9 +54,10 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
 });
 
 test("stores beta applications and sends Resend notifications", async () => {
-  const [form, route, schema, hosting] = await Promise.all([
+  const [form, route, emailHelper, schema, hosting] = await Promise.all([
     readFile(new URL("../app/beta-access-form.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/beta-access/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/beta-email.ts", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
   ]);
@@ -68,10 +69,56 @@ test("stores beta applications and sends Resend notifications", async () => {
   assert.match(form, /event\.key === "Escape"/);
   assert.match(form, /previousFocusRef/);
   assert.match(form, /You&apos;re on/);
-  assert.match(route, /api\.resend\.com\/emails/);
-  assert.match(route, /RESEND_API_KEY/);
+  assert.match(form, /cloudflare\.com\/turnstile/);
+  assert.match(form, /turnstileRequired/);
+  assert.match(emailHelper, /api\.resend\.com\/emails/);
+  assert.match(emailHelper, /RESEND_API_KEY/);
+  assert.match(route, /siteverify/);
+  assert.match(route, /TURNSTILE_SECRET_KEY/);
+  assert.match(route, /0x4AAAAAAEFhAAW5N5kUh-aO/);
   assert.match(schema, /beta_access_requests/);
+  assert.match(schema, /beta_access_request_events/);
   assert.equal(JSON.parse(hosting).d1, "DB");
+});
+
+test("protects and operates the beta administration console", async () => {
+  const [page, consoleSource, auth, listRoute, detailRoute, migration] =
+    await Promise.all([
+      readFile(new URL("../app/admin/beta/page.tsx", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(new URL("../app/beta-admin.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/admin/api/requests/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/admin/api/requests/[id]/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../drizzle/0001_puzzling_lockjaw.sql", import.meta.url),
+        "utf8",
+      ),
+    ]);
+
+  assert.match(page, /getAdminActorFromHeaders/);
+  assert.match(page, /Verified access required/);
+  assert.match(consoleSource, /Applicant management/);
+  assert.match(consoleSource, /Private admin notes/);
+  assert.match(consoleSource, /Send invitation/);
+  assert.match(consoleSource, /Activity history/);
+  assert.match(auth, /cf-access-authenticated-user-email/);
+  assert.match(auth, /cf-access-jwt-assertion/);
+  assert.match(auth, /oai-authenticated-user-email/);
+  assert.match(auth, /BETA_ADMIN_EMAILS/);
+  assert.match(listRoute, /\.limit\(250\)/);
+  assert.match(detailRoute, /status_changed/);
+  assert.match(detailRoute, /5,000 characters/);
+  assert.match(migration, /PRAGMA optimize/);
+  assert.match(migration, /CASE WHEN "status" = 'requested' THEN 'pending'/);
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {

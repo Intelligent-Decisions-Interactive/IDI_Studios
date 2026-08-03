@@ -1,5 +1,11 @@
 import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
+import {
+  getBetaEmailConfig,
+  sendApplicantConfirmation,
+  sendStudioNotification,
+} from "../../beta-email";
+import { logBetaEvent } from "../../beta-admin";
 import { getDb } from "../../../db";
 import { betaAccessRequests } from "../../../db/schema";
 
@@ -9,51 +15,73 @@ type BetaAccessPayload = {
   androidDevice?: unknown;
   testingFocus?: unknown;
   website?: unknown;
+  turnstileToken?: unknown;
 };
 
-type ResendResult = {
-  id?: string;
-  message?: string;
+type RuntimeEnv = {
+  TURNSTILE_SECRET_KEY?: string;
+};
+
+type TurnstileResult = {
+  success?: boolean;
+  action?: string;
+  hostname?: string;
+  "error-codes"?: string[];
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 }
 
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    };
-    return entities[character];
-  });
+function turnstileSecret() {
+  return (env as unknown as RuntimeEnv).TURNSTILE_SECRET_KEY?.trim() || "";
 }
 
-async function sendResendEmail(
-  apiKey: string,
-  idempotencyKey: string,
-  payload: Record<string, unknown>,
-) {
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "Idempotency-Key": idempotencyKey,
-    },
-    body: JSON.stringify(payload),
+function allowedTurnstileHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase();
+  return (
+    normalized === "idistudios.io" ||
+    normalized.endsWith(".idistudios.io") ||
+    normalized === "idistudios.sofakingbannon.chatgpt.site" ||
+    normalized === "localhost"
+  );
+}
+
+async function verifyTurnstile(token: string, remoteIp: string) {
+  const secret = turnstileSecret();
+  if (!secret) return true;
+  if (!token) return false;
+
+  const body = new FormData();
+  body.set("secret", secret);
+  body.set("response", token);
+  if (remoteIp) body.set("remoteip", remoteIp);
+  body.set("idempotency_key", crypto.randomUUID());
+
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    { method: "POST", body },
+  );
+  if (!response.ok) return false;
+
+  const result = (await response.json()) as TurnstileResult;
+  return Boolean(
+    result.success &&
+      result.action === "beta_access" &&
+      result.hostname &&
+      allowedTurnstileHostname(result.hostname),
+  );
+}
+
+export async function GET() {
+  const required = Boolean(turnstileSecret());
+  return Response.json({
+    turnstileRequired: required,
+    turnstileSiteKey: required ? TURNSTILE_SITE_KEY : null,
   });
-  const result = (await response.json()) as ResendResult;
-  if (!response.ok) {
-    throw new Error(result.message || `Resend returned ${response.status}`);
-  }
-  return result;
 }
 
 export async function POST(request: Request) {
@@ -71,10 +99,22 @@ export async function POST(request: Request) {
     const email = clean(payload.email, 160).toLowerCase();
     const androidDevice = clean(payload.androidDevice, 120);
     const testingFocus = clean(payload.testingFocus, 1200);
+    const turnstileToken = clean(payload.turnstileToken, 2048);
 
     if (!name || !EMAIL_PATTERN.test(email) || !androidDevice || !testingFocus) {
       return Response.json(
         { error: "Complete every field with a valid email address." },
+        { status: 400 },
+      );
+    }
+
+    const verified = await verifyTurnstile(
+      turnstileToken,
+      request.headers.get("CF-Connecting-IP") || "",
+    );
+    if (!verified) {
+      return Response.json(
+        { error: "Complete the security check and try again." },
         { status: 400 },
       );
     }
@@ -90,72 +130,88 @@ export async function POST(request: Request) {
           name,
           androidDevice,
           testingFocus,
-          status: "requested",
+          status: "pending",
           emailStatus: "pending",
           resendEmailId: null,
+          adminEmailStatus: "pending",
+          adminResendId: null,
+          inviteEmailStatus: "not_sent",
+          inviteResendId: null,
+          invitedAt: null,
+          reviewedAt: null,
+          reviewedBy: null,
+          lastEmailError: null,
           updatedAt: now,
         },
       })
       .returning();
 
-    const runtimeEnv = env as unknown as {
-      RESEND_API_KEY?: string;
-      BETA_FROM_EMAIL?: string;
-      BETA_NOTIFICATION_EMAIL?: string;
-    };
-    const apiKey = runtimeEnv.RESEND_API_KEY;
+    await logBetaEvent({
+      requestId: submission.id,
+      eventType: "request_submitted",
+      actorEmail: email,
+      newStatus: "pending",
+      details: { androidDevice },
+    });
 
-    if (!apiKey) {
+    const config = getBetaEmailConfig();
+    if (!config.apiKey) {
       return Response.json({ ok: true, emailSent: false }, { status: 201 });
     }
 
-    const from = runtimeEnv.BETA_FROM_EMAIL || "IDI Studios <beta@idistudios.io>";
-    const notify = runtimeEnv.BETA_NOTIFICATION_EMAIL || "development@idistudios.io";
-    const safeName = escapeHtml(name);
-    const safeEmail = escapeHtml(email);
-    const safeDevice = escapeHtml(androidDevice);
-    const safeFocus = escapeHtml(testingFocus).replace(/\n/g, "<br />");
     const idempotencyBase = `beta-${submission.id}-${now.getTime()}`;
+    let adminEmailStatus = "sent";
+    let applicantEmailStatus = "sent";
+    let adminResendId: string | null = null;
+    let applicantResendId: string | null = null;
+    const emailErrors: string[] = [];
 
     try {
-      const notification = await sendResendEmail(apiKey, `${idempotencyBase}-studio`, {
-        from,
-        to: [notify],
-        reply_to: email,
-        subject: `Beta request: ${name}`,
-        html: `<h1>New Conquest: Ascension beta request</h1><p><strong>Name:</strong> ${safeName}</p><p><strong>Email:</strong> ${safeEmail}</p><p><strong>Android device:</strong> ${safeDevice}</p><p><strong>Testing focus:</strong><br />${safeFocus}</p>`,
-        text: `New Conquest: Ascension beta request\n\nName: ${name}\nEmail: ${email}\nAndroid device: ${androidDevice}\nTesting focus: ${testingFocus}`,
-        tags: [{ name: "request_type", value: "beta_access" }],
-      });
-
-      await sendResendEmail(apiKey, `${idempotencyBase}-applicant`, {
-        from,
-        to: [email],
-        reply_to: notify,
-        subject: "We received your Conquest: Ascension beta request",
-        html: `<h1>Your request is in.</h1><p>Hi ${safeName},</p><p>Thanks for volunteering to test <strong>Conquest: Ascension</strong>. We are inviting players in limited Android waves and will contact you if your device fits an upcoming build.</p><p>— IDI Studios</p>`,
-        text: `Hi ${name},\n\nThanks for volunteering to test Conquest: Ascension. We are inviting players in limited Android waves and will contact you if your device fits an upcoming build.\n\n— IDI Studios`,
-        tags: [{ name: "request_type", value: "beta_confirmation" }],
-      });
-
-      await db
-        .update(betaAccessRequests)
-        .set({
-          emailStatus: "sent",
-          resendEmailId: notification.id || null,
-          updatedAt: new Date(),
-        })
-        .where(eq(betaAccessRequests.id, submission.id));
-
-      return Response.json({ ok: true, emailSent: true }, { status: 201 });
-    } catch (emailError) {
-      console.error("Beta request email failed", emailError);
-      await db
-        .update(betaAccessRequests)
-        .set({ emailStatus: "failed", updatedAt: new Date() })
-        .where(eq(betaAccessRequests.id, submission.id));
-      return Response.json({ ok: true, emailSent: false }, { status: 201 });
+      const result = await sendStudioNotification(
+        submission,
+        `${idempotencyBase}-studio`,
+      );
+      adminResendId = result.id || null;
+    } catch (error) {
+      adminEmailStatus = "failed";
+      emailErrors.push(
+        `Studio notification: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
+
+    try {
+      const result = await sendApplicantConfirmation(
+        submission,
+        `${idempotencyBase}-applicant`,
+      );
+      applicantResendId = result.id || null;
+    } catch (error) {
+      applicantEmailStatus = "failed";
+      emailErrors.push(
+        `Applicant confirmation: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+
+    await db
+      .update(betaAccessRequests)
+      .set({
+        adminEmailStatus,
+        adminResendId,
+        emailStatus: applicantEmailStatus,
+        resendEmailId: applicantResendId,
+        lastEmailError: emailErrors.join(" | ") || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(betaAccessRequests.id, submission.id));
+
+    return Response.json(
+      {
+        ok: true,
+        emailSent:
+          adminEmailStatus === "sent" && applicantEmailStatus === "sent",
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Beta access request failed", error);
     return Response.json(
