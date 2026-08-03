@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 180" role="img" aria-labelledby="title desc">
+  <title id="title">IDI Studios primary horizontal logo</title>
+  <desc id="desc">Geometric gold IDI monogram with the word Studios in bone white.</desc>
+  <rect width="760" height="180" rx="16" fill="#03090f"/>
+  <g transform="translate(42 35)" fill="none" stroke="#d4af37" stroke-width="9">
+    <path d="M0 0h34M17 0v110M0 110h34"/>
+    <path d="M64 0v110h32c45 0 68-21 68-55S141 0 96 0H64Z"/>
+    <path d="M197 0h34M214 0v110M197 110h34"/>
+  </g>
+  <path d="M309 35v110" stroke="#d4af37" stroke-width="1" opacity=".55"/>
+  <text x="353" y="106" fill="#f7f8fa" font-family="Manrope, Arial, sans-serif" font-size="48" font-weight="600" letter-spacing="18">STUDIOS</text>
+</svg>

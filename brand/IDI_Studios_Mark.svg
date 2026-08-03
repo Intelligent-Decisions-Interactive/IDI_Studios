@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-labelledby="title desc">
+  <title id="title">IDI Studios mark</title>
+  <desc id="desc">A geometric gold IDI monogram on a deep navy field.</desc>
+  <rect width="320" height="120" rx="12" fill="#03090f"/>
+  <g fill="none" stroke="#d4af37" stroke-width="10">
+    <path d="M35 25h38M54 25v70M35 95h38"/>
+    <path d="M105 25v70h28c39 0 59-13 59-35s-20-35-59-35h-28Z"/>
+    <path d="M235 25h38M254 25v70M235 95h38"/>
+  </g>
+</svg>
