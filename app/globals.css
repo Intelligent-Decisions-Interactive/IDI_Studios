@@ -520,8 +520,8 @@ img { display: block; max-width: 100%; }
 }
 .capture-group--city .capture-grid { margin-left: auto; }
 .capture-group--characters .capture-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  width: min(940px, 100%);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: min(1080px, 100%);
 }
 .capture-group--menus .capture-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));

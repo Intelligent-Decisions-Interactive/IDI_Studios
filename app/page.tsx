@@ -54,6 +54,7 @@ const captureGroups = [
     captures: [
       { src: "/assets/current-build/leader-kael-varyn.jpg", title: "Leader profile", alt: "Conquest leader profile for Kael Varyn" },
       { src: "/assets/current-build/equipment.jpg", title: "Equipment", alt: "Conquest equipment selection and refinement screen" },
+      { src: "/assets/current-build/item-catalogue.jpg", title: "Item catalogue", alt: "Conquest Item Catalogue screen showing Ascendant crown equipment variants" },
       { src: "/assets/current-build/barracks-training.jpg", title: "Barracks training", alt: "Conquest Barracks Training screen showing a Shieldbearer troop selection" },
     ],
   },

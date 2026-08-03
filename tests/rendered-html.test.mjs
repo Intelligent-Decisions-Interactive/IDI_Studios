@@ -21,6 +21,7 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /world-blackstone-warehouse/);
   assert.match(page, /barracks-roster/);
   assert.match(page, /barracks-training/);
+  assert.match(page, /item-catalogue/);
   assert.match(page, /Overworld/);
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
@@ -37,6 +38,7 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(cityGroup, /world-blackstone-warehouse/);
   assert.doesNotMatch(characterGroup, /army-setup|barracks-roster/);
   assert.match(characterGroup, /barracks-training/);
+  assert.match(characterGroup, /item-catalogue/);
   assert.match(menusGroup, /army-setup/);
   assert.match(menusGroup, /barracks-roster/);
   assert.match(page, /conquest-wordmark/);
