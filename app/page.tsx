@@ -24,6 +24,40 @@ const pursuits = [
   },
 ];
 
+const buildFeatures = [
+  {
+    src: "/assets/current-build/world-starved-wyrm.jpg",
+    title: "Persistent world",
+    copy: "Encounters, settlements, terrain, and Ascendant threats share one navigable realm.",
+    alt: "Conquest world map showing the Starved Wyrm Ascendant encounter",
+  },
+  {
+    src: "/assets/current-build/battle-skirmish.jpg",
+    title: "Formation combat",
+    copy: "Troop position, turn order, readiness, and command choices shape every engagement.",
+    alt: "Conquest skirmish battle with two armies arranged in formation",
+  },
+  {
+    src: "/assets/current-build/city-university.jpg",
+    title: "Realm construction",
+    copy: "Blackstone Hold grows tile by tile into a persistent city with specialized districts.",
+    alt: "Blackstone Hold construction map centered on the University district",
+  },
+];
+
+const systemCaptures = [
+  { src: "/assets/current-build/world-desert-tile.jpg", title: "Exploration", alt: "Conquest desert world tile with an army formation" },
+  { src: "/assets/current-build/world-dragonkin-host.jpg", title: "Encounters", alt: "Dragonkin Host encounter on the Conquest world map" },
+  { src: "/assets/current-build/world-blackstone-hold.jpg", title: "Settlements", alt: "Blackstone Hold selected on the Conquest world map" },
+  { src: "/assets/current-build/army-setup.jpg", title: "Army setup", alt: "Conquest army setup screen with deployed formations" },
+  { src: "/assets/current-build/campaign.jpg", title: "Campaign", alt: "Conquest campaign progression and permanent quests" },
+  { src: "/assets/current-build/research-development.jpg", title: "Research", alt: "Conquest research and development branches" },
+  { src: "/assets/current-build/equipment.jpg", title: "Equipment", alt: "Conquest equipment selection and refinement screen" },
+  { src: "/assets/current-build/leader-kael-varyn.jpg", title: "Leaders", alt: "Conquest leader profile for Kael Varyn" },
+  { src: "/assets/current-build/city-civic-center.jpg", title: "Civic center", alt: "Blackstone Hold construction map centered on the Civic Center" },
+  { src: "/assets/current-build/city-housing.jpg", title: "Housing", alt: "Blackstone Hold housing quarter and surrounding settlement" },
+];
+
 export default function Home() {
   return (
     <main>
@@ -33,8 +67,8 @@ export default function Home() {
         <a className="brand-link" href="#top"><StudioMark /></a>
         <nav aria-label="Primary navigation">
           <a href="#conquest">The game</a>
+          <a href="#current-build">Current build</a>
           <a href="#approach">How we build</a>
-          <a href="#studio">The studio</a>
         </nav>
         <a className="header-contact" href="mailto:hello@idistudios.io">
           Say hello <span aria-hidden="true">↗</span>
@@ -57,7 +91,7 @@ export default function Home() {
             </p>
             <div className="hero-actions">
               <a className="rough-button" href="#conquest">Explore Conquest <span aria-hidden="true">↓</span></a>
-              <a className="quiet-link" href="#approach">How we build <span aria-hidden="true">↗</span></a>
+              <a className="quiet-link" href="#current-build">See the current build <span aria-hidden="true">↗</span></a>
             </div>
           </div>
           <div className="hero-stamp" aria-hidden="true">
@@ -109,6 +143,50 @@ export default function Home() {
               <span>Formation tactics</span>
               <span>Strange factions</span>
               <span>Earned progression</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="current-build" id="current-build" aria-labelledby="build-title">
+          <div className="shell">
+            <div className="build-heading">
+              <div>
+                <p className="scribble scribble--light">Current Android build</p>
+                <h2 id="build-title">This is the<br />game today.</h2>
+              </div>
+              <div className="build-heading-copy">
+                <p>
+                  Real screens from <em>Conquest: Ascension</em>: a persistent world,
+                  formation-driven combat, realm construction, research, leaders,
+                  equipment, and long-term progression.
+                </p>
+                <span>Interface and balance remain in active development.</span>
+              </div>
+            </div>
+
+            <div className="build-feature-grid">
+              {buildFeatures.map((feature) => (
+                <figure className="build-shot" key={feature.src}>
+                  <img src={feature.src} alt={feature.alt} loading="lazy" />
+                  <figcaption>
+                    <strong>{feature.title}</strong>
+                    <span>{feature.copy}</span>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+
+            <div className="systems-heading">
+              <p>One connected progression loop</p>
+              <span>World / Army / Campaign / Research / Leaders / City</span>
+            </div>
+            <div className="systems-gallery" aria-label="More screens from the current Conquest build">
+              {systemCaptures.map((capture) => (
+                <figure className="system-shot" key={capture.src}>
+                  <img src={capture.src} alt={capture.alt} loading="lazy" />
+                  <figcaption>{capture.title}</figcaption>
+                </figure>
+              ))}
             </div>
           </div>
         </section>
