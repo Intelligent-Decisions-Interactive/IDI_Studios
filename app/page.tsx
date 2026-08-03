@@ -138,15 +138,11 @@ export default function Home() {
               <p className="scribble">From the current build</p>
               <h2 id="notes-title">The world is<br />already moving.</h2>
               <p>
-                A living realm, its leaders, and the roads between them—captured
-                directly from the game as it grows.
+                A closer look at realm management and the leaders who carry the
+                campaign—captured directly from the current game.
               </p>
             </div>
             <div className="notes-gallery">
-              <figure className="note-card note-card--map">
-                <img src="/assets/conquest-world-map.png" alt="Conquest world map with Blackstone Hold, forests, roads, and coastline" />
-                <figcaption>Roads beyond Blackstone</figcaption>
-              </figure>
               <figure className="note-card note-card--city">
                 <img src="/assets/conquest-city.jpg" alt="Conquest city screen showing Blackstone Hold and its buildings" />
                 <figcaption>Blackstone Hold</figcaption>

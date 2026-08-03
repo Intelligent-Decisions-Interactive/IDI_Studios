@@ -279,11 +279,10 @@ img { display: block; max-width: 100%; }
 .notes-heading { display: grid; grid-template-columns: 1fr 1.2fr .8fr; gap: 5vw; align-items: end; }
 .notes-heading .scribble { align-self: start; }
 .notes-heading > p:last-child { margin: 0 0 4px; color: var(--ash); line-height: 1.68; }
-.notes-gallery { display: grid; grid-template-columns: 1.5fr .65fr .65fr; gap: 22px; align-items: end; margin-top: 72px; }
+.notes-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; width: min(820px, 100%); margin: 72px 0 0 auto; }
 .note-card { position: relative; margin: 0; padding: 8px 8px 16px; border: 1px solid rgba(189, 150, 55, .32); background: #0c1015; box-shadow: 0 20px 45px rgba(0, 0, 0, .28); }
 .note-card::before { content: ""; position: absolute; inset: 3px; pointer-events: none; border: 1px solid rgba(217, 213, 199, .05); }
 .note-card img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.68) contrast(1.08); }
-.note-card--map img { aspect-ratio: 16 / 10; }
 .note-card--city img,
 .note-card--leaders img { aspect-ratio: 9 / 16; object-position: top; }
 .note-card figcaption { padding: 14px 6px 0; color: rgba(217, 213, 199, .58); font-size: .61rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
@@ -323,8 +322,7 @@ footer > a:hover { color: var(--gold-bright); }
   .pursuit-stack { margin-top: 20px; }
   .notes-heading { grid-template-columns: 1fr 1fr; }
   .notes-heading .scribble { grid-column: 1 / -1; }
-  .notes-gallery { grid-template-columns: 1fr 1fr; }
-  .note-card--map { grid-column: 1 / -1; }
+  .notes-gallery { grid-template-columns: 1fr 1fr; width: min(680px, 100%); }
   .studio-layout { gap: 48px; }
   footer { grid-template-columns: 1fr auto; padding: 28px 24px; }
   footer p { display: none; }
@@ -364,7 +362,6 @@ footer > a:hover { color: var(--gold-bright); }
   .notes-heading .scribble { grid-column: auto; }
   .notes-heading > p:last-child { margin-top: 20px; }
   .notes-gallery { grid-template-columns: 1fr; margin-top: 52px; }
-  .note-card--map { grid-column: auto; }
   .note-card--city,
   .note-card--leaders { width: 82%; }
   .note-card--leaders { justify-self: end; }
