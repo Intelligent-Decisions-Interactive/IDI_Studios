@@ -80,7 +80,7 @@ test("stores beta applications and sends Resend notifications", async () => {
   assert.match(emailHelper, /RESEND_API_KEY/);
   assert.match(route, /siteverify/);
   assert.match(route, /TURNSTILE_SECRET_KEY/);
-  assert.match(route, /0x4AAAAAAEFhAAW5N5kUh-aO/);
+  assert.match(route, /0x4AAAAAAEFhAL-8NdrZ1QrJmHV0qw5FyZM/);
   assert.match(schema, /beta_access_requests/);
   assert.match(schema, /beta_access_request_events/);
   assert.equal(JSON.parse(hosting).d1, "DB");
