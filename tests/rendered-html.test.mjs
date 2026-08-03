@@ -58,12 +58,16 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });
 
-test("stores beta applications and sends Resend notifications", async () => {
-  const [form, route, emailHelper, schema, hosting] = await Promise.all([
+test("stores verified beta applications in Supabase and sends notifications", async () => {
+  const [form, route, emailHelper, supabaseHelper, migration, hosting] = await Promise.all([
     readFile(new URL("../app/beta-access-form.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/beta-access/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/beta-email.ts", import.meta.url), "utf8"),
-    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/supabase.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../supabase/migrations/20260803_create_beta_access.sql", import.meta.url),
+      "utf8",
+    ),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
   ]);
 
@@ -74,18 +78,24 @@ test("stores beta applications and sends Resend notifications", async () => {
   assert.match(form, /event\.key === "Escape"/);
   assert.match(form, /previousFocusRef/);
   assert.match(form, /You&apos;re on/);
-  assert.doesNotMatch(form, /cloudflare\.com\/turnstile|turnstile/i);
+  assert.match(form, /cloudflare\.com\/turnstile/);
+  assert.match(form, /turnstileToken/);
   assert.match(emailHelper, /api\.resend\.com\/emails/);
   assert.match(emailHelper, /RESEND_API_KEY/);
-  assert.doesNotMatch(route, /siteverify|TURNSTILE|turnstile/i);
-  assert.match(route, /A filled honeypot indicates an automated submission/);
-  assert.match(schema, /beta_access_requests/);
-  assert.match(schema, /beta_access_request_events/);
-  assert.equal(JSON.parse(hosting).d1, "DB");
+  assert.match(route, /siteverify/);
+  assert.match(route, /TURNSTILE_SECRET_KEY/);
+  assert.match(route, /upsertBetaRequest/);
+  assert.match(supabaseHelper, /SUPABASE_URL/);
+  assert.match(supabaseHelper, /SUPABASE_SECRET_KEY/);
+  assert.match(supabaseHelper, /rest\/v1/);
+  assert.match(migration, /create table if not exists public\.beta_access_requests/);
+  assert.match(migration, /create table if not exists public\.beta_access_request_events/);
+  assert.match(migration, /enable row level security/);
+  assert.equal(JSON.parse(hosting).d1, null);
 });
 
 test("protects and operates the beta administration console", async () => {
-  const [page, consoleSource, auth, listRoute, detailRoute, migration] =
+  const [page, consoleSource, auth, listRoute, detailRoute, supabaseHelper] =
     await Promise.all([
       readFile(new URL("../app/admin/beta/page.tsx", import.meta.url), "utf8"),
       readFile(
@@ -101,10 +111,7 @@ test("protects and operates the beta administration console", async () => {
         new URL("../app/admin/api/requests/[id]/route.ts", import.meta.url),
         "utf8",
       ),
-      readFile(
-        new URL("../drizzle/0001_puzzling_lockjaw.sql", import.meta.url),
-        "utf8",
-      ),
+      readFile(new URL("../app/supabase.ts", import.meta.url), "utf8"),
     ]);
 
   assert.match(page, /getAdminActorFromHeaders/);
@@ -117,11 +124,11 @@ test("protects and operates the beta administration console", async () => {
   assert.match(auth, /cf-access-jwt-assertion/);
   assert.match(auth, /oai-authenticated-user-email/);
   assert.match(auth, /BETA_ADMIN_EMAILS/);
-  assert.match(listRoute, /\.limit\(250\)/);
+  assert.match(listRoute, /listBetaRequests/);
   assert.match(detailRoute, /status_changed/);
   assert.match(detailRoute, /5,000 characters/);
-  assert.match(migration, /PRAGMA optimize/);
-  assert.match(migration, /CASE WHEN "status" = 'requested' THEN 'pending'/);
+  assert.match(supabaseHelper, /limit=250/);
+  assert.match(supabaseHelper, /beta_access_request_events/);
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {

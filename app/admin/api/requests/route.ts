@@ -1,10 +1,8 @@
-import { desc } from "drizzle-orm";
 import {
   adminConfiguration,
   getAdminActorFromHeaders,
 } from "@/app/beta-admin";
-import { getDb } from "@/db";
-import { betaAccessRequests } from "@/db/schema";
+import { listBetaRequests } from "@/app/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +15,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const applications = await getDb()
-    .select()
-    .from(betaAccessRequests)
-    .orderBy(desc(betaAccessRequests.createdAt))
-    .limit(250);
+  const applications = await listBetaRequests();
 
   return Response.json({
     success: true,

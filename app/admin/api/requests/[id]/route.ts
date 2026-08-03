@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import {
   adminConfiguration,
   getAdminActorFromHeaders,
@@ -7,8 +6,7 @@ import {
   isBetaStatus,
   logBetaEvent,
 } from "@/app/beta-admin";
-import { getDb } from "@/db";
-import { betaAccessRequests } from "@/db/schema";
+import { updateBetaRequest } from "@/app/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -94,18 +92,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const now = new Date();
-  const [application] = await getDb()
-    .update(betaAccessRequests)
-    .set({
+  const now = new Date().toISOString();
+  const application = await updateBetaRequest(id, {
       status: body.status,
       adminNotes: body.adminNotes.trim(),
       reviewedAt: now,
       reviewedBy: actor.email,
-      updatedAt: now,
-    })
-    .where(eq(betaAccessRequests.id, id))
-    .returning();
+    });
 
   await logBetaEvent({
     requestId: id,

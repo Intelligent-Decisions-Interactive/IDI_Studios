@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import {
   adminConfiguration,
   getAdminActorFromHeaders,
@@ -10,8 +9,7 @@ import {
   sendApplicantConfirmation,
   sendStudioNotification,
 } from "@/app/beta-email";
-import { getDb } from "@/db";
-import { betaAccessRequests } from "@/db/schema";
+import { updateBetaRequest } from "@/app/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -49,26 +47,20 @@ export async function POST(request: Request, context: RouteContext) {
       body.type === "admin"
         ? await sendStudioNotification(application, idempotencyKey)
         : await sendApplicantConfirmation(application, idempotencyKey);
-    const now = new Date();
-    const [updated] = await getDb()
-      .update(betaAccessRequests)
-      .set(
-        body.type === "admin"
-          ? {
-              adminEmailStatus: "sent",
-              adminResendId: result.id || null,
-              lastEmailError: null,
-              updatedAt: now,
-            }
-          : {
-              emailStatus: "sent",
-              resendEmailId: result.id || null,
-              lastEmailError: null,
-              updatedAt: now,
-            },
-      )
-      .where(eq(betaAccessRequests.id, application.id))
-      .returning();
+    const updated = await updateBetaRequest(
+      application.id,
+      body.type === "admin"
+        ? {
+            adminEmailStatus: "sent",
+            adminResendId: result.id || null,
+            lastEmailError: null,
+          }
+        : {
+            emailStatus: "sent",
+            resendEmailId: result.id || null,
+            lastEmailError: null,
+          },
+    );
 
     await logBetaEvent({
       requestId: application.id,
@@ -86,14 +78,12 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Email delivery failed.";
-    await getDb()
-      .update(betaAccessRequests)
-      .set(
-        body.type === "admin"
-          ? { adminEmailStatus: "failed", lastEmailError: message, updatedAt: new Date() }
-          : { emailStatus: "failed", lastEmailError: message, updatedAt: new Date() },
-      )
-      .where(eq(betaAccessRequests.id, application.id));
+    await updateBetaRequest(
+      application.id,
+      body.type === "admin"
+        ? { adminEmailStatus: "failed", lastEmailError: message }
+        : { emailStatus: "failed", lastEmailError: message },
+    );
     await logBetaEvent({
       requestId: application.id,
       eventType: `${body.type}_email_failed`,

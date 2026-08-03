@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import {
   adminConfiguration,
   getAdminActorFromHeaders,
@@ -7,8 +6,7 @@ import {
   logBetaEvent,
 } from "@/app/beta-admin";
 import { sendBetaInvitation } from "@/app/beta-email";
-import { getDb } from "@/db";
-import { betaAccessRequests } from "@/db/schema";
+import { updateBetaRequest } from "@/app/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +36,7 @@ export async function POST(request: Request, context: RouteContext) {
       { status: 404 },
     );
   }
-  if (!['approved', 'invited'].includes(application.status)) {
+  if (!["approved", "invited"].includes(application.status)) {
     return Response.json(
       { success: false, message: "Approve the applicant before inviting them." },
       { status: 409 },
@@ -50,21 +48,16 @@ export async function POST(request: Request, context: RouteContext) {
       application,
       `beta-invite-${application.id}-${Date.now()}`,
     );
-    const now = new Date();
-    const [updated] = await getDb()
-      .update(betaAccessRequests)
-      .set({
-        status: "invited",
-        inviteEmailStatus: "sent",
-        inviteResendId: result.id || null,
-        invitedAt: now,
-        reviewedAt: now,
-        reviewedBy: actor.email,
-        lastEmailError: null,
-        updatedAt: now,
-      })
-      .where(eq(betaAccessRequests.id, application.id))
-      .returning();
+    const now = new Date().toISOString();
+    const updated = await updateBetaRequest(application.id, {
+      status: "invited",
+      inviteEmailStatus: "sent",
+      inviteResendId: result.id || null,
+      invitedAt: now,
+      reviewedAt: now,
+      reviewedBy: actor.email,
+      lastEmailError: null,
+    });
 
     await logBetaEvent({
       requestId: application.id,
@@ -82,14 +75,10 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invitation failed.";
-    await getDb()
-      .update(betaAccessRequests)
-      .set({
-        inviteEmailStatus: "failed",
-        lastEmailError: message,
-        updatedAt: new Date(),
-      })
-      .where(eq(betaAccessRequests.id, application.id));
+    await updateBetaRequest(application.id, {
+      inviteEmailStatus: "failed",
+      lastEmailError: message,
+    });
     await logBetaEvent({
       requestId: application.id,
       eventType: "invitation_failed",

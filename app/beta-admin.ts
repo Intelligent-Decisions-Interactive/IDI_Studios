@@ -1,10 +1,7 @@
 import { env } from "cloudflare:workers";
-import { desc, eq } from "drizzle-orm";
-import { getDb } from "../db";
-import {
-  betaAccessRequestEvents,
-  betaAccessRequests,
-} from "../db/schema";
+import { insertBetaEvent } from "./supabase";
+
+export { getBetaRequest, getBetaRequestEvents } from "./supabase";
 
 type RuntimeEnv = {
   BETA_ADMIN_EMAILS?: string;
@@ -62,24 +59,6 @@ export function isBetaStatus(value: unknown): value is BetaStatus {
   );
 }
 
-export async function getBetaRequest(id: number) {
-  const db = getDb();
-  const [application] = await db
-    .select()
-    .from(betaAccessRequests)
-    .where(eq(betaAccessRequests.id, id))
-    .limit(1);
-  return application || null;
-}
-
-export async function getBetaRequestEvents(id: number) {
-  return getDb()
-    .select()
-    .from(betaAccessRequestEvents)
-    .where(eq(betaAccessRequestEvents.requestId, id))
-    .orderBy(desc(betaAccessRequestEvents.createdAt));
-}
-
 export async function logBetaEvent(input: {
   requestId: number;
   eventType: string;
@@ -88,14 +67,7 @@ export async function logBetaEvent(input: {
   newStatus?: string | null;
   details?: Record<string, unknown>;
 }) {
-  await getDb().insert(betaAccessRequestEvents).values({
-    requestId: input.requestId,
-    eventType: input.eventType,
-    actorEmail: input.actorEmail,
-    previousStatus: input.previousStatus || null,
-    newStatus: input.newStatus || null,
-    details: input.details ? JSON.stringify(input.details) : null,
-  });
+  await insertBetaEvent(input);
 }
 
 export function adminConfiguration() {
