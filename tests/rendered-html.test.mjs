@@ -18,7 +18,8 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.doesNotMatch(page, /hello@idistudios\.io/);
   assert.match(page, /Request beta access/);
   assert.match(page, /beta-access/);
-  assert.match(page, /BetaAccessForm/);
+  assert.match(page, /BetaAccessModal/);
+  assert.match(page, /BetaAccessTrigger/);
   assert.match(page, /world-starved-wyrm/);
   assert.match(page, /battle-skirmish/);
   assert.match(page, /city-university/);
@@ -62,6 +63,11 @@ test("stores beta applications and sends Resend notifications", async () => {
 
   assert.match(form, /\/api\/beta-access/);
   assert.match(form, /Android device/);
+  assert.match(form, /role="dialog"/);
+  assert.match(form, /aria-modal="true"/);
+  assert.match(form, /event\.key === "Escape"/);
+  assert.match(form, /previousFocusRef/);
+  assert.match(form, /You&apos;re on/);
   assert.match(route, /api\.resend\.com\/emails/);
   assert.match(route, /RESEND_API_KEY/);
   assert.match(schema, /beta_access_requests/);

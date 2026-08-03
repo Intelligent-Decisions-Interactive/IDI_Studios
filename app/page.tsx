@@ -1,4 +1,4 @@
-import { BetaAccessForm } from "./beta-access-form";
+import { BetaAccessModal, BetaAccessTrigger } from "./beta-access-form";
 
 const StudioMark = () => (
   <span className="studio-wordmark" aria-label="IDI Studios">
@@ -7,8 +7,6 @@ const StudioMark = () => (
     <span className="studio-name">Studios</span>
   </span>
 );
-
-const betaRequestHref = "#beta-access";
 
 const pursuits = [
   {
@@ -87,9 +85,9 @@ export default function Home() {
           <a href="#vision">The vision</a>
           <a href="#current-build">Current build</a>
         </nav>
-        <a className="header-contact" href={betaRequestHref}>
+        <BetaAccessTrigger className="header-contact">
           Request beta <span aria-hidden="true">↗</span>
-        </a>
+        </BetaAccessTrigger>
       </header>
 
       <div id="content">
@@ -107,7 +105,7 @@ export default function Home() {
               teach, and victory has a reason. Our first world is <em>Conquest: Ascension</em>.
             </p>
             <div className="hero-actions">
-              <a className="rough-button" href={betaRequestHref}>Request beta access <span aria-hidden="true">↗</span></a>
+              <BetaAccessTrigger className="rough-button">Request beta access <span aria-hidden="true">↗</span></BetaAccessTrigger>
               <a className="quiet-link" href="#current-build">See the current build <span aria-hidden="true">↗</span></a>
             </div>
           </div>
@@ -334,8 +332,10 @@ export default function Home() {
             <p className="scribble">Limited Android testing waves</p>
             <h2 id="contact-title">Request beta<br /><em>access.</em></h2>
             <p>Tell us what Android device you use and what you most want to test in Conquest: Ascension.</p>
-            <BetaAccessForm />
-            <a className="contact-secondary" href="mailto:development@idistudios.io">Studio inquiries <span aria-hidden="true">↗</span></a>
+            <div className="contact-actions">
+              <BetaAccessTrigger className="contact-action contact-primary">Request beta access <span aria-hidden="true">↗</span></BetaAccessTrigger>
+              <a className="contact-action contact-secondary" href="mailto:development@idistudios.io">Studio inquiries <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
         </section>
       </div>
@@ -345,6 +345,8 @@ export default function Home() {
         <p>© 2026 IDI Studios / A label of Intelligent Decisions Interactive.</p>
         <a href="#top">Back to top ↑</a>
       </footer>
+
+      <BetaAccessModal />
     </main>
   );
 }
