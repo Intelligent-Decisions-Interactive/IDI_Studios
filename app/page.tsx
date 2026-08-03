@@ -83,7 +83,7 @@ export default function Home() {
           <a href="#vision">The vision</a>
           <a href="#current-build">Current build</a>
         </nav>
-        <a className="header-contact" href="mailto:hello@idistudios.io">
+        <a className="header-contact" href="mailto:development@idistudios.io">
           Say hello <span aria-hidden="true">↗</span>
         </a>
       </header>
@@ -330,7 +330,7 @@ export default function Home() {
             <p className="scribble">Stay close to the build</p>
             <h2 id="contact-title">Come watch us<br /><em>build it.</em></h2>
             <p>For development updates, press, publishing, and studio inquiries.</p>
-            <a href="mailto:hello@idistudios.io">hello@idistudios.io <span aria-hidden="true">↗</span></a>
+            <a href="mailto:development@idistudios.io">development@idistudios.io <span aria-hidden="true">↗</span></a>
           </div>
         </section>
       </div>

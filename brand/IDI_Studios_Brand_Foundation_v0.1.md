@@ -129,7 +129,7 @@ Our first original title, *Conquest: Ascension*, is an Android-first persistent 
 ## Domain and communications
 
 - Primary studio domain: `idistudios.io`
-- General contact: `hello@idistudios.io`
+- Development contact: `development@idistudios.io`
 - Business and publishing: `business@idistudios.io`
 - Press and creators: `press@idistudios.io`
 - Player support: `support@idistudios.io`
@@ -146,4 +146,3 @@ The IDI Studios site and Intelligent Decisions Interactive site should cross-lin
 6. Social avatar, header, and Open Graph image.
 7. Studio website home page centered on *Conquest: Ascension*.
 8. Compact brand guide governing spacing, color, typography, and product-brand relationships.
-
