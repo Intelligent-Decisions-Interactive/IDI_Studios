@@ -15,6 +15,9 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /world-starved-wyrm/);
   assert.match(page, /battle-skirmish/);
   assert.match(page, /city-university/);
+  assert.match(page, /Overworld/);
+  assert.match(page, /Character UI/);
+  assert.match(page, /Menus & progression/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });
