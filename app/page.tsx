@@ -1,3 +1,5 @@
+import { BetaAccessForm } from "./beta-access-form";
+
 const StudioMark = () => (
   <span className="studio-wordmark" aria-label="IDI Studios">
     <span className="studio-monogram" aria-hidden="true">IDI</span>
@@ -6,7 +8,7 @@ const StudioMark = () => (
   </span>
 );
 
-const betaRequestHref = "mailto:development@idistudios.io?subject=Conquest%3A%20Ascension%20Beta%20Access%20Request&body=Name%3A%0AAndroid%20device%3A%0AWhat%20would%20you%20most%20like%20to%20test%3F%3A%0A";
+const betaRequestHref = "#beta-access";
 
 const pursuits = [
   {
@@ -327,15 +329,13 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="contact" aria-labelledby="contact-title">
+        <section className="contact" id="beta-access" aria-labelledby="contact-title">
           <div className="shell contact-inner">
             <p className="scribble">Limited Android testing waves</p>
             <h2 id="contact-title">Request beta<br /><em>access.</em></h2>
             <p>Tell us what Android device you use and what you most want to test in Conquest: Ascension.</p>
-            <div className="contact-actions">
-              <a href={betaRequestHref}>Request beta access <span aria-hidden="true">↗</span></a>
-              <a className="contact-secondary" href="mailto:development@idistudios.io">Studio inquiries <span aria-hidden="true">↗</span></a>
-            </div>
+            <BetaAccessForm />
+            <a className="contact-secondary" href="mailto:development@idistudios.io">Studio inquiries <span aria-hidden="true">↗</span></a>
           </div>
         </section>
       </div>

@@ -17,8 +17,8 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /development@idistudios\.io/);
   assert.doesNotMatch(page, /hello@idistudios\.io/);
   assert.match(page, /Request beta access/);
-  assert.match(page, /Beta%20Access%20Request/);
-  assert.match(page, /Android%20device/);
+  assert.match(page, /beta-access/);
+  assert.match(page, /BetaAccessForm/);
   assert.match(page, /world-starved-wyrm/);
   assert.match(page, /battle-skirmish/);
   assert.match(page, /city-university/);
@@ -50,6 +50,22 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.doesNotMatch(page, /account-realm-overview/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
+});
+
+test("stores beta applications and sends Resend notifications", async () => {
+  const [form, route, schema, hosting] = await Promise.all([
+    readFile(new URL("../app/beta-access-form.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/beta-access/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(form, /\/api\/beta-access/);
+  assert.match(form, /Android device/);
+  assert.match(route, /api\.resend\.com\/emails/);
+  assert.match(route, /RESEND_API_KEY/);
+  assert.match(schema, /beta_access_requests/);
+  assert.equal(JSON.parse(hosting).d1, "DB");
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {
