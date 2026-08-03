@@ -31,7 +31,8 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /Character UI/);
   assert.match(page, /Menus & progression/);
   assert.match(styles, /hero-worlds-worth-mastering/);
-  assert.match(styles, /\.capture-group--city \.capture-grid,\s*\.capture-group--characters \.capture-grid,\s*\.capture-group--menus \.capture-grid \{ margin: 0 auto; \}/);
+  assert.match(styles, /\.capture-group--overworld \.capture-grid,\s*\.capture-group--city \.capture-grid,\s*\.capture-group--characters \.capture-grid,\s*\.capture-group--menus \.capture-grid \{\s*grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);\s*\}/);
+  assert.doesNotMatch(styles, /\.capture-group--(?:city|characters|menus) \.capture-grid[\s\S]{0,120}width: min\(1080px, 100%\)/);
   assert.match(page, /realm-development/);
   assert.match(page, /formation-command/);
   assert.match(page, /ascension-event/);
