@@ -13,7 +13,7 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.match(page, /Small studio/);
   assert.match(page, /hello@idistudios\.io/);
   assert.doesNotMatch(page, /Respect is a design system|Campaign landmarks|Enemy factions/);
-  assert.doesNotMatch(page, /conquest-world-map|world map/i);
+  assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)|current build|world map/i);
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {

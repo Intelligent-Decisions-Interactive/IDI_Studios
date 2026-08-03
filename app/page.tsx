@@ -33,7 +33,7 @@ export default function Home() {
         <a className="brand-link" href="#top"><StudioMark /></a>
         <nav aria-label="Primary navigation">
           <a href="#conquest">The game</a>
-          <a href="#field-notes">Field notes</a>
+          <a href="#approach">How we build</a>
           <a href="#studio">The studio</a>
         </nav>
         <a className="header-contact" href="mailto:hello@idistudios.io">
@@ -57,7 +57,7 @@ export default function Home() {
             </p>
             <div className="hero-actions">
               <a className="rough-button" href="#conquest">Explore Conquest <span aria-hidden="true">↓</span></a>
-              <a className="quiet-link" href="#field-notes">View the current build <span aria-hidden="true">↗</span></a>
+              <a className="quiet-link" href="#approach">How we build <span aria-hidden="true">↗</span></a>
             </div>
           </div>
           <div className="hero-stamp" aria-hidden="true">
@@ -97,13 +97,12 @@ export default function Home() {
               </div>
             </div>
 
-            <figure className="conquest-poster">
-              <img src="/assets/conquest-hero.png" alt="A dark fantasy citadel and armies in Conquest: Ascension" />
-              <figcaption>
-                <span>Beyond the gates of Blackstone Hold</span>
-                <span>Captured from the current build</span>
-              </figcaption>
-            </figure>
+            <div className="conquest-signal" aria-label="Build. Command. Conquer. Ascend.">
+              <span><small>01</small>Build</span>
+              <span><small>02</small>Command</span>
+              <span><small>03</small>Conquer</span>
+              <span><small>04</small>Ascend</span>
+            </div>
 
             <div className="game-notes" aria-label="Conquest game features">
               <span>Persistent realm</span>
@@ -114,7 +113,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="pursuits" aria-labelledby="pursuits-title">
+        <section className="pursuits" id="approach" aria-labelledby="pursuits-title">
           <div className="shell">
             <div className="pursuits-heading">
               <p className="scribble scribble--light">What we’re chasing</p>
@@ -128,29 +127,6 @@ export default function Home() {
                   <p>{pursuit.copy}</p>
                 </article>
               ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="field-notes" id="field-notes" aria-labelledby="notes-title">
-          <div className="shell">
-            <div className="notes-heading">
-              <p className="scribble">From the current build</p>
-              <h2 id="notes-title">The world is<br />already moving.</h2>
-              <p>
-                A closer look at realm management and the leaders who carry the
-                campaign—captured directly from the current game.
-              </p>
-            </div>
-            <div className="notes-gallery">
-              <figure className="note-card note-card--city">
-                <img src="/assets/conquest-city.jpg" alt="Conquest city screen showing Blackstone Hold and its buildings" />
-                <figcaption>Blackstone Hold</figcaption>
-              </figure>
-              <figure className="note-card note-card--leaders">
-                <img src="/assets/conquest-leaders.png" alt="Conquest leader equipment and progression screen" />
-                <figcaption>Leaders and loadouts</figcaption>
-              </figure>
             </div>
           </div>
         </section>
