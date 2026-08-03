@@ -143,10 +143,10 @@ export default function Home() {
             </div>
 
             <div className="conquest-signal" aria-label="Build. Command. Conquer. Ascend.">
-              <span><small>01</small>Build</span>
-              <span><small>02</small>Command</span>
-              <span><small>03</small>Conquer</span>
-              <span><small>04</small>Ascend</span>
+              <span><small>01</small><strong>Build</strong></span>
+              <span><small>02</small><strong>Command</strong></span>
+              <span><small>03</small><strong>Conquer</strong></span>
+              <span><small>04</small><strong>Ascend</strong></span>
             </div>
 
             <div className="game-notes" aria-label="Conquest game features">
