@@ -58,6 +58,24 @@ test("keeps the IDI Studios voice and Conquest focus in the homepage source", as
   assert.doesNotMatch(page, /conquest-(?:world-map|hero|city|leaders)/i);
 });
 
+test("publishes a discoverable careers page for creative developers", async () => {
+  const [home, careers, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/careers/page.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+  ]);
+
+  assert.match(home, /href="\/careers"/);
+  assert.match(careers, /IDI is looking for/);
+  assert.match(careers, /creative developers/);
+  assert.match(careers, /to join its team/);
+  assert.doesNotMatch(careers, /join it's team/i);
+  assert.match(careers, /development@idistudios\.io/);
+  assert.match(careers, /careers-og\.png/);
+  assert.match(styles, /\.careers-hero/);
+  assert.match(styles, /\.careers-conversations/);
+});
+
 test("stores verified beta applications in Supabase and sends notifications", async () => {
   const [form, route, emailHelper, supabaseHelper, migration, hosting] = await Promise.all([
     readFile(new URL("../app/beta-access-form.tsx", import.meta.url), "utf8"),

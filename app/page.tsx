@@ -1,12 +1,5 @@
 import { BetaAccessModal, BetaAccessTrigger } from "./beta-access-form";
-
-const StudioMark = () => (
-  <span className="studio-wordmark" aria-label="IDI Studios">
-    <span className="studio-monogram" aria-hidden="true">IDI</span>
-    <span className="studio-slash" aria-hidden="true">/</span>
-    <span className="studio-name">Studios</span>
-  </span>
-);
+import { StudioMark } from "./studio-mark";
 
 const pursuits = [
   {
@@ -84,6 +77,7 @@ export default function Home() {
           <a href="#conquest">The game</a>
           <a href="#vision">The vision</a>
           <a href="#current-build">Current build</a>
+          <a href="/careers">Careers</a>
         </nav>
         <BetaAccessTrigger className="header-contact">
           Request beta <span aria-hidden="true">↗</span>
@@ -343,7 +337,10 @@ export default function Home() {
       <footer>
         <StudioMark />
         <p>© 2026 IDI Studios / A label of Intelligent Decisions Interactive.</p>
-        <a href="#top">Back to top ↑</a>
+        <span className="footer-links">
+          <a href="/careers">Careers</a>
+          <a href="#top">Back to top ↑</a>
+        </span>
       </footer>
 
       <BetaAccessModal />
