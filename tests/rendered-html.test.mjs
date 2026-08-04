@@ -71,7 +71,8 @@ test("publishes a discoverable careers page for creative developers", async () =
   assert.match(careers, /creative developers/);
   assert.match(careers, /to join its team/);
   assert.doesNotMatch(careers, /join it's team/i);
-  assert.match(careers, /development@idistudios\.io/);
+  assert.match(careers, /careers@idistudios\.io/);
+  assert.doesNotMatch(careers, /development@idistudios\.io/);
   assert.match(careers, /careers-og\.png/);
   assert.match(styles, /\.careers-hero/);
   assert.match(styles, /\.careers-conversations/);

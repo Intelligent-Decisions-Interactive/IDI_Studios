@@ -79,7 +79,7 @@ export default function CareersPage() {
               starting conversations with developers who care about deep systems,
               clear decisions, and player-earned progress.
             </p>
-            <a className="rough-button" href="mailto:development@idistudios.io?subject=Developer%20introduction%20%E2%80%94%20IDI%20Studios">
+            <a className="rough-button" href="mailto:careers@idistudios.io?subject=Developer%20introduction%20%E2%80%94%20IDI%20Studios">
               Introduce yourself <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -127,8 +127,8 @@ export default function CareersPage() {
               Send a short note about yourself, the work you want to own, and a link
               to something you’re proud of. A formal application isn’t necessary.
             </p>
-            <a className="contact-action contact-primary" href="mailto:development@idistudios.io?subject=Developer%20introduction%20%E2%80%94%20IDI%20Studios">
-              development@idistudios.io <span aria-hidden="true">↗</span>
+            <a className="contact-action contact-primary" href="mailto:careers@idistudios.io?subject=Developer%20introduction%20%E2%80%94%20IDI%20Studios">
+              careers@idistudios.io <span aria-hidden="true">↗</span>
             </a>
           </div>
         </section>
