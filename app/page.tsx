@@ -79,9 +79,12 @@ export default function Home() {
           <a href="#current-build">Current build</a>
           <a href="/careers">Careers</a>
         </nav>
-        <BetaAccessTrigger className="header-contact">
-          Request beta <span aria-hidden="true">↗</span>
-        </BetaAccessTrigger>
+        <div className="header-actions">
+          <a className="mobile-careers-link" href="/careers">Careers</a>
+          <BetaAccessTrigger className="header-contact">
+            Request beta <span aria-hidden="true">↗</span>
+          </BetaAccessTrigger>
+        </div>
       </header>
 
       <div id="content">

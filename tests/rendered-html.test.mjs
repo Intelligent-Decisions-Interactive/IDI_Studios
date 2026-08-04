@@ -66,6 +66,7 @@ test("publishes a discoverable careers page for creative developers", async () =
   ]);
 
   assert.match(home, /href="\/careers"/);
+  assert.match(home, /className="mobile-careers-link"/);
   assert.match(careers, /IDI is looking for/);
   assert.match(careers, /creative developers/);
   assert.match(careers, /to join its team/);
@@ -74,6 +75,7 @@ test("publishes a discoverable careers page for creative developers", async () =
   assert.match(careers, /careers-og\.png/);
   assert.match(styles, /\.careers-hero/);
   assert.match(styles, /\.careers-conversations/);
+  assert.match(styles, /\.mobile-careers-link \{ display: inline-flex; \}/);
 });
 
 test("stores verified beta applications in Supabase and sends notifications", async () => {

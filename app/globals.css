@@ -77,7 +77,10 @@ img { display: block; max-width: 100%; }
 }
 .site-header nav a:hover,
 .header-contact:hover { color: var(--gold-bright); }
+.header-actions { display: flex; align-items: center; justify-self: end; }
 .header-contact { justify-self: end; }
+.mobile-careers-link { display: none; color: rgba(217, 213, 199, .66); font-size: .66rem; font-weight: 800; letter-spacing: .14em; text-decoration: none; text-transform: uppercase; }
+.mobile-careers-link:hover { color: var(--gold-bright); }
 .beta-access-trigger { appearance: none; font: inherit; cursor: pointer; }
 .header-contact.beta-access-trigger { padding: 0; border: 0; background: transparent; }
 
@@ -696,6 +699,8 @@ footer > a:hover { color: var(--gold-bright); }
   :root { --shell: min(100% - 48px, 780px); }
   .site-header { grid-template-columns: 1fr auto; padding: 0 24px; }
   .site-header nav { display: none; }
+  .header-actions { gap: 24px; }
+  .mobile-careers-link { display: inline-flex; }
   .conquest-intro,
   .vision-heading,
   .build-heading,
@@ -729,6 +734,8 @@ footer > a:hover { color: var(--gold-bright); }
   .studio-monogram { font-size: 1.18rem; }
   .studio-name { font-size: .56rem; letter-spacing: .2em; }
   .header-contact { font-size: .56rem; letter-spacing: .09em; }
+  .header-actions { gap: 14px; }
+  .mobile-careers-link { font-size: .56rem; letter-spacing: .09em; }
   .hero { min-height: auto; }
   .hero-art { background-position: 72% 50%; transform: scale(1.01); }
   .hero-scrim {
