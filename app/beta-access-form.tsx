@@ -43,6 +43,7 @@ const OPEN_BETA_EVENT = "idi:open-beta-access";
 const TURNSTILE_SCRIPT_ID = "cloudflare-turnstile-script";
 const TURNSTILE_SCRIPT_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAL-8NdrZ1QrJmHV0qw5FyZM";
 let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
 
 function loadTurnstile() {
@@ -97,9 +98,8 @@ export function BetaAccessModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
-  const [turnstileRequired, setTurnstileRequired] = useState(false);
   const [verificationLoading, setVerificationLoading] = useState(false);
-  const [verificationReady, setVerificationReady] = useState(true);
+  const [verificationReady, setVerificationReady] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -143,33 +143,13 @@ export function BetaAccessModal() {
       setMessage("");
 
       try {
-        const response = await fetch("/api/beta-access", {
-          credentials: "same-origin",
-        });
-        const config = (await response.json()) as {
-          turnstileRequired?: boolean;
-          turnstileSiteKey?: string | null;
-        };
-        if (!response.ok) throw new Error("Security configuration is unavailable.");
-        if (cancelled) return;
-
-        const required = config.turnstileRequired === true;
-        setTurnstileRequired(required);
-        if (!required) {
-          setVerificationReady(true);
-          return;
-        }
-        if (!config.turnstileSiteKey) {
-          throw new Error("Security verification is not configured.");
-        }
-
         const turnstile = await loadTurnstile();
         if (cancelled || !turnstileContainerRef.current) return;
         removeTurnstile();
         turnstileWidgetRef.current = turnstile.render(
           turnstileContainerRef.current,
           {
-            sitekey: config.turnstileSiteKey,
+            sitekey: TURNSTILE_SITE_KEY,
             action: "beta_access",
             theme: "dark",
             size: "flexible",
@@ -198,7 +178,6 @@ export function BetaAccessModal() {
         );
       } catch (error) {
         if (!cancelled) {
-          setTurnstileRequired(true);
           setVerificationReady(false);
           setState("error");
           setMessage(
@@ -227,9 +206,8 @@ export function BetaAccessModal() {
       formRef.current?.reset();
       setState("idle");
       setMessage("");
-      setTurnstileRequired(false);
       setVerificationLoading(false);
-      setVerificationReady(true);
+      setVerificationReady(false);
     }, 180);
   }
 
@@ -264,7 +242,7 @@ export function BetaAccessModal() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (turnstileRequired && !turnstileTokenRef.current) {
+    if (!turnstileTokenRef.current) {
       setState("error");
       setMessage("Complete the security check before submitting.");
       return;
@@ -308,7 +286,7 @@ export function BetaAccessModal() {
       setState("error");
       setMessage(error instanceof Error ? error.message : "Please try again.");
       turnstileTokenRef.current = "";
-      setVerificationReady(!turnstileRequired);
+      setVerificationReady(false);
       if (turnstileWidgetRef.current) {
         window.turnstile?.reset(turnstileWidgetRef.current);
       }
@@ -398,7 +376,6 @@ export function BetaAccessModal() {
 
               <div
                 className="beta-form-verification"
-                hidden={!turnstileRequired}
                 aria-busy={verificationLoading}
               >
                 <div ref={turnstileContainerRef} />
@@ -412,7 +389,7 @@ export function BetaAccessModal() {
                   disabled={
                     state === "submitting" ||
                     verificationLoading ||
-                    (turnstileRequired && !verificationReady)
+                    !verificationReady
                   }
                 >
                   {state === "submitting" ? "Sending request…" : "Request beta access"}

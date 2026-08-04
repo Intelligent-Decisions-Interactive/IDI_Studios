@@ -25,7 +25,6 @@ type TurnstileResult = {
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 
 function clean(value: unknown, maxLength: number) {
   return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
@@ -47,7 +46,7 @@ function allowedTurnstileHostname(hostname: string) {
 
 async function verifyTurnstile(token: string, remoteIp: string) {
   const secret = turnstileSecret();
-  if (!secret) return { required: false, verified: true, unavailable: false };
+  if (!secret) return { required: true, verified: false, unavailable: true };
   if (!token) return { required: true, verified: false, unavailable: false };
 
   const controller = new AbortController();
@@ -88,14 +87,6 @@ async function verifyTurnstile(token: string, remoteIp: string) {
   } finally {
     clearTimeout(timeout);
   }
-}
-
-export async function GET() {
-  const required = Boolean(turnstileSecret());
-  return Response.json({
-    turnstileRequired: required,
-    turnstileSiteKey: required ? TURNSTILE_SITE_KEY : null,
-  });
 }
 
 export async function POST(request: Request) {

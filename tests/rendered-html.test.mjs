@@ -80,6 +80,8 @@ test("stores verified beta applications in Supabase and sends notifications", as
   assert.match(form, /You&apos;re on/);
   assert.match(form, /cloudflare\.com\/turnstile/);
   assert.match(form, /turnstileToken/);
+  assert.match(form, /0x4AAAAAAEFhAL-8NdrZ1QrJmHV0qw5FyZM/);
+  assert.doesNotMatch(form, /turnstileRequired/);
   assert.match(emailHelper, /api\.resend\.com\/emails/);
   assert.match(emailHelper, /RESEND_API_KEY/);
   assert.match(route, /siteverify/);
