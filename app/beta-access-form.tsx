@@ -43,7 +43,7 @@ const OPEN_BETA_EVENT = "idi:open-beta-access";
 const TURNSTILE_SCRIPT_ID = "cloudflare-turnstile-script";
 const TURNSTILE_SCRIPT_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAL-8NdrZ1QrJmHV0qw5FyZM";
+const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
 
 function loadTurnstile() {
