@@ -5,6 +5,9 @@
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
+  "vars": {
+    "SUPABASE_URL": "https://mbptywurviigpgigghna.supabase.co"
+  },
   "rules": [
     { "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }
   ],
