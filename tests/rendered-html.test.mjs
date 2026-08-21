@@ -154,6 +154,40 @@ test("protects and operates the beta administration console", async () => {
   assert.match(supabaseHelper, /beta_access_request_events/);
 });
 
+test("protects private realm downloads with TOTP and signed sessions", async () => {
+  const [page, gate, authRoute, downloadRoute, authHelper, storageHelper] =
+    await Promise.all([
+      readFile(new URL("../app/wow/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/wow/access-gate.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/wow/auth/route.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/wow/download/client/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(new URL("../app/wow-auth.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/wow-storage.ts", import.meta.url), "utf8"),
+    ]);
+
+  assert.match(page, /verifyWowSession/);
+  assert.match(page, /WOW_SESSION_COOKIE/);
+  assert.match(page, /\/wow\/download\/client/);
+  assert.doesNotMatch(page, /storage\/v1\/object\/public/);
+  assert.match(gate, /Google Authenticator/);
+  assert.match(gate, /autoComplete="one-time-code"/);
+  assert.match(gate, /cloudflare\.com\/turnstile/);
+  assert.match(authRoute, /verifyWowTotp/);
+  assert.match(authRoute, /TURNSTILE_SECRET_KEY/);
+  assert.match(authRoute, /ATTEMPT_LIMIT = 5/);
+  assert.match(authRoute, /Set-Cookie/);
+  assert.match(authHelper, /SHA-1/);
+  assert.match(authHelper, /SHA-256/);
+  assert.match(authHelper, /SameSite=Strict/);
+  assert.match(downloadRoute, /verifyWowSession/);
+  assert.match(downloadRoute, /createClientDownloadUrl/);
+  assert.match(storageHelper, /storage\/v1\/object\/sign/);
+  assert.doesNotMatch(storageHelper, /storage\/v1\/object\/public/);
+});
+
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {
   const [wranglerSource, viteWranglerSource, packageSource, viteSource] =
     await Promise.all([

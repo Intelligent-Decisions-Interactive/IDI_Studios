@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { StudioMark } from "../studio-mark";
+import { verifyWowSession, WOW_SESSION_COOKIE } from "../wow-auth";
+import { WowAccessGate } from "./access-gate";
 import styles from "./wow.module.css";
 
 const launcher = {
@@ -12,12 +15,14 @@ const launcher = {
 };
 
 const client = {
-  url: "https://mbptywurviigpgigghna.supabase.co/storage/v1/object/public/Client/3.3.5a.zip",
+  url: "/wow/download/client",
   name: "Full game client",
   version: "3.3.5a",
   size: "16.6 GB",
   platform: "Windows PC",
 };
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Private Realm Downloads — IDI Studios",
@@ -48,7 +53,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function WowLauncherPage() {
+export default async function WowLauncherPage() {
+  const cookieStore = await cookies();
+  const authorized = await verifyWowSession(
+    cookieStore.get(WOW_SESSION_COOKIE)?.value,
+  );
+
+  if (!authorized) return <WowAccessGate />;
+
   return (
     <main className={styles.page}>
       <a className={styles.skipLink} href="#downloads-content">
@@ -59,9 +71,11 @@ export default function WowLauncherPage() {
         <Link className={styles.brand} href="/" aria-label="IDI Studios home">
           <StudioMark />
         </Link>
-        <span className={styles.accessLabel}>
-          <i aria-hidden="true" /> Private access
-        </span>
+        <form action="/wow/logout" method="post">
+          <button className={styles.signOut} type="submit">
+            <i aria-hidden="true" /> Verified / Sign out
+          </button>
+        </form>
       </header>
 
       <section className={styles.hero} id="downloads-content" aria-labelledby="realm-title">
