@@ -4,8 +4,10 @@ import { StudioMark } from "../studio-mark";
 import styles from "./wow.module.css";
 
 const launcher = {
-  url: "",
-  name: "IDI Realm Launcher",
+  url: "/wow/downloads/Illidans-Visage-Live-Launcher.zip",
+  name: "Illidan’s Visage Launcher",
+  fileName: "Illidans Visage Live Launcher.zip",
+  size: "626 KB",
   platform: "Windows PC",
 };
 
@@ -74,7 +76,11 @@ export default function WowLauncherPage() {
 
           <div className={styles.downloadBlock}>
             {launcher.url ? (
-              <a className={styles.downloadButton} href={launcher.url} download>
+              <a
+                className={styles.downloadButton}
+                href={launcher.url}
+                download={launcher.fileName}
+              >
                 <span>
                   <small>Download for {launcher.platform}</small>
                   {launcher.name}
@@ -91,8 +97,8 @@ export default function WowLauncherPage() {
               </button>
             )}
             <p>
-              The latest launcher build is being prepared. Check back here when you
-              receive the go-ahead.
+              ZIP archive / {launcher.size}. Download, extract the folder, then read
+              <strong> START HERE.txt</strong> before launching.
             </p>
           </div>
         </div>
@@ -105,7 +111,7 @@ export default function WowLauncherPage() {
           <dl>
             <div>
               <dt>Status</dt>
-              <dd><span className={styles.statusDot} aria-hidden="true" /> Launcher in progress</dd>
+              <dd><span className={styles.statusDot} aria-hidden="true" /> Launcher ready</dd>
             </div>
             <div>
               <dt>Platform</dt>
@@ -117,8 +123,8 @@ export default function WowLauncherPage() {
             </div>
           </dl>
           <p>
-            Keep this page handy. The download button will activate here when the
-            launcher is ready.
+            Keep this page handy. Future launcher builds will be published at the
+            same address.
           </p>
         </aside>
 
