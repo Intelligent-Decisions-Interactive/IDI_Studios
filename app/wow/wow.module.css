@@ -6,6 +6,7 @@
   --realm-ash: #8e9aa2;
   --realm-gold: #c9a34b;
   --realm-gold-bright: #e2bd65;
+  --realm-green: #69d493;
   min-height: 100svh;
   overflow: hidden;
   background: var(--realm-black);
@@ -61,8 +62,8 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--realm-gold-bright);
-  box-shadow: 0 0 16px rgba(226, 189, 101, .85);
+  background: var(--realm-green);
+  box-shadow: 0 0 16px rgba(105, 212, 147, .85);
 }
 
 .hero {
@@ -233,7 +234,7 @@
 
 .realmCard dt { color: rgba(224, 221, 210, .38); font-size: .58rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .realmCard dd { margin: 0; color: var(--realm-bone); font-size: .74rem; font-weight: 800; letter-spacing: .04em; text-align: right; text-transform: uppercase; }
-.statusDot { display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 50%; background: #d0a852; box-shadow: 0 0 10px rgba(208, 168, 82, .7); }
+.statusDot { display: inline-block; width: 6px; height: 6px; margin: 0 7px 1px 0; border-radius: 50%; background: var(--realm-green); box-shadow: 0 0 10px rgba(105, 212, 147, .75); }
 
 .realmCard > p { margin: 0; padding: 22px; color: var(--realm-ash); font-size: .77rem; line-height: 1.62; }
 
