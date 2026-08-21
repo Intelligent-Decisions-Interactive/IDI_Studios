@@ -11,9 +11,17 @@ const launcher = {
   platform: "Windows PC",
 };
 
+const client = {
+  url: "https://mbptywurviigpgigghna.supabase.co/storage/v1/object/public/Client/3.3.5a.zip",
+  name: "Full game client",
+  version: "3.3.5a",
+  size: "16.6 GB",
+  platform: "Windows PC",
+};
+
 export const metadata: Metadata = {
-  title: "Private Realm Launcher — IDI Studios",
-  description: "Unlisted launcher access for invited players on the IDI private realm.",
+  title: "Private Realm Downloads — IDI Studios",
+  description: "Unlisted client and launcher downloads for invited players on the IDI private realm.",
   robots: {
     index: false,
     follow: false,
@@ -25,8 +33,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Private Realm Launcher — IDI Studios",
-    description: "Unlisted launcher access for invited players on the IDI private realm.",
+    title: "Private Realm Downloads — IDI Studios",
+    description: "Unlisted client and launcher downloads for invited players on the IDI private realm.",
     type: "website",
     url: "https://idistudios.io/wow",
     siteName: "IDI Studios",
@@ -34,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Private Realm Launcher — IDI Studios",
-    description: "Unlisted launcher access for invited players on the IDI private realm.",
+    title: "Private Realm Downloads — IDI Studios",
+    description: "Unlisted client and launcher downloads for invited players on the IDI private realm.",
     images: [],
   },
 };
@@ -43,8 +51,8 @@ export const metadata: Metadata = {
 export default function WowLauncherPage() {
   return (
     <main className={styles.page}>
-      <a className={styles.skipLink} href="#launcher-content">
-        Skip to launcher
+      <a className={styles.skipLink} href="#downloads-content">
+        Skip to downloads
       </a>
 
       <header className={styles.header}>
@@ -56,7 +64,7 @@ export default function WowLauncherPage() {
         </span>
       </header>
 
-      <section className={styles.hero} id="launcher-content" aria-labelledby="realm-title">
+      <section className={styles.hero} id="downloads-content" aria-labelledby="realm-title">
         <div className={styles.ambient} aria-hidden="true">
           <span className={styles.ringOne} />
           <span className={styles.ringTwo} />
@@ -70,14 +78,22 @@ export default function WowLauncherPage() {
             <span>starts here.</span>
           </h1>
           <p className={styles.intro}>
-            One launcher for the realm, patches, and everything you need to get in.
-            This access page is intentionally unlisted while the experience is being refined.
+            Get the full client and the realm launcher in one place. This access
+            page is intentionally unlisted while the experience is being refined.
           </p>
 
           <div className={styles.downloadBlock}>
+            <a className={styles.downloadButton} href={client.url}>
+              <span>
+                <small>{client.version} / {client.platform} / {client.size}</small>
+                {client.name}
+              </span>
+              <b aria-hidden="true">↓</b>
+            </a>
+
             {launcher.url ? (
               <a
-                className={styles.downloadButton}
+                className={`${styles.downloadButton} ${styles.downloadButtonSecondary}`}
                 href={launcher.url}
                 download={launcher.fileName}
               >
@@ -88,7 +104,7 @@ export default function WowLauncherPage() {
                 <b aria-hidden="true">↓</b>
               </a>
             ) : (
-              <button className={styles.downloadButton} type="button" disabled>
+              <button className={`${styles.downloadButton} ${styles.downloadButtonSecondary}`} type="button" disabled>
                 <span>
                   <small>Download for {launcher.platform}</small>
                   Launcher coming soon
@@ -97,8 +113,9 @@ export default function WowLauncherPage() {
               </button>
             )}
             <p>
-              ZIP archive / {launcher.size}. Download, extract the folder, then read
-              <strong> START HERE.txt</strong> before launching.
+              Start with the full client if you do not already have version {client.version}.
+              The smaller launcher archive is {launcher.size} and includes
+              <strong> START HERE.txt</strong>.
             </p>
           </div>
         </div>
@@ -111,11 +128,15 @@ export default function WowLauncherPage() {
           <dl>
             <div>
               <dt>Status</dt>
-              <dd><span className={styles.statusDot} aria-hidden="true" /> Launcher ready</dd>
+              <dd><span className={styles.statusDot} aria-hidden="true" /> Downloads ready</dd>
             </div>
             <div>
               <dt>Platform</dt>
               <dd>{launcher.platform}</dd>
+            </div>
+            <div>
+              <dt>Client</dt>
+              <dd>{client.version} / {client.size}</dd>
             </div>
             <div>
               <dt>Availability</dt>
@@ -123,8 +144,8 @@ export default function WowLauncherPage() {
             </div>
           </dl>
           <p>
-            Keep this page handy. Future launcher builds will be published at the
-            same address.
+            Keep this page handy. Future client and launcher builds will be
+            published here.
           </p>
         </aside>
 
@@ -140,15 +161,15 @@ export default function WowLauncherPage() {
           <li>
             <span>01</span>
             <div>
-              <h3>Get the launcher</h3>
-              <p>Download the latest Windows build from this page.</p>
+              <h3>Get the client</h3>
+              <p>Download and extract the full 3.3.5a Windows client if you need it.</p>
             </div>
           </li>
           <li>
             <span>02</span>
             <div>
-              <h3>Let it prepare</h3>
-              <p>Open the launcher and let it check the files needed for the realm.</p>
+              <h3>Add the launcher</h3>
+              <p>Download the realm launcher and follow the included START HERE instructions.</p>
             </div>
           </li>
           <li>
