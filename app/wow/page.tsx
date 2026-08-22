@@ -10,7 +10,7 @@ const launcher = {
   url: "/wow/downloads/Illidans-Visage-Live-Launcher.zip",
   name: "Illidan’s Visage Launcher",
   fileName: "Illidans Visage Live Launcher.zip",
-  size: "626 KB",
+  size: "807 KB",
   platform: "Windows PC",
 };
 
