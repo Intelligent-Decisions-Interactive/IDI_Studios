@@ -7,7 +7,7 @@ import { WowAccessGate } from "./access-gate";
 import styles from "./wow.module.css";
 
 const launcher = {
-  url: "/wow/downloads/Illidans-Visage-Live-Launcher.zip",
+  url: "/wow/downloads/Illidans-Visage-Live-Launcher.zip?v=00b7ffb5",
   name: "Illidan’s Visage Launcher",
   fileName: "Illidans Visage Live Launcher.zip",
   size: "807 KB",
