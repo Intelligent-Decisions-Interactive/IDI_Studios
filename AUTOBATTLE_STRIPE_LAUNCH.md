@@ -5,9 +5,9 @@
 Stripe's implementation planner accepted guide `iguide_61VNDXC40TWfHDe2p41P20duDHpBz` for the **Intelligent Decisions Interactive sandbox**.
 
 - Primary flow: Stripe-hosted Checkout for web purchases, using dynamic payment methods.
-- Tax: Stripe Automatic Tax with a business-approved product tax code.
+- Tax: Stripe Automatic Tax with `txcd_10103100` (SaaS delivered as an app download for personal use), pending final business/tax review.
 - Invoicing: Dashboard-created invoices and Stripe's Hosted Invoice Page for exceptional or assisted sales; these remain a supplemental, manually reconciled path at launch.
-- Android: no purchase link is added to the app until Managed Payments eligibility, country support, and the applicable store policy are confirmed.
+- Android: the sideloaded public beta uses Stripe PaymentSheet inside the app. The app receives only the publishable key; prices, discounts, tax, and fulfillment remain server controlled.
 - Fulfillment: only a verified Stripe webhook may create a Stripe order and grant tokens. The browser success redirect never grants value.
 
 The private owner Android application in the AutoBattle repository remains offline. Commerce belongs to this website and the separate public Android project; no payment code or token boundary should be copied into the private application.
@@ -33,9 +33,10 @@ Configure these as deployment secrets or environment values. Do not put real val
 
 | Name | Secret | Purpose |
 | --- | --- | --- |
-| `STRIPE_SECRET_KEY` | Yes | Stripe restricted/test secret used to create Checkout Sessions. Start with a test key. |
+| `STRIPE_SECRET_KEY` | Yes | Stripe restricted/test secret used to create Checkout Sessions, Tax Calculations, and PaymentIntents. Start with a test key. |
+| `STRIPE_PUBLISHABLE_KEY` | No | Matching test/live publishable key returned to linked public-app devices for Stripe PaymentSheet. |
 | `STRIPE_WEBHOOK_SECRET` | Yes | Signing secret for this endpoint and environment. |
-| `STRIPE_AUTOBATTLE_TAX_CODE` | No | Stripe Tax code approved for AutoBattle's software/digital-service classification. |
+| `STRIPE_AUTOBATTLE_TAX_CODE` | No | Use `txcd_10103100` for the current personal-use app-download model, subject to final business/tax review. |
 | `AUTOBATTLE_PUBLIC_ORIGIN` | No | Exact HTTPS origin that hosts this site, with no path or trailing slash. |
 | `STRIPE_ALLOW_LIVE_MODE` | No | Leave absent or `false` during testing. Set to `true` only during an approved live launch. |
 
@@ -43,20 +44,25 @@ The code rejects live secret keys and live webhook events unless `STRIPE_ALLOW_L
 
 ## Test-mode setup
 
-1. Apply `supabase/migrations/20260909180159_autobattle_stripe_checkout.sql` to the intended non-production Supabase environment.
-2. In Stripe test mode, enable Stripe Tax and confirm the business's origin address, registrations, default tax behavior, and chosen AutoBattle tax code. Do not guess the tax classification; have the business owner or tax adviser approve it.
-3. Configure the four test values above, keeping `STRIPE_ALLOW_LIVE_MODE` absent or false.
+1. Apply `supabase/migrations/20260909180159_autobattle_stripe_checkout.sql`, then `supabase/migrations/20260909221403_autobattle_mobile_stripe_marketplace.sql`, to the intended environment.
+2. In Stripe test mode, enable Stripe Tax and confirm the business's origin address, registrations, default tax behavior, and the proposed `txcd_10103100` AutoBattle tax code.
+3. Configure the required test values above, keeping `STRIPE_ALLOW_LIVE_MODE` absent or false.
 4. Register `https://<AUTOBATTLE_PUBLIC_ORIGIN>/api/autobattle/stripe/webhook` for:
    - `checkout.session.completed`
    - `checkout.session.async_payment_succeeded`
    - `checkout.session.async_payment_failed`
    - `checkout.session.expired`
+   - `payment_intent.succeeded`
+   - `payment_intent.processing`
+   - `payment_intent.payment_failed`
+   - `payment_intent.canceled`
    - `invoice.paid`
    - `invoice.payment_failed`
    - `charge.refunded`
    - `credit_note.created`
 5. Complete one full-price and one founding-clan test checkout. Confirm the order, tax total, event record, separate purchased/bonus ledger deltas, account activation, and exactly-once behavior after replaying the event.
 6. Exercise a failed or delayed payment and confirm no tokens are granted before `payment_status=paid`.
+7. In the Android public app, select a pack, enter the billing address used for tax, complete PaymentSheet with a Stripe test card, and confirm the balance refreshes only after `payment_intent.succeeded` is processed.
 
 Do not publish or switch to live keys until the migration, test-mode webhooks, Tax configuration, refund procedure, support copy, and final business approval are complete.
 
@@ -71,9 +77,10 @@ Refunds are also reviewed manually. Do not automatically create a negative balan
 ## Security and operations
 
 - Checkout requires a signed-in AutoBattle account and a same-origin POST.
+- Native purchases require a linked device credential. A Stripe Tax Calculation is bound to that user, SKU, and purchase UUID, then checked against the PaymentSheet confirmation token's billing address before the PaymentIntent is created.
 - The server fetches the pack and permanent founding discount from Supabase; client-supplied prices are ignored.
 - Checkout retries carry a per-attempt UUID into Stripe's idempotency key.
-- Automatic Tax is enabled and tax is added to, not removed from, the advertised pack price.
+- Web Checkout adds applicable tax to the advertised price. The native Android marketplace uses tax-inclusive pricing, so its displayed pack or clan price is the exact amount charged and any required tax is absorbed from that amount.
 - The webhook verifies the signature against the unmodified raw body with a five-minute tolerance.
 - Fulfillment rechecks SKU, currency, pre-tax charged amount, founding entitlement, and tax arithmetic in one database transaction.
 - Stripe event IDs, Checkout IDs, order constraints, and the token-ledger key make delivery exactly once across webhook retries.

@@ -65,7 +65,49 @@ export async function POST(request: Request) {
   }
 
   try {
-    if (["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type)) {
+    if (event.type === "payment_intent.succeeded") {
+      const intent = event.data.object;
+      const metadata = intent.metadata && typeof intent.metadata === "object"
+        ? intent.metadata as Record<string, unknown>
+        : {};
+      const paymentIntentId = stringValue(intent.id);
+      const userId = stringValue(metadata.autobattle_user_id);
+      const listedSubtotal = integerValue(metadata.autobattle_subtotal_cents);
+      const discountCents = integerValue(metadata.autobattle_discount_cents);
+      const amountSubtotal = integerValue(metadata.autobattle_pretax_total_cents);
+      const amountTax = integerValue(metadata.autobattle_tax_cents);
+      const amountTotal = integerValue(intent.amount);
+      const amountReceived = integerValue(intent.amount_received);
+      if (
+        stringValue(intent.object) !== "payment_intent" ||
+        stringValue(intent.status) !== "succeeded" ||
+        !paymentIntentId.startsWith("pi_") ||
+        stringValue(metadata.autobattle_flow) !== "token_pack_mobile_v1" ||
+        !stringValue(metadata.autobattle_tax_calculation_id).startsWith("taxcalc_") ||
+        listedSubtotal - discountCents !== amountSubtotal ||
+        amountSubtotal !== amountTotal ||
+        amountTax < 0 ||
+        amountTax > amountTotal ||
+        amountReceived !== amountTotal
+      ) {
+        throw new Error("unexpected_mobile_payment_intent");
+      }
+      await fulfillAutoBattleStripeCheckout({
+        eventId: event.id,
+        eventType: event.type,
+        checkoutId: paymentIntentId,
+        paymentIntentId,
+        userId,
+        sku: stringValue(metadata.autobattle_sku),
+        currency: stringValue(intent.currency).toLowerCase(),
+        amountSubtotal,
+        amountTax,
+        amountTotal,
+        discountPercent: integerValue(metadata.autobattle_discount_percent),
+        discountEntitlementId: stringValue(metadata.autobattle_discount_entitlement_id) || null,
+        liveMode: event.livemode,
+      });
+    } else if (["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type)) {
       const session = event.data.object;
       if (stringValue(session.payment_status) !== "paid") {
         await recordReviewEvent(event, "ignored");
@@ -109,9 +151,9 @@ export async function POST(request: Request) {
         discountEntitlementId: stringValue(metadata.autobattle_discount_entitlement_id) || null,
         liveMode: event.livemode,
       });
-    } else if (event.type === "checkout.session.async_payment_failed") {
+    } else if (["checkout.session.async_payment_failed", "payment_intent.payment_failed"].includes(event.type)) {
       await recordReviewEvent(event, "failed");
-    } else if (event.type === "checkout.session.expired") {
+    } else if (["checkout.session.expired", "payment_intent.canceled", "payment_intent.processing"].includes(event.type)) {
       await recordReviewEvent(event, "ignored");
     } else if (["invoice.paid", "invoice.payment_failed", "charge.refunded", "credit_note.created"].includes(event.type)) {
       await recordReviewEvent(event, "needs_review");

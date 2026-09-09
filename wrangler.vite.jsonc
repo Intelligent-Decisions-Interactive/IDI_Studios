@@ -5,7 +5,10 @@
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
-    "SUPABASE_URL": "https://mbptywurviigpgigghna.supabase.co"
+    "SUPABASE_URL": "https://mbptywurviigpgigghna.supabase.co",
+    "AUTOBATTLE_PUBLIC_ORIGIN": "https://idistudios.io",
+    "STRIPE_PUBLISHABLE_KEY": "pk_test_51UDooBP20duDHpBzpnjTZq6DFuxiDGJKXSlzk6Fn76wywAUHl9GIuyhftACgq7QJeqMZn0YRoZwvKajVGThrcKsU00ZSikdf0T",
+    "STRIPE_AUTOBATTLE_TAX_CODE": "txcd_10103100"
   },
   "assets": {
     "directory": "./public",
