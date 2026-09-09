@@ -100,6 +100,35 @@ body:has(.beta-admin-denied) {
   letter-spacing: 0.02em;
 }
 
+.admin-product-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--admin-line);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.admin-product-nav a {
+  min-width: 104px;
+  padding: 9px 14px;
+  color: var(--admin-slate);
+  font-size: 0.72rem;
+  font-weight: 680;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-decoration: none;
+}
+
+.admin-product-nav a:hover {
+  color: var(--admin-white);
+}
+
+.admin-product-nav a[aria-current="page"] {
+  background: var(--admin-gold);
+  color: var(--admin-ink);
+}
+
 .admin-session {
   display: grid;
   grid-template-columns: auto auto;
@@ -927,6 +956,7 @@ body:has(.beta-admin-denied) {
 
 @media (max-width: 760px) {
   .beta-admin-header {
+    flex-wrap: wrap;
     min-height: 68px;
     padding: 11px 16px;
   }
@@ -943,6 +973,16 @@ body:has(.beta-admin-denied) {
 
   .admin-session button {
     display: block;
+  }
+
+  .admin-product-nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .admin-product-nav a {
+    flex: 1;
+    min-width: 0;
   }
 
   .beta-admin-shell {

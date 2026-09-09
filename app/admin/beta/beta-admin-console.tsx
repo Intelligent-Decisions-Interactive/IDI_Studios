@@ -29,6 +29,8 @@ type BetaApplication = {
 
 type AutoBattleAccessStatus = "pending" | "beta" | "active" | "suspended";
 
+export type BetaAdminProduct = "conquest" | "autobattle";
+
 type AutoBattleAdminAccount = {
   userId: string;
   email: string;
@@ -148,6 +150,12 @@ function applicationProduct(application: BetaApplication) {
   return "Conquest: Ascension";
 }
 
+function applicationProductKey(application: BetaApplication): BetaAdminProduct {
+  return application.testingFocus.startsWith("[AutoBattle")
+    ? "autobattle"
+    : "conquest";
+}
+
 function DataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -160,9 +168,11 @@ function DataRow({ label, children }: { label: string; children: React.ReactNode
 export function BetaAdminConsole({
   actorEmail: initialActorEmail,
   actorProvider: initialActorProvider,
+  product,
 }: {
   actorEmail: string;
   actorProvider: string;
+  product: BetaAdminProduct;
 }) {
   const [applications, setApplications] = useState<BetaApplication[]>([]);
   const [autoBattleAccounts, setAutoBattleAccounts] = useState<AutoBattleAdminAccount[]>([]);
@@ -228,15 +238,22 @@ export function BetaAdminConsole({
     setLoading(true);
     try {
       const result = await apiRequest<ListResponse>("/admin/api/requests");
-      setApplications(result.applications || []);
+      const scopedApplications = (result.applications || []).filter(
+        (application) => applicationProductKey(application) === product,
+      );
+      setApplications(scopedApplications);
       setAutoBattleAccounts(result.autoBattleAccounts || []);
       setActorEmail(result.actorEmail || initialActorEmail);
       setActorProvider(result.actorProvider || initialActorProvider);
       setInviteEnabled(result.inviteEnabled);
       setMessage("");
       setMessageState("");
-      if (selectedId && result.applications.some((item) => item.id === selectedId)) {
+      if (selectedId && scopedApplications.some((item) => item.id === selectedId)) {
         await selectApplication(selectedId);
+      } else if (selectedId) {
+        setSelectedId(null);
+        setSelected(null);
+        setEvents([]);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Unable to load requests.");
@@ -244,7 +261,7 @@ export function BetaAdminConsole({
     } finally {
       setLoading(false);
     }
-  }, [initialActorEmail, initialActorProvider, selectApplication, selectedId]);
+  }, [initialActorEmail, initialActorProvider, product, selectApplication, selectedId]);
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadApplications(), 0);
@@ -253,28 +270,27 @@ export function BetaAdminConsole({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const counts = useMemo(
-    () => {
-      const result = applications.reduce(
-        (result, application) => {
-          result.total += 1;
-          if (application.status === "pending") result.pending += 1;
-          if (["approved", "invited", "active"].includes(application.status)) {
-            result.accepted += 1;
-          }
-          return result;
-        },
-        { total: 0, pending: 0, accepted: 0 },
-      );
+  const counts = useMemo(() => {
+    const result = applications.reduce(
+      (result, application) => {
+        result.total += 1;
+        if (application.status === "pending") result.pending += 1;
+        if (["approved", "invited", "active"].includes(application.status)) {
+          result.accepted += 1;
+        }
+        return result;
+      },
+      { total: 0, pending: 0, accepted: 0 },
+    );
+    if (product === "autobattle") {
       for (const account of autoBattleAccounts) {
         result.total += 1;
         if (account.accessStatus === "pending") result.pending += 1;
         if (["beta", "active"].includes(account.accessStatus)) result.accepted += 1;
       }
-      return result;
-    },
-    [applications, autoBattleAccounts],
-  );
+    }
+    return result;
+  }, [applications, autoBattleAccounts, product]);
 
   const sortedAutoBattleAccounts = useMemo(
     () => [...autoBattleAccounts].sort((left, right) => {
@@ -507,6 +523,20 @@ export function BetaAdminConsole({
           <span>IDI</span>
           <strong>Studios / Beta Operations</strong>
         </Link>
+        <nav className="admin-product-nav" aria-label="Beta operations products">
+          <Link
+            href="/beta/admin/conquest"
+            aria-current={product === "conquest" ? "page" : undefined}
+          >
+            Conquest
+          </Link>
+          <Link
+            href="/beta/admin/autobattle"
+            aria-current={product === "autobattle" ? "page" : undefined}
+          >
+            AutoBattle
+          </Link>
+        </nav>
         <div className="admin-session">
           <span>{actorEmail}</span>
           <small>{actorProvider}</small>
@@ -519,11 +549,14 @@ export function BetaAdminConsole({
       <main className="beta-admin-shell">
         <section className="admin-summary">
           <div>
-            <p className="admin-eyebrow">Private beta operations</p>
-            <h1>Applicant management.</h1>
+            <p className="admin-eyebrow">
+              {product === "autobattle" ? "AutoBattle operations" : "Conquest operations"}
+            </p>
+            <h1>{product === "autobattle" ? "AutoBattle access." : "Conquest applicants."}</h1>
             <p>
-              Review AutoBattle accounts and request-form submissions, record
-              decisions, and move approved Android testers into a build wave.
+              {product === "autobattle"
+                ? "Approve AutoBattle accounts and manage its founding-clan and public-beta submissions."
+                : "Review Conquest: Ascension applications, record decisions, and move approved Android testers into a build wave."}
             </p>
           </div>
           <div className="admin-stats" aria-label="Application summary">
@@ -533,7 +566,8 @@ export function BetaAdminConsole({
           </div>
         </section>
 
-        <section className="admin-autobattle" aria-labelledby="autobattle-accounts-title">
+        {product === "autobattle" ? (
+          <section className="admin-autobattle" aria-labelledby="autobattle-accounts-title">
           <div className="admin-section-heading">
             <div>
               <p className="admin-eyebrow">AutoBattle / Account access</p>
@@ -601,12 +635,19 @@ export function BetaAdminConsole({
               <p className="admin-list-state">No AutoBattle accounts have been created yet.</p>
             )}
           </div>
-        </section>
+          </section>
+        ) : null}
 
         <div className="admin-queue-heading">
-          <p className="admin-eyebrow">Request forms</p>
-          <h2>Form submissions.</h2>
-          <p>Conquest requests and AutoBattle founding or public-beta forms appear here.</p>
+          <p className="admin-eyebrow">
+            {product === "autobattle" ? "AutoBattle / Request forms" : "Conquest / Request forms"}
+          </p>
+          <h2>{product === "autobattle" ? "Campaign submissions." : "Beta applications."}</h2>
+          <p>
+            {product === "autobattle"
+              ? "Founding-clan and AutoBattle public-beta forms appear here."
+              : "Only Conquest: Ascension beta applications appear here."}
+          </p>
         </div>
 
         <section className="admin-workspace" aria-label="Beta applicant workspace">

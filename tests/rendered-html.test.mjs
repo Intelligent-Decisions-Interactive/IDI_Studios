@@ -119,7 +119,10 @@ test("stores verified beta applications in Supabase and sends notifications", as
 
 test("protects and operates the beta administration console", async () => {
   const [
-    page,
+    legacyPage,
+    adminProductPage,
+    conquestPage,
+    autoBattlePage,
     consoleSource,
     auth,
     listRoute,
@@ -130,6 +133,18 @@ test("protects and operates the beta administration console", async () => {
   ] =
     await Promise.all([
       readFile(new URL("../app/admin/beta/page.tsx", import.meta.url), "utf8"),
+      readFile(
+        new URL("../app/beta/admin/admin-product-page.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/beta/admin/conquest/page.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL("../app/beta/admin/autobattle/page.tsx", import.meta.url),
+        "utf8",
+      ),
       readFile(
         new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
         "utf8",
@@ -151,9 +166,15 @@ test("protects and operates the beta administration console", async () => {
       readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     ]);
 
-  assert.match(page, /getAdminActorFromHeaders/);
-  assert.match(page, /Verified access required/);
-  assert.match(consoleSource, /Applicant management/);
+  assert.match(legacyPage, /redirect\("\/beta\/admin\/conquest"\)/);
+  assert.match(adminProductPage, /getAdminActorFromHeaders/);
+  assert.match(adminProductPage, /Verified access required/);
+  assert.match(conquestPage, /product="conquest"/);
+  assert.match(autoBattlePage, /product="autobattle"/);
+  assert.match(consoleSource, /\/beta\/admin\/conquest/);
+  assert.match(consoleSource, /\/beta\/admin\/autobattle/);
+  assert.match(consoleSource, /Conquest applicants/);
+  assert.match(consoleSource, /AutoBattle access/);
   assert.match(consoleSource, /Private admin notes/);
   assert.match(consoleSource, /Send invitation/);
   assert.match(consoleSource, /Activity history/);
