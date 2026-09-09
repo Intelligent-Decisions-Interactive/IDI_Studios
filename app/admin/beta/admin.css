@@ -358,7 +358,9 @@ body:has(.beta-admin-denied) {
 
 .admin-autobattle-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 .admin-queue-heading {

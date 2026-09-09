@@ -217,6 +217,58 @@ test("protects and operates the beta administration console", async () => {
   assert.match(autoBattleDatabase, /access_status: accessStatus/);
 });
 
+test("emails account-bound single-use AutoBattle founding codes", async () => {
+  const [consoleSource, route, protectedRoute, database, emailHelper, migration] =
+    await Promise.all([
+      readFile(
+        new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
+        "utf8",
+      ),
+      readFile(
+        new URL(
+          "../app/admin/api/autobattle/accounts/[id]/redemption-code/route.ts",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+      readFile(
+        new URL(
+          "../app/beta/admin/api/autobattle/accounts/[id]/redemption-code/route.ts",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+      readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/beta-email.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL(
+          "../supabase/migrations/20260909233554_assign_autobattle_invite_codes.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    ]);
+
+  assert.match(consoleSource, /Email founding code/);
+  assert.match(consoleSource, /\/beta\/admin\/api\/autobattle\/accounts\/\$\{account\.userId\}\/redemption-code/);
+  assert.match(consoleSource, /30 starting tokens and the permanent 50% clan price/);
+  assert.match(route, /requireSameOrigin/);
+  assert.match(route, /getAdminActorFromHeaders/);
+  assert.match(route, /assigned_user_id: id/);
+  assert.match(route, /sendAutoBattleRedemptionCodeEmail/);
+  assert.match(route, /deactivateAutoBattleInviteCode/);
+  assert.doesNotMatch(route, /success: true,\s*code/);
+  assert.match(protectedRoute, /@\/app\/admin\/api\/autobattle\/accounts\/\[id\]\/redemption-code\/route/);
+  assert.match(database, /deactivateAssignedAutoBattleInviteCodes/);
+  assert.match(database, /hasAutoBattleCampaignRedemption/);
+  assert.match(emailHelper, /sendAutoBattleRedemptionCodeEmail/);
+  assert.match(emailHelper, /autobattle_redemption_code/);
+  assert.match(migration, /add column if not exists assigned_user_id uuid/);
+  assert.match(migration, /invite\.assigned_user_id <> p_user_id/);
+  assert.match(migration, /create unique index if not exists autobattle_invite_codes_assigned_user_idx/);
+  assert.match(migration, /grant execute on function public\.autobattle_redeem_invite_code\(uuid, text\)\s*to service_role/);
+});
+
 test("protects private realm downloads with TOTP and signed sessions", async () => {
   const [page, gate, authRoute, downloadRoute, authHelper, storageHelper] =
     await Promise.all([

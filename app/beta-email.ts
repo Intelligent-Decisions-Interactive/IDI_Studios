@@ -242,3 +242,26 @@ export async function sendBetaInvitation(
     tags: [{ name: "request_type", value: "beta_invitation" }],
   });
 }
+
+export async function sendAutoBattleRedemptionCodeEmail(
+  recipient: { email: string; playerName: string; code: string },
+  idempotencyKey: string,
+) {
+  const config = getBetaEmailConfig();
+  if (!config.apiKey) throw new Error("RESEND_API_KEY is not configured.");
+
+  const accountUrl = config.autobattleInviteUrl;
+  const safeName = escapeHtml(recipient.playerName || "AutoBattle player");
+  const safeCode = escapeHtml(recipient.code);
+  const safeUrl = escapeHtml(accountUrl);
+
+  return sendResendEmail(config.apiKey, idempotencyKey, {
+    from: config.from,
+    to: [recipient.email],
+    reply_to: config.notify,
+    subject: "Your AutoBattle founding code",
+    html: `<h1>Your AutoBattle founding code is ready.</h1><p>Hi ${safeName},</p><p>Enter this single-use code in your AutoBattle account:</p><p style="font-size:24px;font-weight:700;letter-spacing:0.08em"><code>${safeCode}</code></p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Redeeming it adds 30 starting tokens and unlocks the permanent 50% founding-clan price on every token pack.</p><p>If you did not expect this email, you can ignore it.</p><p>— IDI Studios</p>`,
+    text: `Hi ${recipient.playerName || "AutoBattle player"},\n\nEnter this single-use code in your AutoBattle account:\n\n${recipient.code}\n\nOpen your account: ${accountUrl}\n\nRedeeming it adds 30 starting tokens and unlocks the permanent 50% founding-clan price on every token pack.\n\nIf you did not expect this email, you can ignore it.\n\n— IDI Studios`,
+    tags: [{ name: "request_type", value: "autobattle_redemption_code" }],
+  });
+}

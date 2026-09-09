@@ -200,6 +200,7 @@ export function BetaAdminConsole({
   const [applyPurchaseDiscount, setApplyPurchaseDiscount] = useState(true);
   const [purchaseConfirmation, setPurchaseConfirmation] = useState<ManualPurchase | null>(null);
   const [autoBattleAction, setAutoBattleAction] = useState("");
+  const [redemptionCodeAction, setRedemptionCodeAction] = useState("");
   const [autoBattleMessage, setAutoBattleMessage] = useState("");
   const [autoBattleMessageState, setAutoBattleMessageState] = useState<"" | "error" | "success">("");
 
@@ -562,6 +563,29 @@ export function BetaAdminConsole({
     }
   }
 
+  async function sendAutoBattleRedemptionCode(account: AutoBattleAdminAccount) {
+    setRedemptionCodeAction(account.userId);
+    setAutoBattleMessage(`Emailing a single-use founding code to ${account.email}…`);
+    setAutoBattleMessageState("");
+    try {
+      await apiRequest<{ email: string }>(
+        `/beta/admin/api/autobattle/accounts/${account.userId}/redemption-code`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      setAutoBattleMessage(
+        `${account.email} was emailed a single-use founding code for 30 starting tokens and the permanent 50% clan price.`,
+      );
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "The redemption code could not be emailed.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setRedemptionCodeAction("");
+    }
+  }
+
   return (
     <div className="beta-admin-root">
       <header className="beta-admin-header">
@@ -601,7 +625,7 @@ export function BetaAdminConsole({
             <h1>{product === "autobattle" ? "AutoBattle access." : "Conquest applicants."}</h1>
             <p>
               {product === "autobattle"
-                ? "Approve AutoBattle accounts and manage its founding-clan and public-beta submissions."
+                ? "Approve AutoBattle accounts, send founding codes, and manage Android access."
                 : "Review Conquest: Ascension applications, record decisions, and move approved Android testers into a build wave."}
             </p>
           </div>
@@ -620,7 +644,8 @@ export function BetaAdminConsole({
               <h2 id="autobattle-accounts-title">Account approvals.</h2>
               <p>
                 These are users who created an AutoBattle account. Approving a pending
-                account enables Android device linking.
+                account enables Android device linking. Founding codes add 30 starting
+                tokens and the permanent 50% clan price when redeemed.
               </p>
             </div>
             <span>{autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending</span>
@@ -646,11 +671,30 @@ export function BetaAdminConsole({
                     <small>Created {formatDate(account.createdAt, false)}</small>
                   </div>
                   <div className="admin-autobattle-actions">
+                    <button
+                      className="admin-secondary-button"
+                      type="button"
+                      disabled={
+                        autoBattleAction !== "" ||
+                        redemptionCodeAction !== "" ||
+                        account.accessStatus === "suspended"
+                      }
+                      onClick={() => void sendAutoBattleRedemptionCode(account)}
+                      title={
+                        account.accessStatus === "suspended"
+                          ? "Restore this account before sending a redemption code."
+                          : "Email a single-use code for 30 tokens and the permanent 50% clan price."
+                      }
+                    >
+                      {redemptionCodeAction === account.userId
+                        ? "Emailing code…"
+                        : "Email founding code"}
+                    </button>
                     {account.accessStatus === "pending" ? (
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={autoBattleAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Approving…" : "Approve beta access"}
@@ -659,7 +703,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Restoring…" : "Restore beta access"}
@@ -668,7 +712,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "suspended")}
                       >
                         {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}

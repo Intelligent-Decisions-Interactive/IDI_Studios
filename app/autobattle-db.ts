@@ -400,6 +400,40 @@ export async function listAutoBattleAdminAccounts() {
   return (rows || []).map(mapAutoBattleAdminAccount);
 }
 
+export async function getAutoBattleAdminAccount(userId: string) {
+  const rows = await serviceRequest<ProfileRow[]>(
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,created_at,updated_at&limit=1`,
+  );
+  return rows?.[0] ? mapAutoBattleAdminAccount(rows[0]) : null;
+}
+
+export async function hasAutoBattleCampaignRedemption(
+  userId: string,
+  campaignKey: string,
+) {
+  const rows = await serviceRequest<Array<{ id: string }>>(
+    `autobattle_code_redemptions?user_id=eq.${encodeURIComponent(userId)}&campaign_key=eq.${encodeURIComponent(campaignKey)}&select=id&limit=1`,
+  );
+  return Boolean(rows?.[0]);
+}
+
+export async function deactivateAssignedAutoBattleInviteCodes(
+  userId: string,
+  campaignKey: string,
+) {
+  await serviceRequest(
+    `autobattle_invite_codes?assigned_user_id=eq.${encodeURIComponent(userId)}&campaign_key=eq.${encodeURIComponent(campaignKey)}&active=eq.true&redemption_count=eq.0`,
+    { method: "PATCH", body: JSON.stringify({ active: false }) },
+  );
+}
+
+export async function deactivateAutoBattleInviteCode(id: string) {
+  await serviceRequest(
+    `autobattle_invite_codes?id=eq.${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ active: false }) },
+  );
+}
+
 export async function updateAutoBattleAccessStatus(
   userId: string,
   accessStatus: AutoBattleAdminAccount["accessStatus"],
