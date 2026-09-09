@@ -303,10 +303,10 @@ export function BetaAdminConsole({
 
   useEffect(() => {
     const initialLoad = window.setTimeout(() => void loadApplications(), 0);
-    // Initial load is intentionally isolated from selection changes.
+    // Product navigation reloads its own records; selection changes stay local.
     return () => window.clearTimeout(initialLoad);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [product]);
 
   const counts = useMemo(() => {
     const result = applications.reduce(

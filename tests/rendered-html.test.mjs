@@ -179,6 +179,7 @@ test("protects and operates the beta administration console", async () => {
   assert.match(legacyPage, /redirect\("\/beta\/admin\/conquest"\)/);
   assert.match(adminProductPage, /getAdminActorFromHeaders/);
   assert.match(adminProductPage, /Verified access required/);
+  assert.match(adminProductPage, /key=\{product\}/);
   assert.match(conquestPage, /product="conquest"/);
   assert.match(autoBattlePage, /product="autobattle"/);
   assert.match(consoleSource, /\/beta\/admin\/conquest/);
@@ -193,6 +194,7 @@ test("protects and operates the beta administration console", async () => {
   assert.match(consoleSource, /\/beta\/admin\/api\/autobattle\/accounts/);
   assert.doesNotMatch(consoleSource, /["`]\/admin\/api/);
   assert.match(consoleSource, /Promise\.allSettled/);
+  assert.match(consoleSource, /\}, \[product\]\);/);
   assert.match(auth, /cf-access-authenticated-user-email/);
   assert.match(auth, /cf-access-jwt-assertion/);
   assert.match(auth, /oai-authenticated-user-email/);

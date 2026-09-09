@@ -22,6 +22,7 @@ export async function AdminProductPage({ product }: { product: BetaAdminProduct 
 
   return (
     <BetaAdminConsole
+      key={product}
       actorEmail={actor.email}
       actorProvider={actor.provider}
       product={product}
