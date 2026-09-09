@@ -232,6 +232,8 @@ body:has(.beta-admin-denied) {
 .admin-toolbar input,
 .admin-toolbar select,
 .admin-review select,
+.admin-purchase-grid input,
+.admin-purchase-grid select,
 .admin-notes textarea {
   width: 100%;
   border: 1px solid var(--admin-line);
@@ -244,12 +246,15 @@ body:has(.beta-admin-denied) {
 
 .admin-toolbar input,
 .admin-toolbar select,
-.admin-review select {
+.admin-review select,
+.admin-purchase-grid input,
+.admin-purchase-grid select {
   min-height: 45px;
   padding: 0 13px;
 }
 
 .admin-toolbar input::placeholder,
+.admin-purchase-grid input::placeholder,
 .admin-notes textarea::placeholder {
   color: #68717a;
 }
@@ -257,6 +262,8 @@ body:has(.beta-admin-denied) {
 .admin-toolbar input:focus,
 .admin-toolbar select:focus,
 .admin-review select:focus,
+.admin-purchase-grid input:focus,
+.admin-purchase-grid select:focus,
 .admin-notes textarea:focus {
   border-color: var(--admin-gold);
   box-shadow: 0 0 0 3px rgba(197, 163, 96, 0.09);
@@ -448,6 +455,7 @@ body:has(.beta-admin-denied) {
 
 .admin-card,
 .admin-review,
+.admin-manual-purchase,
 .admin-history {
   padding: 21px;
   border: 1px solid var(--admin-line);
@@ -456,6 +464,7 @@ body:has(.beta-admin-denied) {
 
 .admin-card h3,
 .admin-review h3,
+.admin-manual-purchase h3,
 .admin-history h3 {
   margin: 0 0 18px;
   font-size: 0.86rem;
@@ -511,6 +520,7 @@ body:has(.beta-admin-denied) {
 
 .admin-testing-focus,
 .admin-review,
+.admin-manual-purchase,
 .admin-history {
   margin-top: 15px;
 }
@@ -524,6 +534,7 @@ body:has(.beta-admin-denied) {
 }
 
 .admin-review-heading,
+.admin-purchase-heading,
 .admin-history-heading {
   display: flex;
   align-items: center;
@@ -532,11 +543,13 @@ body:has(.beta-admin-denied) {
 }
 
 .admin-review-heading h3,
+.admin-purchase-heading h3,
 .admin-history-heading h3 {
   margin-bottom: 0;
 }
 
-.admin-review-heading p {
+.admin-review-heading p,
+.admin-purchase-heading p {
   margin: 5px 0 0;
   color: var(--admin-slate);
   font-size: 0.7rem;
@@ -564,6 +577,61 @@ body:has(.beta-admin-denied) {
   margin-top: 21px;
 }
 
+.admin-purchase-grid {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.8fr) minmax(250px, 1.2fr);
+  gap: 15px;
+  margin-top: 21px;
+}
+
+.admin-purchase-grid label > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--admin-slate);
+  font-size: 0.7rem;
+}
+
+.admin-purchase-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 15px;
+  color: var(--admin-slate);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.admin-purchase-checkbox input {
+  width: 15px;
+  height: 15px;
+  margin: 2px 0 0;
+  accent-color: var(--admin-gold);
+}
+
+.admin-purchase-confirmation {
+  display: grid;
+  gap: 5px;
+  margin-top: 17px;
+  padding: 15px;
+  border: 1px solid rgba(65, 190, 145, 0.42);
+  background: rgba(65, 190, 145, 0.08);
+}
+
+.admin-purchase-confirmation strong {
+  color: var(--admin-success);
+  font-size: 0.74rem;
+}
+
+.admin-purchase-confirmation span {
+  font-size: 0.72rem;
+}
+
+.admin-purchase-confirmation small {
+  color: var(--admin-slate);
+  font-size: 0.64rem;
+  line-height: 1.5;
+}
+
 .admin-review-grid label > span,
 .admin-invite-control > span,
 .admin-notes > span {
@@ -585,6 +653,21 @@ body:has(.beta-admin-denied) {
   font-size: 0.62rem;
   line-height: 1.45;
 }
+
+.admin-clan-code {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 17px;
+  padding: 15px;
+  border: 1px dashed var(--admin-gold);
+  background: rgba(218, 183, 106, 0.07);
+}
+
+.admin-clan-code > div { display: grid; gap: 7px; }
+.admin-clan-code span { color: var(--admin-slate); font-size: 0.62rem; text-transform: uppercase; }
+.admin-clan-code strong { color: var(--admin-gold); font-family: monospace; font-size: 1rem; letter-spacing: 0.08em; }
 
 .admin-notes {
   display: block;
@@ -691,7 +774,8 @@ body:has(.beta-admin-denied) {
   }
 
   .admin-detail-grid,
-  .admin-review-grid {
+  .admin-review-grid,
+  .admin-purchase-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -761,7 +845,8 @@ body:has(.beta-admin-denied) {
     padding: 30px 8px;
   }
 
-  .admin-review-heading {
+  .admin-review-heading,
+  .admin-purchase-heading {
     display: grid;
     align-items: start;
   }

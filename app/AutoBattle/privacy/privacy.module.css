@@ -1,0 +1,39 @@
+.page {
+  --ink: #080c0f;
+  --panel: #10161a;
+  --bone: #e6e0d3;
+  --ash: #929b9d;
+  --gold: #c99c36;
+  --gold-hot: #f0c765;
+  --teal: #57c5bd;
+  min-height: 100svh;
+  background: radial-gradient(circle at 80% 8%, rgba(201, 156, 54, .1), transparent 28%), #080c0f;
+  color: var(--bone);
+}
+
+.header,
+.footer { display: flex; min-height: 76px; align-items: center; justify-content: space-between; gap: 24px; padding: 0 44px; border-bottom: 1px solid rgba(201, 156, 54, .22); background: rgba(5, 7, 9, .82); }
+.header a,
+.footer a { color: var(--gold-hot); font-size: .62rem; font-weight: 900; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
+.header a:first-child { color: inherit; }
+.headerLogo { display: block; width: clamp(158px, 18vw, 212px); height: auto; }
+.policy { width: min(880px, calc(100% - 64px)); margin: 0 auto; padding: 96px 0 120px; }
+.eyebrow { margin: 0 0 22px; color: var(--gold-hot); font-size: .62rem; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+.policy h1 { margin: 0; font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; font-size: clamp(4rem, 8vw, 7rem); font-weight: 900; letter-spacing: .005em; line-height: .86; text-transform: uppercase; }
+.policy h1 span { color: var(--gold-hot); }
+.updated { margin: 28px 0 72px; color: var(--ash); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; }
+.policy section { display: grid; grid-template-columns: minmax(190px, .65fr) 1.35fr; gap: 54px; padding: 34px 0; border-top: 1px solid rgba(230, 224, 211, .12); }
+.policy h2 { margin: 0; color: var(--teal); font-size: .75rem; letter-spacing: .1em; line-height: 1.5; text-transform: uppercase; }
+.policy section p { margin: 0; color: rgba(230, 224, 211, .67); font-size: .9rem; line-height: 1.75; }
+.policy section a { color: var(--gold-hot); }
+.policy aside { margin-top: 34px; padding: 22px; border-left: 3px solid var(--gold); background: rgba(201, 156, 54, .07); color: rgba(230, 224, 211, .52); font-size: .72rem; line-height: 1.65; }
+.footer { min-height: 92px; justify-content: flex-end; gap: 24px; border-top: 1px solid rgba(201, 156, 54, .22); border-bottom: 0; }
+
+@media (max-width: 620px) {
+  .header,
+  .footer { padding-inline: 16px; }
+  .headerLogo { width: 142px; }
+  .policy { width: calc(100% - 30px); padding-block: 72px 88px; }
+  .policy h1 { font-size: clamp(3.4rem, 16vw, 5rem); }
+  .policy section { grid-template-columns: 1fr; gap: 14px; }
+}

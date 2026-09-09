@@ -7,12 +7,17 @@ import {
 } from "@/app/beta-admin";
 import { sendBetaInvitation } from "@/app/beta-email";
 import { updateBetaRequest } from "@/app/supabase";
+import { requireSameOrigin } from "@/app/autobattle-auth";
+import { noStoreJson } from "@/app/autobattle-api";
 
 export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
+  if (!requireSameOrigin(request)) {
+    return noStoreJson({ success: false, message: "Invalid request origin." }, 403);
+  }
   const actor = getAdminActorFromHeaders(request.headers);
   if (!actor) {
     return Response.json(

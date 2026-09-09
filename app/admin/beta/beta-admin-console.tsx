@@ -50,6 +50,21 @@ type DetailResponse = {
   inviteEnabled: boolean;
 };
 
+type ManualPurchase = {
+  alreadyFulfilled: boolean;
+  orderId: string;
+  sku: string;
+  paidTokens: number;
+  bonusTokens: number;
+  discountCents: number;
+  discountUnlimited: boolean;
+  totalCents: number;
+  currency: string;
+  purchasedBalance: number;
+  bonusBalance: number;
+  promotionalBalance: number;
+};
+
 const STATUS_OPTIONS: BetaStatus[] = [
   "pending",
   "approved",
@@ -57,6 +72,15 @@ const STATUS_OPTIONS: BetaStatus[] = [
   "active",
   "declined",
 ];
+
+const TOKEN_PACKS = [
+  { sku: "tokens_5", label: "5 tokens — $0.99" },
+  { sku: "tokens_25", label: "25 + 5 bonus — $4.99" },
+  { sku: "tokens_50", label: "50 + 10 bonus — $9.99" },
+  { sku: "tokens_100", label: "100 + 25 bonus — $19.99" },
+  { sku: "tokens_250", label: "250 + 50 bonus — $49.99" },
+  { sku: "tokens_500", label: "500 + 100 bonus — $99.99" },
+] as const;
 
 function formatDate(value: string | null, includeTime = true) {
   if (!value) return "Not recorded";
@@ -66,6 +90,13 @@ function formatDate(value: string | null, includeTime = true) {
     dateStyle: "medium",
     ...(includeTime ? { timeStyle: "short" } : {}),
   }).format(date);
+}
+
+function formatMoney(cents: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(cents / 100);
 }
 
 async function apiRequest<T>(path: string, options: RequestInit = {}) {
@@ -127,6 +158,11 @@ export function BetaAdminConsole({
   const [messageState, setMessageState] = useState<"" | "error" | "success">("");
   const [reviewStatus, setReviewStatus] = useState<BetaStatus>("pending");
   const [adminNotes, setAdminNotes] = useState("");
+  const [clanCode, setClanCode] = useState("");
+  const [purchaseSku, setPurchaseSku] = useState("tokens_100");
+  const [paymentReference, setPaymentReference] = useState("");
+  const [applyPurchaseDiscount, setApplyPurchaseDiscount] = useState(true);
+  const [purchaseConfirmation, setPurchaseConfirmation] = useState<ManualPurchase | null>(null);
 
   const mergeApplication = useCallback((application: BetaApplication) => {
     setApplications((current) =>
@@ -142,6 +178,9 @@ export function BetaAdminConsole({
     async (id: number) => {
       setSelectedId(id);
       setDetailLoading(true);
+      setClanCode("");
+      setPaymentReference("");
+      setPurchaseConfirmation(null);
       setMessage("");
       setMessageState("");
       try {
@@ -301,6 +340,76 @@ export function BetaAdminConsole({
     } catch {
       setMessage("The email address could not be copied.");
       setMessageState("error");
+    }
+  }
+
+  async function issueClanCode() {
+    if (!selected) return;
+    setAction("clan-code");
+    setMessage("Issuing single-use clan access code…");
+    setMessageState("");
+    try {
+      const result = await apiRequest<{ code: string; events: BetaEvent[] }>(
+        `/admin/api/requests/${selected.id}/clan-code`,
+        { method: "POST", body: JSON.stringify({}) },
+      );
+      setClanCode(result.code);
+      setEvents(result.events || []);
+      setMessage("Clan access code issued. It is shown only in this review session.");
+      setMessageState("success");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The clan access code could not be issued.");
+      setMessageState("error");
+    } finally {
+      setAction("");
+    }
+  }
+
+  async function copyClanCode() {
+    if (!clanCode) return;
+    try {
+      await navigator.clipboard.writeText(clanCode);
+      setMessage("Clan access code copied.");
+      setMessageState("success");
+    } catch {
+      setMessage("The clan access code could not be copied.");
+      setMessageState("error");
+    }
+  }
+
+  async function fulfillPurchase(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+    setAction("purchase");
+    setPurchaseConfirmation(null);
+    setMessage("Crediting confirmed payment…");
+    setMessageState("");
+    try {
+      const result = await apiRequest<{ purchase: ManualPurchase }>(
+        "/admin/api/autobattle/manual-purchase",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            email: selected.email,
+            sku: purchaseSku,
+            paymentReference,
+            applyDiscount: applyPurchaseDiscount,
+          }),
+        },
+      );
+      setPurchaseConfirmation(result.purchase);
+      setPaymentReference("");
+      setMessage(
+        result.purchase.alreadyFulfilled
+          ? "This payment was already fulfilled; no duplicate tokens were added."
+          : "Payment recorded and token balances updated.",
+      );
+      setMessageState("success");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "The purchase could not be credited.");
+      setMessageState("error");
+    } finally {
+      setAction("");
     }
   }
 
@@ -511,7 +620,28 @@ export function BetaAdminConsole({
                             : "Approve the applicant before sending an invitation."}
                       </small>
                     </div>
+                    {selected.testingFocus.startsWith("[AutoBattle clan access]") ? (
+                      <div className="admin-invite-control">
+                        <span>Founding clan offer</span>
+                        <button
+                          className="admin-secondary-button"
+                          type="button"
+                          disabled={action !== "" || !["approved", "invited", "active"].includes(selected.status)}
+                          onClick={() => void issueClanCode()}
+                        >
+                          {action === "clan-code" ? "Issuing…" : "Issue clan code"}
+                        </button>
+                        <small>Grants 30 promotional tokens and a permanent 50% clan discount.</small>
+                      </div>
+                    ) : null}
                   </div>
+
+                  {clanCode ? (
+                    <div className="admin-clan-code">
+                      <div><span>Single-use clan access code</span><strong>{clanCode}</strong></div>
+                      <button className="admin-small-button" type="button" onClick={() => void copyClanCode()}>Copy code</button>
+                    </div>
+                  ) : null}
 
                   <label className="admin-notes">
                     <span>Private admin notes</span>
@@ -524,6 +654,89 @@ export function BetaAdminConsole({
                     <small>{adminNotes.length}/5000</small>
                   </label>
                 </form>
+
+                {selected.testingFocus.startsWith("[AutoBattle") ? (
+                  <form className="admin-manual-purchase" onSubmit={fulfillPurchase}>
+                    <div className="admin-purchase-heading">
+                      <div>
+                        <h3>Credit a confirmed payment</h3>
+                        <p>
+                          The player must sign in once before fulfillment. Each receipt or
+                          transaction reference can credit tokens only once.
+                        </p>
+                      </div>
+                      <button
+                        className="admin-primary-button"
+                        type="submit"
+                        disabled={
+                          action !== "" ||
+                          paymentReference.trim().length < 4 ||
+                          !["approved", "invited", "active"].includes(selected.status)
+                        }
+                      >
+                        {action === "purchase" ? "Crediting…" : "Credit token pack"}
+                      </button>
+                    </div>
+
+                    <div className="admin-purchase-grid">
+                      <label>
+                        <span>Token pack</span>
+                        <select value={purchaseSku} onChange={(event) => setPurchaseSku(event.target.value)}>
+                          {TOKEN_PACKS.map((pack) => (
+                            <option value={pack.sku} key={pack.sku}>{pack.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Payment reference</span>
+                        <input
+                          type="text"
+                          value={paymentReference}
+                          onChange={(event) => setPaymentReference(event.target.value)}
+                          minLength={4}
+                          maxLength={160}
+                          autoComplete="off"
+                          placeholder="Receipt or transaction ID"
+                          required
+                        />
+                      </label>
+                    </div>
+
+                    <label className="admin-purchase-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={applyPurchaseDiscount}
+                        onChange={(event) => setApplyPurchaseDiscount(event.target.checked)}
+                      />
+                      <span>Apply this account&apos;s clan discount, if available.</span>
+                    </label>
+
+                    {purchaseConfirmation ? (
+                      <div className="admin-purchase-confirmation">
+                        <strong>
+                          {purchaseConfirmation.alreadyFulfilled ? "Previously fulfilled" : "Fulfilled"}
+                        </strong>
+                        <span>
+                          {purchaseConfirmation.paidTokens} paid
+                          {purchaseConfirmation.bonusTokens
+                            ? ` + ${purchaseConfirmation.bonusTokens} bonus`
+                            : ""}
+                          {" · "}{formatMoney(purchaseConfirmation.totalCents, purchaseConfirmation.currency)}
+                          {purchaseConfirmation.discountCents > 0
+                            ? purchaseConfirmation.discountUnlimited
+                              ? " at the permanent clan price"
+                              : " after discount"
+                            : ""}
+                        </span>
+                        <small>
+                          Current balance: {purchaseConfirmation.purchasedBalance} paid +{" "}
+                          {purchaseConfirmation.bonusBalance} bonus +{" "}
+                          {purchaseConfirmation.promotionalBalance} promotional
+                        </small>
+                      </div>
+                    ) : null}
+                  </form>
+                ) : null}
 
                 <article className="admin-history">
                   <div className="admin-history-heading">

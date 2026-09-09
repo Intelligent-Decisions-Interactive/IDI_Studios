@@ -215,3 +215,36 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
   assert.match(viteSource, /configPath: "\.\/wrangler\.vite\.jsonc"/);
   assert.doesNotMatch(viteSource, /hostingConfig|localBindingConfig|config:\s*localBindingConfig/);
 });
+
+test("keeps AutoBattle accounts behind the server and an append-only token ledger", async () => {
+  const [auth, api, database, linkRoute, accountPage, migration] = await Promise.all([
+    readFile(new URL("../app/autobattle-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/autobattle/mobile/link/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../supabase/migrations/20260909005746_autobattle_accounts.sql", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(auth, /create_user: true/);
+  assert.match(auth, /HttpOnly/);
+  assert.match(auth, /SameSite=Strict/);
+  assert.match(auth, /Secure/);
+  assert.match(api, /Authorization/iu);
+  assert.match(database, /SUPABASE_SECRET_KEY/);
+  assert.match(linkRoute, /getRandomValues\(new Uint8Array\(32\)\)/);
+  assert.doesNotMatch(accountPage, /SUPABASE_SECRET_KEY|service_role/);
+  assert.match(migration, /enable row level security/);
+  assert.match(migration, /revoke all on table public\.autobattle_profiles from anon, authenticated/);
+  assert.match(migration, /revoke all on table public\.autobattle_token_ledger from anon, authenticated/);
+  assert.match(migration, /autobattle_release_stale_cycles/);
+  assert.match(migration, /active_device_count >= 5/);
+  assert.match(migration, /purchased_balance/);
+  assert.match(migration, /bonus_balance/);
+  assert.match(migration, /promotional_balance/);
+  assert.match(migration, /Append-only token audit trail/);
+  assert.doesNotMatch(migration, /plaintext_code|plain_code/);
+});

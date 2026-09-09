@@ -14,6 +14,16 @@ type SubmitState = "idle" | "submitting" | "success" | "error";
 type BetaAccessTriggerProps = {
   children: ReactNode;
   className?: string;
+  product?: BetaAccessProduct;
+};
+
+export type BetaAccessProduct =
+  | "conquest"
+  | "autobattle"
+  | "autobattle-clan";
+
+type BetaAccessModalProps = {
+  product?: BetaAccessProduct;
 };
 
 type TurnstileApi = {
@@ -45,6 +55,63 @@ const TURNSTILE_SCRIPT_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const TURNSTILE_SITE_KEY = "0x4AAAAAAEFhAAW5N5kUh-aO";
 let turnstileScriptPromise: Promise<TurnstileApi> | null = null;
+
+const accessCopy: Record<
+  BetaAccessProduct,
+  {
+    eyebrow: string;
+    title: string;
+    titleAccent: string;
+    intro: string;
+    deviceLabel: string;
+    focusLabel: string;
+    focusPlaceholder: string;
+    footer: string;
+    submit: string;
+    success: string;
+  }
+> = {
+  conquest: {
+    eyebrow: "Limited Android testing waves",
+    title: "Request beta",
+    titleAccent: "access.",
+    intro:
+      "Tell us what Android device you use and what you most want to test in Conquest: Ascension.",
+    deviceLabel: "Android device",
+    focusLabel: "What do you most want to test?",
+    focusPlaceholder: "",
+    footer: "One request per player. Testing access is limited and not guaranteed.",
+    submit: "Request beta access",
+    success:
+      "Your Conquest: Ascension beta request has been submitted.",
+  },
+  autobattle: {
+    eyebrow: "AutoBattle / Public Android beta",
+    title: "Request public",
+    titleAccent: "beta access.",
+    intro:
+      "Tell us which Android device you use and what you want to automate with AutoBattle.",
+    deviceLabel: "Android device",
+    focusLabel: "What workflow interests you the most with AutoBattle?",
+    focusPlaceholder: "Include the game and task—for example, Total Battle crypt cycles, encounter marches, or another visual workflow",
+    footer: "Public beta access opens in controlled Android waves.",
+    submit: "Request public beta",
+    success: "Your AutoBattle public beta request has been submitted.",
+  },
+  "autobattle-clan": {
+    eyebrow: "Founding clan / Private Android access",
+    title: "Request founding",
+    titleAccent: "access.",
+    intro:
+      "Tell us which Android device you use and what you want to automate with AutoBattle.",
+    deviceLabel: "Android device",
+    focusLabel: "What workflow interests you the most with AutoBattle?",
+    focusPlaceholder: "Include the game and task—for example, Total Battle crypt cycles, encounter marches, or another visual workflow",
+    footer: "One request per player. Every founding request is reviewed individually.",
+    submit: "Request founding access",
+    success: "Your AutoBattle founding access request has been submitted.",
+  },
+};
 
 function loadTurnstile() {
   if (window.turnstile) return Promise.resolve(window.turnstile);
@@ -80,21 +147,31 @@ function loadTurnstile() {
   return turnstileScriptPromise;
 }
 
-export function BetaAccessTrigger({ children, className }: BetaAccessTriggerProps) {
+export function BetaAccessTrigger({
+  children,
+  className,
+  product = "conquest",
+}: BetaAccessTriggerProps) {
   return (
     <button
       type="button"
       className={`beta-access-trigger${className ? ` ${className}` : ""}`}
       aria-haspopup="dialog"
       aria-controls="beta-access-modal"
-      onClick={() => window.dispatchEvent(new Event(OPEN_BETA_EVENT))}
+      onClick={() =>
+        window.dispatchEvent(
+          new CustomEvent(OPEN_BETA_EVENT, { detail: { product } }),
+        )
+      }
     >
       {children}
     </button>
   );
 }
 
-export function BetaAccessModal() {
+export function BetaAccessModal({ product = "conquest" }: BetaAccessModalProps) {
+  const [activeProduct, setActiveProduct] = useState(product);
+  const copy = accessCopy[activeProduct];
   const [isOpen, setIsOpen] = useState(false);
   const [state, setState] = useState<SubmitState>("idle");
   const [message, setMessage] = useState("");
@@ -118,15 +195,19 @@ export function BetaAccessModal() {
   }
 
   useEffect(() => {
-    function openModal() {
+    function openModal(event: Event) {
+      const requestedProduct = (
+        event as CustomEvent<{ product?: BetaAccessProduct }>
+      ).detail?.product;
       previousFocusRef.current = document.activeElement as HTMLElement | null;
+      setActiveProduct(requestedProduct || product);
       setIsOpen(true);
       window.requestAnimationFrame(() => closeButtonRef.current?.focus());
     }
 
     window.addEventListener(OPEN_BETA_EVENT, openModal);
     return () => window.removeEventListener(OPEN_BETA_EVENT, openModal);
-  }, []);
+  }, [product]);
 
   useEffect(() => {
     document.body.classList.toggle("beta-modal-open", isOpen);
@@ -255,6 +336,7 @@ export function BetaAccessModal() {
     const formData = new FormData(form);
     const payload = {
       ...Object.fromEntries(formData.entries()),
+      product: activeProduct,
       turnstileToken: turnstileTokenRef.current,
     };
 
@@ -330,7 +412,7 @@ export function BetaAccessModal() {
               You&apos;re on<br /><em>the list.</em>
             </h2>
             <p>
-              Your Conquest: Ascension beta request has been submitted. {message}
+              {copy.success} {message}
             </p>
             <button type="button" className="beta-modal-action" onClick={closeModal}>
               Close <span aria-hidden="true">×</span>
@@ -338,24 +420,30 @@ export function BetaAccessModal() {
           </div>
         ) : (
           <div className="beta-form-view">
-            <p className="scribble">Limited Android testing waves</p>
-            <h2 id="beta-access-title">Request beta<br /><em>access.</em></h2>
+            <p className="scribble">{copy.eyebrow}</p>
+            <h2 id="beta-access-title">{copy.title}<br /><em>{copy.titleAccent}</em></h2>
             <p className="beta-modal-intro">
-              Tell us what Android device you use and what you most want to test in Conquest: Ascension.
+              {copy.intro}
             </p>
 
             <form className="beta-form" onSubmit={handleSubmit} ref={formRef}>
               <div className="beta-form-grid">
                 <label>
-                  <span>Name</span>
-                  <input name="name" type="text" autoComplete="name" maxLength={80} required />
+                  <span>{activeProduct === "conquest" ? "Name" : "Player name"}</span>
+                  <input
+                    name="name"
+                    type="text"
+                    autoComplete={activeProduct === "conquest" ? "name" : "nickname"}
+                    maxLength={80}
+                    required
+                  />
                 </label>
                 <label>
                   <span>Email</span>
                   <input name="email" type="email" autoComplete="email" maxLength={160} required />
                 </label>
                 <label className="beta-form-wide">
-                  <span>Android device</span>
+                  <span>{copy.deviceLabel}</span>
                   <input
                     name="androidDevice"
                     type="text"
@@ -364,9 +452,36 @@ export function BetaAccessModal() {
                     required
                   />
                 </label>
+                {activeProduct === "autobattle-clan" ? (
+                  <label className="beta-form-wide">
+                    <span>Security question: Who is the clan leader?</span>
+                    <input
+                      name="clanLeader"
+                      type="text"
+                      autoComplete="off"
+                      maxLength={80}
+                      required
+                    />
+                    <small>
+                      Your answer is reviewed with your clan membership before a clan access token is issued.
+                    </small>
+                  </label>
+                ) : null}
                 <label className="beta-form-wide">
-                  <span>What do you most want to test?</span>
-                  <textarea name="testingFocus" rows={4} maxLength={1200} required />
+                  <span>{copy.focusLabel}</span>
+                  <textarea
+                    name="testingFocus"
+                    rows={4}
+                    maxLength={
+                      activeProduct === "autobattle-clan"
+                        ? 1000
+                        : activeProduct === "autobattle"
+                          ? 1160
+                          : 1200
+                    }
+                    placeholder={copy.focusPlaceholder}
+                    required
+                  />
                 </label>
                 <label className="beta-form-trap" aria-hidden="true">
                   <span>Website</span>
@@ -383,7 +498,7 @@ export function BetaAccessModal() {
               </div>
 
               <div className="beta-form-footer">
-                <p>One request per player. Testing access is limited and not guaranteed.</p>
+                <p>{copy.footer}</p>
                 <button
                   type="submit"
                   disabled={
@@ -392,7 +507,7 @@ export function BetaAccessModal() {
                     !verificationReady
                   }
                 >
-                  {state === "submitting" ? "Sending request…" : "Request beta access"}
+                  {state === "submitting" ? "Sending request…" : copy.submit}
                   <span aria-hidden="true">↗</span>
                 </button>
               </div>

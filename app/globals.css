@@ -593,6 +593,7 @@ body.beta-modal-open { overflow: hidden; }
 .beta-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .beta-form label { display: grid; gap: 9px; }
 .beta-form label > span { color: var(--gold-bright); font-size: .64rem; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.beta-form label > small { color: rgba(217, 213, 199, .48); font-size: .68rem; line-height: 1.5; }
 .beta-form input, .beta-form textarea { width: 100%; border: 1px solid rgba(217, 213, 199, .2); border-radius: 0; outline: 0; background: rgba(255, 255, 255, .035); color: var(--bone); font: inherit; transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease; }
 .beta-form input { min-height: 48px; padding: 0 14px; }
 .beta-form textarea { min-height: 112px; padding: 13px 14px; resize: vertical; }
