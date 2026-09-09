@@ -244,7 +244,10 @@ export function BetaAdminConsole({
     setAutoBattleMessage("");
     setAutoBattleMessageState("");
 
-    const formsRequest = apiRequest<ListResponse>("/beta/admin/api/requests");
+    const formsRequest =
+      product === "conquest"
+        ? apiRequest<ListResponse>("/beta/admin/api/requests")
+        : Promise.resolve<ListResponse | null>(null);
     const accountsRequest =
       product === "autobattle"
         ? apiRequest<AutoBattleListResponse>("/beta/admin/api/autobattle/accounts")
@@ -254,9 +257,9 @@ export function BetaAdminConsole({
       accountsRequest,
     ] as const);
 
-    if (formsResult.status === "fulfilled") {
+    if (product === "conquest" && formsResult.status === "fulfilled" && formsResult.value) {
       const scopedApplications = (formsResult.value.applications || []).filter(
-        (application) => applicationProductKey(application) === product,
+        (application) => applicationProductKey(application) === "conquest",
       );
       setApplications(scopedApplications);
       setActorEmail(formsResult.value.actorEmail || initialActorEmail);
@@ -269,7 +272,7 @@ export function BetaAdminConsole({
         setSelected(null);
         setEvents([]);
       }
-    } else {
+    } else if (product === "conquest" && formsResult.status === "rejected") {
       setApplications([]);
       setSelectedId(null);
       setSelected(null);
@@ -280,6 +283,11 @@ export function BetaAdminConsole({
           : "Unable to load requests.",
       );
       setMessageState("error");
+    } else {
+      setApplications([]);
+      setSelectedId(null);
+      setSelected(null);
+      setEvents([]);
     }
 
     if (product === "autobattle") {
@@ -676,16 +684,14 @@ export function BetaAdminConsole({
           </section>
         ) : null}
 
+        {product === "conquest" ? (
+          <>
         <div className="admin-queue-heading">
           <p className="admin-eyebrow">
-            {product === "autobattle" ? "AutoBattle / Request forms" : "Conquest / Request forms"}
+            Conquest / Request forms
           </p>
-          <h2>{product === "autobattle" ? "Campaign submissions." : "Beta applications."}</h2>
-          <p>
-            {product === "autobattle"
-              ? "Founding-clan and AutoBattle public-beta forms appear here."
-              : "Only Conquest: Ascension beta applications appear here."}
-          </p>
+          <h2>Beta applications.</h2>
+          <p>Only Conquest: Ascension beta applications appear here.</p>
         </div>
 
         <section className="admin-workspace" aria-label="Beta applicant workspace">
@@ -1014,6 +1020,8 @@ export function BetaAdminConsole({
             )}
           </section>
         </section>
+          </>
+        ) : null}
       </main>
     </div>
   );

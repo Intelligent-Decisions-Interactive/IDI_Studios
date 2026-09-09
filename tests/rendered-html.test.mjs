@@ -195,6 +195,9 @@ test("protects and operates the beta administration console", async () => {
   assert.doesNotMatch(consoleSource, /["`]\/admin\/api/);
   assert.match(consoleSource, /Promise\.allSettled/);
   assert.match(consoleSource, /\}, \[product\]\);/);
+  assert.match(consoleSource, /product === "conquest"\s*\? apiRequest<ListResponse>/);
+  assert.doesNotMatch(consoleSource, /Campaign submissions/);
+  assert.doesNotMatch(consoleSource, /Founding-clan and AutoBattle public-beta forms appear here/);
   assert.match(auth, /cf-access-authenticated-user-email/);
   assert.match(auth, /cf-access-jwt-assertion/);
   assert.match(auth, /oai-authenticated-user-email/);
