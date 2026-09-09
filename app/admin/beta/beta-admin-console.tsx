@@ -27,6 +27,17 @@ type BetaApplication = {
   updatedAt: string;
 };
 
+type AutoBattleAccessStatus = "pending" | "beta" | "active" | "suspended";
+
+type AutoBattleAdminAccount = {
+  userId: string;
+  email: string;
+  playerName: string;
+  accessStatus: AutoBattleAccessStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type BetaEvent = {
   id: number;
   eventType: string;
@@ -39,6 +50,7 @@ type BetaEvent = {
 
 type ListResponse = {
   applications: BetaApplication[];
+  autoBattleAccounts: AutoBattleAdminAccount[];
   actorEmail: string;
   actorProvider: string;
   inviteEnabled: boolean;
@@ -126,6 +138,16 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
+function applicationProduct(application: BetaApplication) {
+  if (application.testingFocus.startsWith("[AutoBattle clan access]")) {
+    return "AutoBattle founding access";
+  }
+  if (application.testingFocus.startsWith("[AutoBattle public beta]")) {
+    return "AutoBattle public beta";
+  }
+  return "Conquest: Ascension";
+}
+
 function DataRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -143,6 +165,7 @@ export function BetaAdminConsole({
   actorProvider: string;
 }) {
   const [applications, setApplications] = useState<BetaApplication[]>([]);
+  const [autoBattleAccounts, setAutoBattleAccounts] = useState<AutoBattleAdminAccount[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selected, setSelected] = useState<BetaApplication | null>(null);
   const [events, setEvents] = useState<BetaEvent[]>([]);
@@ -163,6 +186,9 @@ export function BetaAdminConsole({
   const [paymentReference, setPaymentReference] = useState("");
   const [applyPurchaseDiscount, setApplyPurchaseDiscount] = useState(true);
   const [purchaseConfirmation, setPurchaseConfirmation] = useState<ManualPurchase | null>(null);
+  const [autoBattleAction, setAutoBattleAction] = useState("");
+  const [autoBattleMessage, setAutoBattleMessage] = useState("");
+  const [autoBattleMessageState, setAutoBattleMessageState] = useState<"" | "error" | "success">("");
 
   const mergeApplication = useCallback((application: BetaApplication) => {
     setApplications((current) =>
@@ -203,6 +229,7 @@ export function BetaAdminConsole({
     try {
       const result = await apiRequest<ListResponse>("/admin/api/requests");
       setApplications(result.applications || []);
+      setAutoBattleAccounts(result.autoBattleAccounts || []);
       setActorEmail(result.actorEmail || initialActorEmail);
       setActorProvider(result.actorProvider || initialActorProvider);
       setInviteEnabled(result.inviteEnabled);
@@ -227,8 +254,8 @@ export function BetaAdminConsole({
   }, []);
 
   const counts = useMemo(
-    () =>
-      applications.reduce(
+    () => {
+      const result = applications.reduce(
         (result, application) => {
           result.total += 1;
           if (application.status === "pending") result.pending += 1;
@@ -238,8 +265,24 @@ export function BetaAdminConsole({
           return result;
         },
         { total: 0, pending: 0, accepted: 0 },
-      ),
-    [applications],
+      );
+      for (const account of autoBattleAccounts) {
+        result.total += 1;
+        if (account.accessStatus === "pending") result.pending += 1;
+        if (["beta", "active"].includes(account.accessStatus)) result.accepted += 1;
+      }
+      return result;
+    },
+    [applications, autoBattleAccounts],
+  );
+
+  const sortedAutoBattleAccounts = useMemo(
+    () => [...autoBattleAccounts].sort((left, right) => {
+      const leftPending = left.accessStatus === "pending" ? 0 : 1;
+      const rightPending = right.accessStatus === "pending" ? 0 : 1;
+      return leftPending - rightPending || right.createdAt.localeCompare(left.createdAt);
+    }),
+    [autoBattleAccounts],
   );
 
   const filteredApplications = useMemo(() => {
@@ -413,6 +456,50 @@ export function BetaAdminConsole({
     }
   }
 
+  async function updateAutoBattleAccess(
+    account: AutoBattleAdminAccount,
+    accessStatus: AutoBattleAccessStatus,
+  ) {
+    setAutoBattleAction(account.userId);
+    setAutoBattleMessage(
+      accessStatus === "beta"
+        ? "Approving AutoBattle beta access…"
+        : accessStatus === "suspended"
+          ? "Suspending AutoBattle access…"
+          : "Updating AutoBattle access…",
+    );
+    setAutoBattleMessageState("");
+    try {
+      const result = await apiRequest<{ account: AutoBattleAdminAccount }>(
+        `/admin/api/autobattle/accounts/${account.userId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ accessStatus }),
+        },
+      );
+      setAutoBattleAccounts((current) =>
+        current.map((item) =>
+          item.userId === result.account.userId ? result.account : item,
+        ),
+      );
+      setAutoBattleMessage(
+        accessStatus === "beta"
+          ? `${result.account.email} now has AutoBattle beta access.`
+          : accessStatus === "suspended"
+            ? `${result.account.email} has been suspended.`
+            : `${result.account.email} was updated.`,
+      );
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "AutoBattle access could not be updated.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setAutoBattleAction("");
+    }
+  }
+
   return (
     <div className="beta-admin-root">
       <header className="beta-admin-header">
@@ -435,16 +522,92 @@ export function BetaAdminConsole({
             <p className="admin-eyebrow">Private beta operations</p>
             <h1>Applicant management.</h1>
             <p>
-              Review requests, record decisions, track delivery health, and move
-              approved Android testers into a build wave.
+              Review AutoBattle accounts and request-form submissions, record
+              decisions, and move approved Android testers into a build wave.
             </p>
           </div>
           <div className="admin-stats" aria-label="Application summary">
-            <article><strong>{counts.total}</strong><span>Total requests</span></article>
+            <article><strong>{counts.total}</strong><span>Total records</span></article>
             <article><strong>{counts.pending}</strong><span>Awaiting review</span></article>
-            <article><strong>{counts.accepted}</strong><span>Approved forward</span></article>
+            <article><strong>{counts.accepted}</strong><span>Approved access</span></article>
           </div>
         </section>
+
+        <section className="admin-autobattle" aria-labelledby="autobattle-accounts-title">
+          <div className="admin-section-heading">
+            <div>
+              <p className="admin-eyebrow">AutoBattle / Account access</p>
+              <h2 id="autobattle-accounts-title">Account approvals.</h2>
+              <p>
+                These are users who created an AutoBattle account. Approving a pending
+                account enables Android device linking.
+              </p>
+            </div>
+            <span>{autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending</span>
+          </div>
+          {autoBattleMessage ? (
+            <p className="admin-autobattle-message" data-state={autoBattleMessageState} role="status">
+              {autoBattleMessage}
+            </p>
+          ) : null}
+          <div className="admin-autobattle-list" role="list">
+            {loading ? (
+              <p className="admin-list-state">Loading AutoBattle accounts…</p>
+            ) : sortedAutoBattleAccounts.length ? (
+              sortedAutoBattleAccounts.map((account) => (
+                <article className="admin-autobattle-account" role="listitem" key={account.userId}>
+                  <div>
+                    <span>AutoBattle account</span>
+                    <strong>{account.playerName || "Player name not set"}</strong>
+                    <a href={`mailto:${account.email}`}>{account.email}</a>
+                  </div>
+                  <div className="admin-autobattle-meta">
+                    <StatusPill status={account.accessStatus} />
+                    <small>Created {formatDate(account.createdAt, false)}</small>
+                  </div>
+                  <div className="admin-autobattle-actions">
+                    {account.accessStatus === "pending" ? (
+                      <button
+                        className="admin-primary-button"
+                        type="button"
+                        disabled={autoBattleAction !== ""}
+                        onClick={() => void updateAutoBattleAccess(account, "beta")}
+                      >
+                        {autoBattleAction === account.userId ? "Approving…" : "Approve beta access"}
+                      </button>
+                    ) : account.accessStatus === "suspended" ? (
+                      <button
+                        className="admin-secondary-button"
+                        type="button"
+                        disabled={autoBattleAction !== ""}
+                        onClick={() => void updateAutoBattleAccess(account, "beta")}
+                      >
+                        {autoBattleAction === account.userId ? "Restoring…" : "Restore beta access"}
+                      </button>
+                    ) : (
+                      <button
+                        className="admin-secondary-button"
+                        type="button"
+                        disabled={autoBattleAction !== ""}
+                        onClick={() => void updateAutoBattleAccess(account, "suspended")}
+                      >
+                        {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}
+                      </button>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="admin-list-state">No AutoBattle accounts have been created yet.</p>
+            )}
+          </div>
+        </section>
+
+        <div className="admin-queue-heading">
+          <p className="admin-eyebrow">Request forms</p>
+          <h2>Form submissions.</h2>
+          <p>Conquest requests and AutoBattle founding or public-beta forms appear here.</p>
+        </div>
 
         <section className="admin-workspace" aria-label="Beta applicant workspace">
           <aside className="admin-applicants">
@@ -488,7 +651,7 @@ export function BetaAdminConsole({
                     </span>
                     <span className="admin-applicant-email">{application.email}</span>
                     <span className="admin-applicant-meta">
-                      <span>{application.androidDevice}</span>
+                      <span>{applicationProduct(application)} · {application.androidDevice}</span>
                       <span>{formatDate(application.createdAt, false)}</span>
                     </span>
                   </button>
@@ -533,6 +696,7 @@ export function BetaAdminConsole({
                   <article className="admin-card">
                     <h3>Testing profile</h3>
                     <dl>
+                      <DataRow label="Product">{applicationProduct(selected)}</DataRow>
                       <DataRow label="Android device">{selected.androidDevice}</DataRow>
                       <DataRow label="Submitted">{formatDate(selected.createdAt)}</DataRow>
                       <DataRow label="Last updated">{formatDate(selected.updatedAt)}</DataRow>

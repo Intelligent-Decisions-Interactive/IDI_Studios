@@ -118,7 +118,16 @@ test("stores verified beta applications in Supabase and sends notifications", as
 });
 
 test("protects and operates the beta administration console", async () => {
-  const [page, consoleSource, auth, listRoute, detailRoute, supabaseHelper] =
+  const [
+    page,
+    consoleSource,
+    auth,
+    listRoute,
+    detailRoute,
+    autoBattleAccessRoute,
+    supabaseHelper,
+    autoBattleDatabase,
+  ] =
     await Promise.all([
       readFile(new URL("../app/admin/beta/page.tsx", import.meta.url), "utf8"),
       readFile(
@@ -134,7 +143,12 @@ test("protects and operates the beta administration console", async () => {
         new URL("../app/admin/api/requests/[id]/route.ts", import.meta.url),
         "utf8",
       ),
+      readFile(
+        new URL("../app/admin/api/autobattle/accounts/[id]/route.ts", import.meta.url),
+        "utf8",
+      ),
       readFile(new URL("../app/supabase.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     ]);
 
   assert.match(page, /getAdminActorFromHeaders/);
@@ -143,15 +157,22 @@ test("protects and operates the beta administration console", async () => {
   assert.match(consoleSource, /Private admin notes/);
   assert.match(consoleSource, /Send invitation/);
   assert.match(consoleSource, /Activity history/);
+  assert.match(consoleSource, /Account approvals/);
+  assert.match(consoleSource, /Approve beta access/);
   assert.match(auth, /cf-access-authenticated-user-email/);
   assert.match(auth, /cf-access-jwt-assertion/);
   assert.match(auth, /oai-authenticated-user-email/);
   assert.match(auth, /BETA_ADMIN_EMAILS/);
   assert.match(listRoute, /listBetaRequests/);
+  assert.match(listRoute, /listAutoBattleAdminAccounts/);
   assert.match(detailRoute, /status_changed/);
   assert.match(detailRoute, /5,000 characters/);
+  assert.match(autoBattleAccessRoute, /getAdminActorFromHeaders/);
+  assert.match(autoBattleAccessRoute, /updateAutoBattleAccessStatus/);
   assert.match(supabaseHelper, /limit=250/);
   assert.match(supabaseHelper, /beta_access_request_events/);
+  assert.match(autoBattleDatabase, /listAutoBattleAdminAccounts/);
+  assert.match(autoBattleDatabase, /access_status: accessStatus/);
 });
 
 test("protects private realm downloads with TOTP and signed sessions", async () => {

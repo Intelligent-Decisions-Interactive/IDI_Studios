@@ -206,6 +206,136 @@ body:has(.beta-admin-denied) {
   font-size: 0.7rem;
 }
 
+.admin-autobattle {
+  margin-bottom: 32px;
+  padding: clamp(22px, 3vw, 32px);
+  border: 1px solid var(--admin-line);
+  background:
+    linear-gradient(135deg, rgba(197, 163, 96, 0.07), transparent 48%),
+    var(--admin-panel);
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.26);
+}
+
+.admin-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.admin-section-heading h2,
+.admin-queue-heading h2 {
+  margin: 0;
+  font-size: clamp(1.65rem, 3vw, 2.5rem);
+  font-weight: 540;
+  letter-spacing: -0.045em;
+}
+
+.admin-section-heading p:last-child,
+.admin-queue-heading > p:last-child {
+  max-width: 720px;
+  margin: 10px 0 0;
+  color: var(--admin-slate);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+.admin-section-heading > span {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid rgba(210, 173, 101, 0.36);
+  border-radius: 999px;
+  color: var(--admin-warning);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.admin-autobattle-message {
+  margin: 17px 0 0;
+  color: var(--admin-slate);
+  font-size: 0.75rem;
+}
+
+.admin-autobattle-message[data-state="success"] {
+  color: var(--admin-success);
+}
+
+.admin-autobattle-message[data-state="error"] {
+  color: var(--admin-danger);
+}
+
+.admin-autobattle-list {
+  display: grid;
+  gap: 1px;
+  margin-top: 22px;
+  border: 1px solid var(--admin-line);
+  background: var(--admin-line);
+}
+
+.admin-autobattle-account {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.42fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  background: #0d1014;
+}
+
+.admin-autobattle-account > div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.admin-autobattle-account > div:first-child > span {
+  color: var(--admin-gold);
+  font-size: 0.58rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.admin-autobattle-account strong,
+.admin-autobattle-account a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-autobattle-account strong {
+  font-size: 0.9rem;
+}
+
+.admin-autobattle-account a {
+  color: var(--admin-slate);
+  font-size: 0.7rem;
+  text-decoration: none;
+}
+
+.admin-autobattle-account a:hover {
+  color: var(--admin-gold);
+}
+
+.admin-autobattle-meta {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.admin-autobattle-meta small {
+  color: var(--admin-slate);
+  font-size: 0.64rem;
+}
+
+.admin-autobattle-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.admin-queue-heading {
+  margin: 42px 0 18px;
+}
+
 .admin-workspace {
   display: grid;
   min-height: 700px;
@@ -356,6 +486,7 @@ body:has(.beta-admin-denied) {
 }
 
 .admin-status-pill[data-status="approved"],
+.admin-status-pill[data-status="beta"],
 .admin-status-pill[data-status="active"],
 .admin-status-pill[data-status="sent"] {
   border-color: rgba(125, 185, 149, 0.36);
@@ -368,6 +499,7 @@ body:has(.beta-admin-denied) {
 }
 
 .admin-status-pill[data-status="declined"],
+.admin-status-pill[data-status="suspended"],
 .admin-status-pill[data-status="failed"] {
   border-color: rgba(212, 128, 128, 0.36);
   color: var(--admin-danger);
@@ -778,6 +910,19 @@ body:has(.beta-admin-denied) {
   .admin-purchase-grid {
     grid-template-columns: 1fr;
   }
+
+  .admin-autobattle-account {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-autobattle-actions {
+    grid-column: 1 / -1;
+    justify-content: stretch;
+  }
+
+  .admin-autobattle-actions button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 760px) {
@@ -807,6 +952,21 @@ body:has(.beta-admin-denied) {
 
   .admin-summary {
     margin-bottom: 23px;
+  }
+
+  .admin-section-heading,
+  .admin-autobattle-account {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .admin-autobattle-meta {
+    justify-items: start;
+  }
+
+  .admin-autobattle-actions {
+    grid-column: auto;
   }
 
   .admin-stats {

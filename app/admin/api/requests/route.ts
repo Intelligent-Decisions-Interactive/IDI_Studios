@@ -3,6 +3,7 @@ import {
   getAdminActorFromHeaders,
 } from "@/app/beta-admin";
 import { listBetaRequests } from "@/app/supabase";
+import { listAutoBattleAdminAccounts } from "@/app/autobattle-db";
 
 export const dynamic = "force-dynamic";
 
@@ -15,11 +16,15 @@ export async function GET(request: Request) {
     );
   }
 
-  const applications = await listBetaRequests();
+  const [applications, autoBattleAccounts] = await Promise.all([
+    listBetaRequests(),
+    listAutoBattleAdminAccounts(),
+  ]);
 
   return Response.json({
     success: true,
     applications,
+    autoBattleAccounts,
     actorEmail: actor.email,
     actorProvider: actor.provider,
     ...adminConfiguration(),

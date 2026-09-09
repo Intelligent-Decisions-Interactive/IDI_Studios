@@ -15,6 +15,15 @@ type ProfileRow = {
   updated_at: string;
 };
 
+export type AutoBattleAdminAccount = {
+  userId: string;
+  email: string;
+  playerName: string;
+  accessStatus: "pending" | "beta" | "active" | "suspended";
+  createdAt: string;
+  updatedAt: string;
+};
+
 type BalanceRow = {
   purchased_balance: number | string;
   bonus_balance: number | string;
@@ -371,6 +380,43 @@ export async function updateAutoBattlePlayerName(userId: string, playerName: str
     "return=representation",
   );
   if (!rows?.[0]) throw new Error("AutoBattle account was not found.");
+}
+
+function mapAutoBattleAdminAccount(row: ProfileRow): AutoBattleAdminAccount {
+  return {
+    userId: row.user_id,
+    email: row.email,
+    playerName: row.player_name || "",
+    accessStatus: row.access_status as AutoBattleAdminAccount["accessStatus"],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function listAutoBattleAdminAccounts() {
+  const rows = await serviceRequest<ProfileRow[]>(
+    "autobattle_profiles?select=user_id,email,player_name,access_status,created_at,updated_at&order=created_at.desc&limit=250",
+  );
+  return (rows || []).map(mapAutoBattleAdminAccount);
+}
+
+export async function updateAutoBattleAccessStatus(
+  userId: string,
+  accessStatus: AutoBattleAdminAccount["accessStatus"],
+) {
+  const rows = await serviceRequest<ProfileRow[]>(
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,created_at,updated_at`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        access_status: accessStatus,
+        updated_at: new Date().toISOString(),
+      }),
+    },
+    "return=representation",
+  );
+  if (!rows?.[0]) throw new Error("AutoBattle account was not found.");
+  return mapAutoBattleAdminAccount(rows[0]);
 }
 
 export async function redeemAutoBattleInvite(userId: string, normalizedCode: string) {
