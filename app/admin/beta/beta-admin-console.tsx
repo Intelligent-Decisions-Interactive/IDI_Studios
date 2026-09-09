@@ -223,7 +223,7 @@ export function BetaAdminConsole({
       setMessage("");
       setMessageState("");
       try {
-        const result = await apiRequest<DetailResponse>(`/admin/api/requests/${id}`);
+        const result = await apiRequest<DetailResponse>(`/beta/admin/api/requests/${id}`);
         mergeApplication(result.application);
         setEvents(result.events || []);
         setInviteEnabled(result.inviteEnabled);
@@ -244,10 +244,10 @@ export function BetaAdminConsole({
     setAutoBattleMessage("");
     setAutoBattleMessageState("");
 
-    const formsRequest = apiRequest<ListResponse>("/admin/api/requests");
+    const formsRequest = apiRequest<ListResponse>("/beta/admin/api/requests");
     const accountsRequest =
       product === "autobattle"
-        ? apiRequest<AutoBattleListResponse>("/admin/api/autobattle/accounts")
+        ? apiRequest<AutoBattleListResponse>("/beta/admin/api/autobattle/accounts")
         : Promise.resolve<AutoBattleListResponse | null>(null);
     const [formsResult, accountsResult] = await Promise.allSettled([
       formsRequest,
@@ -364,7 +364,7 @@ export function BetaAdminConsole({
     setMessageState("");
     try {
       const result = await apiRequest<DetailResponse>(
-        `/admin/api/requests/${selected.id}`,
+        `/beta/admin/api/requests/${selected.id}`,
         {
           method: "PATCH",
           body: JSON.stringify({ status: reviewStatus, adminNotes }),
@@ -389,7 +389,7 @@ export function BetaAdminConsole({
     setMessageState("");
     try {
       const result = await apiRequest<DetailResponse>(
-        `/admin/api/requests/${selected.id}/retry-email`,
+        `/beta/admin/api/requests/${selected.id}/retry-email`,
         { method: "POST", body: JSON.stringify({ type }) },
       );
       mergeApplication(result.application);
@@ -412,7 +412,7 @@ export function BetaAdminConsole({
     setMessageState("");
     try {
       const result = await apiRequest<DetailResponse>(
-        `/admin/api/requests/${selected.id}/invite`,
+        `/beta/admin/api/requests/${selected.id}/invite`,
         { method: "POST", body: JSON.stringify({}) },
       );
       mergeApplication(result.application);
@@ -447,7 +447,7 @@ export function BetaAdminConsole({
     setMessageState("");
     try {
       const result = await apiRequest<{ code: string; events: BetaEvent[] }>(
-        `/admin/api/requests/${selected.id}/clan-code`,
+        `/beta/admin/api/requests/${selected.id}/clan-code`,
         { method: "POST", body: JSON.stringify({}) },
       );
       setClanCode(result.code);
@@ -483,7 +483,7 @@ export function BetaAdminConsole({
     setMessageState("");
     try {
       const result = await apiRequest<{ purchase: ManualPurchase }>(
-        "/admin/api/autobattle/manual-purchase",
+        "/beta/admin/api/autobattle/manual-purchase",
         {
           method: "POST",
           body: JSON.stringify({
@@ -525,7 +525,7 @@ export function BetaAdminConsole({
     setAutoBattleMessageState("");
     try {
       const result = await apiRequest<{ account: AutoBattleAdminAccount }>(
-        `/admin/api/autobattle/accounts/${account.userId}`,
+        `/beta/admin/api/autobattle/accounts/${account.userId}`,
         {
           method: "PATCH",
           body: JSON.stringify({ accessStatus }),
