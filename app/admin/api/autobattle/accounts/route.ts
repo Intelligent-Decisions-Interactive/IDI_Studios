@@ -1,8 +1,5 @@
-import {
-  adminConfiguration,
-  getAdminActorFromHeaders,
-} from "@/app/beta-admin";
-import { listBetaRequests } from "@/app/supabase";
+import { getAdminActorFromHeaders } from "@/app/beta-admin";
+import { listAutoBattleAdminAccounts } from "@/app/autobattle-db";
 
 export const dynamic = "force-dynamic";
 
@@ -16,18 +13,17 @@ export async function GET(request: Request) {
   }
 
   try {
-    const applications = await listBetaRequests();
+    const accounts = await listAutoBattleAdminAccounts();
     return Response.json({
       success: true,
-      applications,
+      accounts,
       actorEmail: actor.email,
       actorProvider: actor.provider,
-      ...adminConfiguration(),
     });
   } catch (error) {
-    console.error("Beta admin request list failed", error);
+    console.error("AutoBattle admin account list failed", error);
     return Response.json(
-      { success: false, message: "The beta request list could not be loaded." },
+      { success: false, message: "The AutoBattle account list could not be loaded." },
       { status: 503 },
     );
   }

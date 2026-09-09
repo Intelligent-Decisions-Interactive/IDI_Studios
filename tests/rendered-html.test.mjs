@@ -127,6 +127,7 @@ test("protects and operates the beta administration console", async () => {
     auth,
     listRoute,
     detailRoute,
+    autoBattleListRoute,
     autoBattleAccessRoute,
     supabaseHelper,
     autoBattleDatabase,
@@ -159,6 +160,10 @@ test("protects and operates the beta administration console", async () => {
         "utf8",
       ),
       readFile(
+        new URL("../app/admin/api/autobattle/accounts/route.ts", import.meta.url),
+        "utf8",
+      ),
+      readFile(
         new URL("../app/admin/api/autobattle/accounts/[id]/route.ts", import.meta.url),
         "utf8",
       ),
@@ -180,14 +185,18 @@ test("protects and operates the beta administration console", async () => {
   assert.match(consoleSource, /Activity history/);
   assert.match(consoleSource, /Account approvals/);
   assert.match(consoleSource, /Approve beta access/);
+  assert.match(consoleSource, /\/admin\/api\/autobattle\/accounts/);
+  assert.match(consoleSource, /Promise\.allSettled/);
   assert.match(auth, /cf-access-authenticated-user-email/);
   assert.match(auth, /cf-access-jwt-assertion/);
   assert.match(auth, /oai-authenticated-user-email/);
   assert.match(auth, /BETA_ADMIN_EMAILS/);
   assert.match(listRoute, /listBetaRequests/);
-  assert.match(listRoute, /listAutoBattleAdminAccounts/);
+  assert.doesNotMatch(listRoute, /listAutoBattleAdminAccounts/);
   assert.match(detailRoute, /status_changed/);
   assert.match(detailRoute, /5,000 characters/);
+  assert.match(autoBattleListRoute, /getAdminActorFromHeaders/);
+  assert.match(autoBattleListRoute, /listAutoBattleAdminAccounts/);
   assert.match(autoBattleAccessRoute, /getAdminActorFromHeaders/);
   assert.match(autoBattleAccessRoute, /updateAutoBattleAccessStatus/);
   assert.match(supabaseHelper, /limit=250/);

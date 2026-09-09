@@ -52,10 +52,13 @@ type BetaEvent = {
 
 type ListResponse = {
   applications: BetaApplication[];
-  autoBattleAccounts: AutoBattleAdminAccount[];
   actorEmail: string;
   actorProvider: string;
   inviteEnabled: boolean;
+};
+
+type AutoBattleListResponse = {
+  accounts: AutoBattleAdminAccount[];
 };
 
 type DetailResponse = {
@@ -236,18 +239,29 @@ export function BetaAdminConsole({
 
   const loadApplications = useCallback(async () => {
     setLoading(true);
-    try {
-      const result = await apiRequest<ListResponse>("/admin/api/requests");
-      const scopedApplications = (result.applications || []).filter(
+    setMessage("");
+    setMessageState("");
+    setAutoBattleMessage("");
+    setAutoBattleMessageState("");
+
+    const formsRequest = apiRequest<ListResponse>("/admin/api/requests");
+    const accountsRequest =
+      product === "autobattle"
+        ? apiRequest<AutoBattleListResponse>("/admin/api/autobattle/accounts")
+        : Promise.resolve<AutoBattleListResponse | null>(null);
+    const [formsResult, accountsResult] = await Promise.allSettled([
+      formsRequest,
+      accountsRequest,
+    ] as const);
+
+    if (formsResult.status === "fulfilled") {
+      const scopedApplications = (formsResult.value.applications || []).filter(
         (application) => applicationProductKey(application) === product,
       );
       setApplications(scopedApplications);
-      setAutoBattleAccounts(result.autoBattleAccounts || []);
-      setActorEmail(result.actorEmail || initialActorEmail);
-      setActorProvider(result.actorProvider || initialActorProvider);
-      setInviteEnabled(result.inviteEnabled);
-      setMessage("");
-      setMessageState("");
+      setActorEmail(formsResult.value.actorEmail || initialActorEmail);
+      setActorProvider(formsResult.value.actorProvider || initialActorProvider);
+      setInviteEnabled(formsResult.value.inviteEnabled);
       if (selectedId && scopedApplications.some((item) => item.id === selectedId)) {
         await selectApplication(selectedId);
       } else if (selectedId) {
@@ -255,12 +269,36 @@ export function BetaAdminConsole({
         setSelected(null);
         setEvents([]);
       }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Unable to load requests.");
+    } else {
+      setApplications([]);
+      setSelectedId(null);
+      setSelected(null);
+      setEvents([]);
+      setMessage(
+        formsResult.reason instanceof Error
+          ? formsResult.reason.message
+          : "Unable to load requests.",
+      );
       setMessageState("error");
-    } finally {
-      setLoading(false);
     }
+
+    if (product === "autobattle") {
+      if (accountsResult.status === "fulfilled" && accountsResult.value) {
+        setAutoBattleAccounts(accountsResult.value.accounts || []);
+      } else if (accountsResult.status === "rejected") {
+        setAutoBattleAccounts([]);
+        setAutoBattleMessage(
+          accountsResult.reason instanceof Error
+            ? accountsResult.reason.message
+            : "Unable to load AutoBattle accounts.",
+        );
+        setAutoBattleMessageState("error");
+      }
+    } else {
+      setAutoBattleAccounts([]);
+    }
+
+    setLoading(false);
   }, [initialActorEmail, initialActorProvider, product, selectApplication, selectedId]);
 
   useEffect(() => {
@@ -587,7 +625,7 @@ export function BetaAdminConsole({
           <div className="admin-autobattle-list" role="list">
             {loading ? (
               <p className="admin-list-state">Loading AutoBattle accounts…</p>
-            ) : sortedAutoBattleAccounts.length ? (
+            ) : autoBattleMessageState === "error" ? null : sortedAutoBattleAccounts.length ? (
               sortedAutoBattleAccounts.map((account) => (
                 <article className="admin-autobattle-account" role="listitem" key={account.userId}>
                   <div>
