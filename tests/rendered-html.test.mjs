@@ -200,8 +200,11 @@ test("protects and operates the beta administration console", async () => {
   assert.doesNotMatch(consoleSource, /Founding-clan and AutoBattle public-beta forms appear here/);
   assert.match(auth, /cf-access-authenticated-user-email/);
   assert.match(auth, /cf-access-jwt-assertion/);
-  assert.match(auth, /oai-authenticated-user-email/);
-  assert.match(auth, /BETA_ADMIN_EMAILS/);
+  assert.match(auth, /crypto\.subtle\.verify/);
+  assert.match(auth, /ACCESS_TEAM_DOMAIN/);
+  assert.match(auth, /ACCESS_POLICY_AUD/);
+  assert.doesNotMatch(auth, /oai-authenticated-user-email/);
+  assert.doesNotMatch(auth, /BETA_ADMIN_EMAILS/);
   assert.match(listRoute, /listBetaRequests/);
   assert.doesNotMatch(listRoute, /listAutoBattleAdminAccounts/);
   assert.match(protectedListRoute, /@\/app\/admin\/api\/requests\/route/);
@@ -304,12 +307,13 @@ test("protects private realm downloads with TOTP and signed sessions", async () 
 });
 
 test("uses Wrangler as the Cloudflare configuration source of truth", async () => {
-  const [wranglerSource, viteWranglerSource, packageSource, viteSource] =
+  const [wranglerSource, viteWranglerSource, packageSource, viteSource, workerSource] =
     await Promise.all([
       readFile(new URL("wrangler.jsonc", root), "utf8"),
       readFile(new URL("wrangler.vite.jsonc", root), "utf8"),
       readFile(new URL("package.json", root), "utf8"),
       readFile(new URL("vite.config.ts", root), "utf8"),
+      readFile(new URL("worker/index.ts", root), "utf8"),
     ]);
   const wrangler = JSON.parse(wranglerSource);
   const viteWrangler = JSON.parse(viteWranglerSource);
@@ -322,13 +326,25 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
   assert.equal(wrangler.assets.run_worker_first, undefined);
   assert.equal(wrangler.build.command, "npm run build");
   assert.equal(wrangler.no_bundle, true);
+  assert.equal(wrangler.workers_dev, false);
+  assert.equal(wrangler.preview_urls, false);
+  assert.deepEqual(wrangler.routes, [{ pattern: "idistudios.io", custom_domain: true }]);
   assert.equal(viteWrangler.main, "./worker/index.ts");
   assert.equal(viteWrangler.assets.directory, "./public");
   assert.equal(viteWrangler.assets.run_worker_first, undefined);
+  assert.equal(viteWrangler.workers_dev, false);
+  assert.equal(viteWrangler.preview_urls, false);
+  assert.deepEqual(viteWrangler.routes, [{ pattern: "idistudios.io", custom_domain: true }]);
+  assert.equal(wrangler.vars.ACCESS_TEAM_DOMAIN, viteWrangler.vars.ACCESS_TEAM_DOMAIN);
+  assert.equal(wrangler.vars.ACCESS_POLICY_AUD, viteWrangler.vars.ACCESS_POLICY_AUD);
   assert.equal(packageJson.scripts.deploy, "wrangler deploy");
   assert.match(viteSource, /cloudflare\(\{/);
   assert.match(viteSource, /configPath: "\.\/wrangler\.vite\.jsonc"/);
   assert.doesNotMatch(viteSource, /hostingConfig|localBindingConfig|config:\s*localBindingConfig/);
+  assert.match(workerSource, /Strict-Transport-Security/);
+  assert.match(workerSource, /Content-Security-Policy/);
+  assert.match(workerSource, /https:\/\/\*\.js\.stripe\.com/);
+  assert.match(workerSource, /https:\/\/\*\.link\.com/);
 });
 
 test("keeps AutoBattle accounts behind the server and an append-only token ledger", async () => {

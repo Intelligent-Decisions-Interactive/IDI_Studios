@@ -31,6 +31,9 @@ export async function deviceSession(request: Request) {
 
 export function publicAccountError(error: unknown) {
   const message = error instanceof Error ? error.message : "";
+  if (message.includes("token_balance_integrity_violation")) {
+    return { status: 503, message: "This account requires token reconciliation before it can continue." };
+  }
   if (message.includes("insufficient_tokens")) {
     return { status: 402, message: "Your account does not have enough tokens for another cycle." };
   }

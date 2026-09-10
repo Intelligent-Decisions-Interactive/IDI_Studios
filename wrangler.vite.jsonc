@@ -4,11 +4,19 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-05-22",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "idistudios.io", "custom_domain": true }
+  ],
   "vars": {
     "SUPABASE_URL": "https://mbptywurviigpgigghna.supabase.co",
     "AUTOBATTLE_PUBLIC_ORIGIN": "https://idistudios.io",
-    "STRIPE_PUBLISHABLE_KEY": "pk_test_51UDooBP20duDHpBzpnjTZq6DFuxiDGJKXSlzk6Fn76wywAUHl9GIuyhftACgq7QJeqMZn0YRoZwvKajVGThrcKsU00ZSikdf0T",
-    "STRIPE_AUTOBATTLE_TAX_CODE": "txcd_10103100"
+    "STRIPE_ALLOW_LIVE_MODE": "true",
+    "STRIPE_PUBLISHABLE_KEY": "pk_live_51UDonx1njYGhP2jB9HFTWwhIfQA7e6zSfnRRhQqX9WNUribNIm5tEOEbluQkJtF32ukIIEnZ1dv8aHDgEKnQvFL200I7bdzrx1",
+    "STRIPE_AUTOBATTLE_TAX_CODE": "txcd_10103100",
+    "ACCESS_TEAM_DOMAIN": "https://long-lake-9cd8.cloudflareaccess.com",
+    "ACCESS_POLICY_AUD": "2268643436b37cec6b1c87d586be7beeaddd0752fe392d47cc4471aca4140b68"
   },
   "assets": {
     "directory": "./public",

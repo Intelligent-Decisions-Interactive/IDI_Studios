@@ -3,6 +3,7 @@ import {
   type AutoBattleAdminAccount,
   updateAutoBattleAccessStatus,
 } from "@/app/autobattle-db";
+import { requireSameOrigin } from "@/app/autobattle-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,13 @@ const ALLOWED_STATUSES = new Set<AutoBattleAdminAccount["accessStatus"]>([
 ]);
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const actor = getAdminActorFromHeaders(request.headers);
+  if (!requireSameOrigin(request)) {
+    return Response.json(
+      { success: false, message: "Invalid request origin." },
+      { status: 403 },
+    );
+  }
+  const actor = await getAdminActorFromHeaders(request.headers);
   if (!actor) {
     return Response.json(
       { success: false, message: "A verified admin session is required." },

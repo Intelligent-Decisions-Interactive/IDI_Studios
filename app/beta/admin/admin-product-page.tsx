@@ -4,7 +4,7 @@ import { BetaAdminConsole, type BetaAdminProduct } from "@/app/admin/beta/beta-a
 import { getAdminActorFromHeaders } from "@/app/beta-admin";
 
 export async function AdminProductPage({ product }: { product: BetaAdminProduct }) {
-  const actor = getAdminActorFromHeaders(await headers());
+  const actor = await getAdminActorFromHeaders(await headers());
 
   if (!actor) {
     return (
@@ -13,7 +13,7 @@ export async function AdminProductPage({ product }: { product: BetaAdminProduct 
         <h1>Verified access required.</h1>
         <p>
           This console is available only through the IDI Studios Cloudflare
-          Zero Trust policy or an approved secure preview account.
+          Zero Trust policy.
         </p>
         <Link href="/">Return to IDI Studios</Link>
       </main>

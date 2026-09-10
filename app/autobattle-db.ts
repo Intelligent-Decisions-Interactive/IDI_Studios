@@ -4,6 +4,7 @@ import type { AutoBattleIdentity } from "./autobattle-auth";
 type RuntimeEnv = {
   SUPABASE_URL?: string;
   SUPABASE_SECRET_KEY?: string;
+  AUTOBATTLE_DB_CAPABILITY?: string;
 };
 
 type ProfileRow = {
@@ -143,8 +144,17 @@ function configuration() {
   const runtime = env as unknown as RuntimeEnv;
   const url = runtime.SUPABASE_URL?.trim().replace(/\/+$/, "") || "";
   const secret = runtime.SUPABASE_SECRET_KEY?.trim() || "";
+  const capability = runtime.AUTOBATTLE_DB_CAPABILITY?.trim() || "";
   if (!url || !secret) throw new Error("AutoBattle account storage is not configured.");
-  return { url, secret };
+  return { url, secret, capability };
+}
+
+function creditMintCapability() {
+  const capability = configuration().capability;
+  if (capability.length < 32) {
+    throw new Error("AutoBattle credit authorization is not configured.");
+  }
+  return capability;
 }
 
 function serviceHeaders(secret: string, prefer?: string) {
@@ -231,6 +241,7 @@ function integer(value: number | string) {
 }
 
 export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAccount | null> {
+  await rpc<void>("autobattle_assert_token_integrity", { p_user_id: userId });
   await rpc<number>("autobattle_release_stale_cycles", { p_user_id: userId });
   const [profiles, balances, discounts, devices, activity] = await Promise.all([
     serviceRequest<ProfileRow[]>(
@@ -352,6 +363,7 @@ export async function fulfillAutoBattleStripeCheckout(input: {
     p_discount_percent: input.discountPercent,
     p_discount_entitlement_id: input.discountEntitlementId,
     p_livemode: input.liveMode,
+    p_capability: creditMintCapability(),
   });
 }
 
@@ -457,6 +469,7 @@ export async function redeemAutoBattleInvite(userId: string, normalizedCode: str
   return rpc<Record<string, unknown>>("autobattle_redeem_invite_code", {
     p_user_id: userId,
     p_code_hash: await sha256Hex(normalizedCode),
+    p_capability: creditMintCapability(),
   });
 }
 

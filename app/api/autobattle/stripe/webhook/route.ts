@@ -5,6 +5,7 @@ import {
 } from "@/app/autobattle-db";
 import {
   StripeConfigurationError,
+  stripeConfiguredLiveMode,
   stripeLiveModeAllowed,
   verifyStripeEvent,
 } from "@/app/autobattle-stripe";
@@ -59,6 +60,17 @@ export async function POST(request: Request) {
     return noStoreJson({ error: "Invalid webhook signature." }, 400);
   }
 
+  let configuredLiveMode: boolean;
+  try {
+    configuredLiveMode = stripeConfiguredLiveMode();
+  } catch (error) {
+    console.error("AutoBattle Stripe payment configuration failed", error);
+    return noStoreJson({ error: "Webhook unavailable." }, 503);
+  }
+  if (event.livemode !== configuredLiveMode) {
+    console.error("AutoBattle rejected a Stripe event from the wrong mode", event.id);
+    return noStoreJson({ error: "Stripe event mode mismatch." }, 400);
+  }
   if (event.livemode && !stripeLiveModeAllowed()) {
     console.error("AutoBattle rejected a live Stripe event because live mode is disabled", event.id);
     return noStoreJson({ error: "Live Stripe events are disabled." }, 503);

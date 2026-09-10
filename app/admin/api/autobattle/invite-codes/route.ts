@@ -13,7 +13,7 @@ function randomCode(length: number) {
 
 export async function POST(request: Request) {
   if (!requireSameOrigin(request)) return noStoreJson({ error: "Invalid request origin." }, 403);
-  const actor = getAdminActorFromHeaders(request.headers);
+  const actor = await getAdminActorFromHeaders(request.headers);
   if (!actor) return noStoreJson({ error: "A verified admin session is required." }, 403);
   try {
     const body = (await request.json()) as {

@@ -7,6 +7,7 @@ import {
   logBetaEvent,
 } from "@/app/beta-admin";
 import { updateBetaRequest } from "@/app/supabase";
+import { requireSameOrigin } from "@/app/autobattle-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,7 @@ function parseId(value: string) {
 }
 
 export async function GET(request: Request, context: RouteContext) {
-  const actor = getAdminActorFromHeaders(request.headers);
+  const actor = await getAdminActorFromHeaders(request.headers);
   if (!actor) {
     return Response.json(
       { success: false, message: "A verified admin session is required." },
@@ -51,7 +52,13 @@ export async function GET(request: Request, context: RouteContext) {
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  const actor = getAdminActorFromHeaders(request.headers);
+  if (!requireSameOrigin(request)) {
+    return Response.json(
+      { success: false, message: "Invalid request origin." },
+      { status: 403 },
+    );
+  }
+  const actor = await getAdminActorFromHeaders(request.headers);
   if (!actor) {
     return Response.json(
       { success: false, message: "A verified admin session is required." },

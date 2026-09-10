@@ -18,7 +18,7 @@ export async function POST(request: Request, context: RouteContext) {
   if (!requireSameOrigin(request)) {
     return noStoreJson({ success: false, message: "Invalid request origin." }, 403);
   }
-  const actor = getAdminActorFromHeaders(request.headers);
+  const actor = await getAdminActorFromHeaders(request.headers);
   if (!actor) {
     return Response.json(
       { success: false, message: "A verified admin session is required." },

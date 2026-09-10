@@ -69,6 +69,10 @@ export function stripeLiveModeAllowed() {
   return liveModeAllowed(runtimeConfiguration());
 }
 
+export function stripeConfiguredLiveMode() {
+  return stripeSecretKey().startsWith("sk_live_");
+}
+
 function paymentConfiguration() {
   const runtime = runtimeConfiguration();
   const publishableKey = runtime.STRIPE_PUBLISHABLE_KEY?.trim() || "";
