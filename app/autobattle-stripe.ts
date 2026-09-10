@@ -4,7 +4,6 @@ import type { AutoBattleCheckoutQuote } from "./autobattle-db";
 export const STRIPE_API_VERSION = "2026-02-25.clover";
 
 type RuntimeEnv = {
-  AUTOBATTLE_PUBLIC_ORIGIN?: string;
   STRIPE_ALLOW_LIVE_MODE?: string;
   STRIPE_AUTOBATTLE_TAX_CODE?: string;
   STRIPE_PUBLISHABLE_KEY?: string;
@@ -58,10 +57,10 @@ function stripeSecretKey() {
   const runtime = runtimeConfiguration();
   const secretKey = runtime.STRIPE_SECRET_KEY?.trim() || "";
   if (!/^sk_(test|live)_/.test(secretKey)) {
-    throw new StripeConfigurationError("Stripe checkout is not configured.");
+    throw new StripeConfigurationError("Stripe payments are not configured.");
   }
   if (secretKey.startsWith("sk_live_") && !liveModeAllowed(runtime)) {
-    throw new StripeConfigurationError("Live Stripe checkout is disabled.");
+    throw new StripeConfigurationError("Live Stripe payments are disabled.");
   }
   return secretKey;
 }
@@ -76,10 +75,10 @@ function paymentConfiguration() {
   const taxCode = runtime.STRIPE_AUTOBATTLE_TAX_CODE?.trim() || "";
   const secretKey = stripeSecretKey();
   if (!/^pk_(test|live)_/.test(publishableKey)) {
-    throw new StripeConfigurationError("Stripe mobile payments are not configured.");
+    throw new StripeConfigurationError("Stripe payments are not configured.");
   }
   if (secretKey.startsWith("sk_test_") !== publishableKey.startsWith("pk_test_")) {
-    throw new StripeConfigurationError("Stripe mobile payment keys are from different modes.");
+    throw new StripeConfigurationError("Stripe payment keys are from different modes.");
   }
   if (!/^txcd_[0-9]+$/.test(taxCode)) {
     throw new StripeConfigurationError("AutoBattle's Stripe Tax code is not configured.");
@@ -87,94 +86,8 @@ function paymentConfiguration() {
   return { publishableKey, secretKey, taxCode };
 }
 
-function checkoutConfiguration() {
-  const runtime = runtimeConfiguration();
-  const originValue = runtime.AUTOBATTLE_PUBLIC_ORIGIN?.trim() || "";
-  let origin: URL;
-  try {
-    origin = new URL(originValue);
-  } catch {
-    throw new StripeConfigurationError("AutoBattle's public checkout origin is not configured.");
-  }
-  if (origin.protocol !== "https:" || origin.pathname !== "/" || origin.search || origin.hash) {
-    throw new StripeConfigurationError("AutoBattle's public checkout origin must be an HTTPS origin.");
-  }
-  return { origin: origin.origin, ...paymentConfiguration() };
-}
-
 export function autoBattleStripePublishableKey() {
   return paymentConfiguration().publishableKey;
-}
-
-function metadata(params: URLSearchParams, name: string, value: string) {
-  params.set(`metadata[${name}]`, value);
-  params.set(`payment_intent_data[metadata][${name}]`, value);
-}
-
-export async function createAutoBattleCheckout(input: {
-  userId: string;
-  email: string;
-  quote: AutoBattleCheckoutQuote;
-  idempotencyKey: string;
-}) {
-  const { origin, secretKey, taxCode } = checkoutConfiguration();
-  const { quote } = input;
-  const params = new URLSearchParams({
-    mode: "payment",
-    customer_creation: "always",
-    customer_email: input.email,
-    client_reference_id: input.userId,
-    success_url: `${origin}/AutoBattle/account?checkout=success`,
-    cancel_url: `${origin}/AutoBattle/account?checkout=cancelled`,
-    "automatic_tax[enabled]": "true",
-    "line_items[0][quantity]": "1",
-    "line_items[0][price_data][currency]": quote.currency,
-    "line_items[0][price_data][unit_amount]": String(quote.totalCents),
-    "line_items[0][price_data][tax_behavior]": "exclusive",
-    "line_items[0][price_data][product_data][name]": `${quote.paidTokens} AutoBattle tokens`,
-    "line_items[0][price_data][product_data][description]": quote.bonusTokens
-      ? `Includes ${quote.bonusTokens} bonus tokens. One token authorizes one automation cycle.`
-      : "One token authorizes one automation cycle.",
-    "line_items[0][price_data][product_data][tax_code]": taxCode,
-  });
-
-  metadata(params, "autobattle_flow", "token_pack_v1");
-  metadata(params, "autobattle_user_id", input.userId);
-  metadata(params, "autobattle_sku", quote.sku);
-  metadata(params, "autobattle_subtotal_cents", String(quote.subtotalCents));
-  metadata(params, "autobattle_discount_cents", String(quote.discountCents));
-  metadata(params, "autobattle_discount_percent", String(quote.discountPercent));
-  metadata(params, "autobattle_discount_entitlement_id", quote.discountEntitlementId || "");
-
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${secretKey}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Idempotency-Key": `autobattle-checkout:${input.userId}:${input.idempotencyKey}`,
-      "Stripe-Version": STRIPE_API_VERSION,
-    },
-    body: params.toString(),
-  });
-  const body = await response.json() as {
-    id?: unknown;
-    url?: unknown;
-    error?: { code?: unknown };
-  };
-  if (!response.ok) {
-    throw new StripeRequestError(
-      response.status,
-      typeof body.error?.code === "string" ? body.error.code : "",
-    );
-  }
-  if (typeof body.id !== "string" || typeof body.url !== "string") {
-    throw new StripeRequestError(502, "invalid_checkout_response");
-  }
-  const checkoutUrl = new URL(body.url);
-  if (checkoutUrl.protocol !== "https:" || checkoutUrl.hostname !== "checkout.stripe.com") {
-    throw new StripeRequestError(502, "invalid_checkout_url");
-  }
-  return { id: body.id, url: checkoutUrl.toString() };
 }
 
 function checkoutReference(userId: string, sku: string, idempotencyKey: string) {
@@ -302,6 +215,7 @@ export async function createAutoBattleMobilePaymentIntent(input: {
   taxCalculationId: string;
   confirmationTokenId: string;
   idempotencyKey: string;
+  channel?: "mobile" | "web";
 }) {
   const { secretKey, taxCode } = paymentConfiguration();
   const calculationUrl = new URL(`https://api.stripe.com/v1/tax/calculations/${input.taxCalculationId}`);
@@ -357,7 +271,10 @@ export async function createAutoBattleMobilePaymentIntent(input: {
     confirmationToken.payment_intent != null ||
     !matchingBillingAddress(calculatedAddress, paymentAddress)
   ) {
-    throw new StripeRequestError(400, "invalid_mobile_checkout");
+    throw new StripeRequestError(
+      400,
+      input.channel === "web" ? "invalid_web_checkout" : "invalid_mobile_checkout",
+    );
   }
 
   const params = new URLSearchParams({
@@ -367,7 +284,9 @@ export async function createAutoBattleMobilePaymentIntent(input: {
     description: `${input.quote.paidTokens} AutoBattle tokens${input.quote.bonusTokens ? ` + ${input.quote.bonusTokens} bonus` : ""}`,
     "automatic_payment_methods[enabled]": "true",
     "hooks[inputs][tax][calculation]": input.taxCalculationId,
-    "metadata[autobattle_flow]": "token_pack_mobile_v1",
+    "metadata[autobattle_flow]": input.channel === "web"
+      ? "token_pack_web_v1"
+      : "token_pack_mobile_v1",
     "metadata[autobattle_user_id]": input.userId,
     "metadata[autobattle_sku]": input.quote.sku,
     "metadata[autobattle_subtotal_cents]": String(input.quote.subtotalCents),
@@ -392,7 +311,7 @@ export async function createAutoBattleMobilePaymentIntent(input: {
       body: params.toString(),
     },
     secretKey,
-    `autobattle-mobile-intent:${input.userId}:${input.idempotencyKey}`,
+    `autobattle-${input.channel === "web" ? "web" : "mobile"}-intent:${input.userId}:${input.idempotencyKey}`,
   );
   const id = stringValue(intent.id);
   const clientSecret = stringValue(intent.client_secret);
@@ -406,6 +325,63 @@ export async function createAutoBattleMobilePaymentIntent(input: {
     throw new StripeRequestError(502, "invalid_payment_intent_response");
   }
   return { id, clientSecret };
+}
+
+export async function createAutoBattleWebPaymentIntent(input: {
+  userId: string;
+  email: string;
+  quote: AutoBattleCheckoutQuote;
+  confirmationTokenId: string;
+  idempotencyKey: string;
+}) {
+  const { secretKey } = paymentConfiguration();
+  const confirmationToken = await stripeJson<{
+    id?: unknown;
+    object?: unknown;
+    expires_at?: unknown;
+    livemode?: unknown;
+    payment_intent?: unknown;
+    payment_method_preview?: { billing_details?: { address?: Record<string, unknown> } };
+  }>(
+    `https://api.stripe.com/v1/confirmation_tokens/${input.confirmationTokenId}`,
+    { method: "GET" },
+    secretKey,
+  );
+  const source = confirmationToken.payment_method_preview?.billing_details?.address || {};
+  const address: AutoBattleBillingAddress = {
+    line1: stringValue(source.line1),
+    line2: stringValue(source.line2),
+    city: stringValue(source.city),
+    state: stringValue(source.state),
+    postalCode: stringValue(source.postal_code),
+    country: stringValue(source.country).toUpperCase(),
+  };
+  if (
+    confirmationToken.object !== "confirmation_token" ||
+    stringValue(confirmationToken.id) !== input.confirmationTokenId ||
+    Boolean(confirmationToken.livemode) !== secretKey.startsWith("sk_live_") ||
+    integerValue(confirmationToken.expires_at) <= Math.floor(Date.now() / 1000) ||
+    confirmationToken.payment_intent != null ||
+    !address.line1 ||
+    !address.city ||
+    !address.postalCode ||
+    !/^[A-Z]{2}$/.test(address.country)
+  ) {
+    throw new StripeRequestError(400, "invalid_web_checkout");
+  }
+
+  const taxQuote = await createAutoBattleMobileTaxQuote({
+    userId: input.userId,
+    quote: input.quote,
+    address,
+    idempotencyKey: input.idempotencyKey,
+  });
+  const intent = await createAutoBattleMobilePaymentIntent({
+    ...input,
+    taxCalculationId: taxQuote.id,
+    channel: "web",
+  });
+  return { ...intent, quote: taxQuote };
 }
 
 function timingSafeEqual(left: string, right: string) {

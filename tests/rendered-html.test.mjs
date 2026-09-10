@@ -363,3 +363,34 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
   assert.match(migration, /Append-only token audit trail/);
   assert.doesNotMatch(migration, /plaintext_code|plain_code/);
 });
+
+test("keeps new AutoBattle purchases in-page and creates only Payment Intents", async () => {
+  const [accountPage, marketplace, paymentRoute, stripeHelper, webhook, packageSource] =
+    await Promise.all([
+      readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/AutoBattle/account/marketplace-checkout.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/autobattle/payment-intent/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/autobattle-stripe.ts", import.meta.url), "utf8"),
+      readFile(new URL("../app/api/autobattle/stripe/webhook/route.ts", import.meta.url), "utf8"),
+      readFile(new URL("../package.json", import.meta.url), "utf8"),
+    ]);
+  const packageJson = JSON.parse(packageSource);
+
+  assert.match(accountPage, /MarketplaceCheckout/);
+  assert.match(accountPage, /\/api\/autobattle\/payment-intent/);
+  assert.doesNotMatch(accountPage, /\/api\/autobattle\/checkout|window\.location\.assign|hosted by Stripe/);
+  assert.match(marketplace, /AddressElement/);
+  assert.match(marketplace, /PaymentElement/);
+  assert.match(marketplace, /createConfirmationToken/);
+  assert.match(marketplace, /stripe\.confirmPayment/);
+  assert.match(marketplace, /redirect: "if_required"/);
+  assert.match(paymentRoute, /requireWebMutation/);
+  assert.match(paymentRoute, /webIdentity/);
+  assert.match(paymentRoute, /createAutoBattleWebPaymentIntent/);
+  assert.match(stripeHelper, /https:\/\/api\.stripe\.com\/v1\/payment_intents/);
+  assert.match(stripeHelper, /token_pack_web_v1/);
+  assert.doesNotMatch(stripeHelper, /checkout\/sessions/);
+  assert.match(webhook, /"token_pack_mobile_v1", "token_pack_web_v1"/);
+  assert.equal(packageJson.dependencies["@stripe/react-stripe-js"], "6.9.0");
+  assert.equal(packageJson.dependencies["@stripe/stripe-js"], "9.10.0");
+});

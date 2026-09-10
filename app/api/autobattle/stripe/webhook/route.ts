@@ -72,6 +72,7 @@ export async function POST(request: Request) {
         : {};
       const paymentIntentId = stringValue(intent.id);
       const userId = stringValue(metadata.autobattle_user_id);
+      const paymentFlow = stringValue(metadata.autobattle_flow);
       const listedSubtotal = integerValue(metadata.autobattle_subtotal_cents);
       const discountCents = integerValue(metadata.autobattle_discount_cents);
       const amountSubtotal = integerValue(metadata.autobattle_pretax_total_cents);
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
         stringValue(intent.object) !== "payment_intent" ||
         stringValue(intent.status) !== "succeeded" ||
         !paymentIntentId.startsWith("pi_") ||
-        stringValue(metadata.autobattle_flow) !== "token_pack_mobile_v1" ||
+        !["token_pack_mobile_v1", "token_pack_web_v1"].includes(paymentFlow) ||
         !stringValue(metadata.autobattle_tax_calculation_id).startsWith("taxcalc_") ||
         listedSubtotal - discountCents !== amountSubtotal ||
         amountSubtotal !== amountTotal ||
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
         amountTax > amountTotal ||
         amountReceived !== amountTotal
       ) {
-        throw new Error("unexpected_mobile_payment_intent");
+        throw new Error("unexpected_payment_intent");
       }
       await fulfillAutoBattleStripeCheckout({
         eventId: event.id,

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { AUTOBATTLE_PRODUCTS, formatUsd } from "../../autobattle-products";
 import styles from "./account.module.css";
+import { MarketplaceCheckout, type MarketplacePack } from "./marketplace-checkout";
 
 type Account = {
   email: string;
@@ -70,6 +71,10 @@ export function AutoBattleAccountPortal() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [checkoutSku, setCheckoutSku] = useState("");
+  const [marketplace, setMarketplace] = useState<null | {
+    pack: MarketplacePack;
+    publishableKey: string;
+  }>(null);
   const [linkCode, setLinkCode] = useState<{ code: string; expiresAt: string } | null>(null);
   const turnstileNode = useRef<HTMLDivElement>(null);
   const turnstileId = useRef("");
@@ -93,18 +98,20 @@ export function AutoBattleAccountPortal() {
   }
 
   useEffect(() => {
-    const checkout = new URLSearchParams(window.location.search).get("checkout");
+    const search = new URLSearchParams(window.location.search);
+    const paymentReturn = search.get("payment") === "return";
+    const paymentStatus = search.get("redirect_status");
     // Session discovery is the effect's external synchronization target.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAccount().catch((reason) => setError(reason instanceof Error ? reason.message : "Your account could not be loaded."))
       .finally(() => {
         setLoading(false);
-        if (checkout === "success") {
-          setMessage("Checkout finished. Tokens appear after Stripe's signed payment confirmation; refresh shortly if they are still processing.");
-        } else if (checkout === "cancelled") {
-          setMessage("Checkout was cancelled. No tokens were added.");
+        if (paymentReturn) {
+          setMessage(paymentStatus === "succeeded"
+            ? "Payment approved. Tokens appear after Stripe's signed payment confirmation; refresh shortly if they are still processing."
+            : "Payment returned to AutoBattle. Check your token activity for the final status.");
         }
-        if (checkout) window.history.replaceState({}, "", "/AutoBattle/account");
+        if (paymentReturn) window.history.replaceState({}, "", "/AutoBattle/account");
       });
   }, []);
 
@@ -283,22 +290,34 @@ export function AutoBattleAccountPortal() {
     }
   }
 
-  async function beginCheckout(sku: string) {
+  async function beginMarketplace(pack: MarketplacePack) {
     resetMessages();
     setBusy(true);
-    setCheckoutSku(sku);
+    setCheckoutSku(pack.sku);
     try {
-      const data = await responseJson<{ checkoutUrl: string }>(await fetch("/api/autobattle/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sku, idempotencyKey: crypto.randomUUID() }),
-      }));
-      window.location.assign(data.checkoutUrl);
+      const data = await responseJson<{ publishableKey: string }>(await fetch(
+        "/api/autobattle/payment-intent",
+        { cache: "no-store" },
+      ));
+      setMarketplace({ pack, publishableKey: data.publishableKey });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Stripe checkout could not be started.");
+      setError(reason instanceof Error ? reason.message : "The marketplace could not be opened.");
+    } finally {
       setBusy(false);
       setCheckoutSku("");
     }
+  }
+
+  function paymentSubmitted(status: "succeeded" | "processing") {
+    setMarketplace(null);
+    setMessage(status === "succeeded"
+      ? "Payment approved. Tokens will appear after Stripe's signed confirmation reaches AutoBattle."
+      : "Payment is processing. Tokens will appear after Stripe confirms it.");
+    window.setTimeout(() => {
+      loadAccount().catch((reason) => setError(
+        reason instanceof Error ? reason.message : "Your token balance could not be refreshed.",
+      ));
+    }, 1500);
   }
 
   async function signOut() {
@@ -308,6 +327,7 @@ export function AutoBattleAccountPortal() {
     } finally {
       setAccount(null);
       setLinkCode(null);
+      setMarketplace(null);
       setMessage("");
       setError("");
       setBusy(false);
@@ -402,7 +422,7 @@ export function AutoBattleAccountPortal() {
         <p>
           {account.discount?.unlimited && account.discount.percentOff === 50
             ? "Your permanent founding-clan price is applied below. Every pack keeps its normal bonus."
-            : "Secure checkout is hosted by Stripe. Applicable tax is calculated at checkout."}
+            : "Pay without leaving AutoBattle. Your billing address and included tax are reviewed before you confirm."}
         </p>
       </div>
       <div className={styles.storeGrid}>
@@ -418,14 +438,19 @@ export function AutoBattleAccountPortal() {
               <div className={styles.storePrice}>
                 {clanPrice < pack.priceCents && <del>{formatUsd(pack.priceCents)}</del>}
                 <strong>{formatUsd(clanPrice)}</strong>
-                <small>{clanPrice < pack.priceCents ? "Founding clan · 50% off" : "Plus applicable tax"}</small>
+                <small>{clanPrice < pack.priceCents ? "Founding clan · 50% off" : "Tax calculated and included"}</small>
               </div>
               <button
                 type="button"
-                onClick={() => beginCheckout(pack.sku)}
+                onClick={() => beginMarketplace({
+                  sku: pack.sku,
+                  paidTokens: pack.paidTokens,
+                  bonusTokens: pack.bonusTokens,
+                  priceCents: clanPrice,
+                })}
                 disabled={busy || account.accessStatus === "suspended"}
               >
-                {checkoutSku === pack.sku ? "Opening Stripe…" : "Buy with Stripe"}<span aria-hidden="true">↗</span>
+                {checkoutSku === pack.sku ? "Preparing…" : "Buy tokens"}<span aria-hidden="true">→</span>
               </button>
             </article>
           );
@@ -434,6 +459,16 @@ export function AutoBattleAccountPortal() {
       <p className={styles.storeNote}>
         Tokens are credited only from a verified Stripe webhook. If automatic fulfillment is delayed, support can safely record the same purchase through the existing manual fallback without duplicating tokens.
       </p>
+
+      {marketplace ? (
+        <MarketplaceCheckout
+          accountEmail={account.email}
+          pack={marketplace.pack}
+          publishableKey={marketplace.publishableKey}
+          onClose={() => setMarketplace(null)}
+          onPaymentSubmitted={paymentSubmitted}
+        />
+      ) : null}
 
       <div className={styles.dashboardGrid}>
         <article className={styles.panel}>

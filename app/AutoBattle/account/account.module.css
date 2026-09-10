@@ -116,6 +116,35 @@
 .storeFlag { position: absolute; top: 0; right: 0; padding: 7px 10px; background: var(--gold-hot); color: var(--ink); font-size: .5rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .storeNote { margin: 16px 0 0; color: rgba(230, 224, 211, .35); font-size: .63rem; line-height: 1.55; }
 
+.checkoutBackdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 28px; overflow-y: auto; background: rgba(2, 4, 5, .88); backdrop-filter: blur(10px); }
+.checkoutDialog { width: min(680px, 100%); max-height: calc(100svh - 56px); overflow-y: auto; border: 1px solid rgba(201, 156, 54, .42); background: #0c1114; box-shadow: 0 38px 120px rgba(0, 0, 0, .72); }
+.checkoutHeading { display: flex; align-items: start; justify-content: space-between; gap: 24px; padding: 28px 30px; border-bottom: 1px solid rgba(230, 224, 211, .12); }
+.checkoutHeading h2 { margin: 0; font-family: "Arial Narrow", "Segoe UI", sans-serif; font-size: clamp(1.8rem, 5vw, 2.7rem); line-height: 1; text-transform: uppercase; }
+.checkoutHeading span { display: block; margin-top: 10px; color: var(--teal); font-size: .65rem; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+.checkoutHeading .eyebrow { margin-bottom: 14px; }
+.checkoutHeading > button { display: grid; width: 38px; height: 38px; flex: 0 0 auto; place-items: center; border: 1px solid rgba(230, 224, 211, .18); background: transparent; color: var(--bone); cursor: pointer; font: inherit; font-size: 1.3rem; }
+.checkoutHeading > button:hover { border-color: var(--gold-hot); color: var(--gold-hot); }
+.checkoutForm,
+.checkoutReview { display: grid; gap: 26px; padding: 30px; }
+.checkoutElementGroup { display: grid; gap: 10px; }
+.checkoutElementGroup > span { color: rgba(230, 224, 211, .58); font-size: .58rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.checkoutError { margin: 0; padding: 12px 14px; border-left: 3px solid #ff8b91; background: rgba(255, 139, 145, .08); color: #ffadb1; font-size: .72rem; line-height: 1.5; }
+.checkoutActions { display: flex; justify-content: end; gap: 12px; }
+.checkoutActions button { min-height: 48px; padding: 0 18px; border: 1px solid var(--gold-hot); background: linear-gradient(180deg, var(--gold-hot), #a7781f); color: var(--ink); cursor: pointer; font-size: .58rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.checkoutActions button:disabled { cursor: not-allowed; filter: grayscale(.5); opacity: .48; }
+.checkoutActions .checkoutSecondary { border-color: rgba(230, 224, 211, .22); background: transparent; color: rgba(230, 224, 211, .62); }
+.checkoutReviewHeading { display: grid; gap: 7px; }
+.checkoutReviewHeading p { margin: 0 0 8px; color: var(--gold-hot); font-size: .58rem; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
+.checkoutReviewHeading strong { font-family: "Arial Narrow", "Segoe UI", sans-serif; font-size: 1.6rem; text-transform: uppercase; }
+.checkoutReviewHeading span { color: var(--teal); font-size: .68rem; }
+.checkoutTotals { display: grid; margin: 0; border-top: 1px solid rgba(230, 224, 211, .12); }
+.checkoutTotals > div { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 0; border-bottom: 1px solid rgba(230, 224, 211, .1); }
+.checkoutTotals dt { color: rgba(230, 224, 211, .52); font-size: .7rem; }
+.checkoutTotals dd { margin: 0; font-size: .78rem; font-weight: 900; }
+.checkoutTotals > div:last-child dt,
+.checkoutTotals > div:last-child dd { color: var(--gold-hot); font-size: .9rem; }
+.checkoutLegal { color: rgba(230, 224, 211, .38); font-size: .61rem; line-height: 1.55; }
+
 .dashboardGrid,
 .detailGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
 .panel { min-height: 330px; padding: 28px; }
@@ -176,6 +205,13 @@
   .balanceGrid { grid-template-columns: 1fr; }
   .balanceGrid article { min-height: 160px; border-right: 1px solid rgba(230, 224, 211, .12); }
   .storeGrid { grid-template-columns: 1fr; }
+  .checkoutBackdrop { align-items: start; padding: 12px; }
+  .checkoutDialog { max-height: calc(100svh - 24px); }
+  .checkoutHeading,
+  .checkoutForm,
+  .checkoutReview { padding: 22px 18px; }
+  .checkoutActions { display: grid; grid-template-columns: 1fr; }
+  .checkoutActions button { justify-content: center; }
   .panel,
   .detailPanel { padding: 22px 18px; }
   .linkCode strong { font-size: 1.48rem; }
