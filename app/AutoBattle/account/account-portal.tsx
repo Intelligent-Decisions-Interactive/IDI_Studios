@@ -487,7 +487,7 @@ export function AutoBattleAccountPortal() {
 
         <article className={styles.panel}>
           <p className={styles.panelLabel}>Android access</p>
-          <h2>Download and link AutoBattle</h2>
+          <h2 id="download">Download and link AutoBattle</h2>
           {releaseAccess ? (
             <div className={styles.releaseDownload}>
               <a href="/api/autobattle/download">Download AutoBattle <span aria-hidden="true">↓</span></a>

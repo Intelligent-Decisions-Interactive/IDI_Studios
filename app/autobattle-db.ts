@@ -82,7 +82,40 @@ type BetaRequestRow = {
   testing_focus: string;
 };
 
-type DeviceSessionRow = DeviceRow & { user_id: string };
+export type AutoBattleDeviceSession = DeviceRow & {
+  user_id: string;
+  release_channel: "production" | "internal";
+};
+
+type ReleaseChannelRow = {
+  channel: string;
+  required_version_code: number | string;
+  version_name: string;
+  bucket_id: string | null;
+  object_path: string | null;
+  filename: string | null;
+  apk_bytes: number | string | null;
+  apk_sha256: string | null;
+  release_notes: string;
+  enforcement_enabled: boolean;
+  published_at: string | null;
+  updated_at: string;
+};
+
+export type AutoBattleReleasePolicy = {
+  channel: "production" | "internal";
+  requiredVersionCode: number;
+  versionName: string;
+  bucketId: string | null;
+  objectPath: string | null;
+  filename: string | null;
+  apkBytes: number | null;
+  apkSha256: string | null;
+  releaseNotes: string;
+  enforcementEnabled: boolean;
+  publishedAt: string | null;
+  updatedAt: string;
+};
 
 export type AutoBattleAccount = {
   email: string;
@@ -306,6 +339,56 @@ export async function getAutoBattleReleaseAccessStatus(userId: string) {
   return status === "beta" || status === "active" ? status : null;
 }
 
+export async function getAutoBattleReleasePolicy(
+  channel: "production" | "internal" = "production",
+): Promise<AutoBattleReleasePolicy> {
+  const rows = await serviceRequest<ReleaseChannelRow[]>(
+    `autobattle_release_channels?channel=eq.${encodeURIComponent(channel)}&select=channel,required_version_code,version_name,bucket_id,object_path,filename,apk_bytes,apk_sha256,release_notes,enforcement_enabled,published_at,updated_at&limit=1`,
+  );
+  const row = rows?.[0];
+  if (!row || (row.channel !== "production" && row.channel !== "internal")) {
+    throw new Error("AutoBattle release policy is unavailable.");
+  }
+  const requiredVersionCode = integer(row.required_version_code);
+  const apkBytes = row.apk_bytes == null ? null : integer(row.apk_bytes);
+  const apkSha256 = row.apk_sha256?.toLowerCase() || null;
+  const safeBucket = row.bucket_id == null || /^[a-z0-9][a-z0-9._-]{2,99}$/.test(row.bucket_id);
+  const safeObjectPath = row.object_path == null || (
+    row.object_path.length >= 3 &&
+    row.object_path.length <= 500 &&
+    !/[\r\n\\]/.test(row.object_path) &&
+    !/(^|\/)\.\.?($|\/)/.test(row.object_path)
+  );
+  const safeFilename = row.filename == null || /^[A-Za-z0-9][A-Za-z0-9._-]{1,175}\.apk$/.test(row.filename);
+  if (
+    requiredVersionCode < 1 ||
+    requiredVersionCode > 2_100_000_000 ||
+    !row.version_name ||
+    row.version_name.length > 40 ||
+    !safeBucket ||
+    !safeObjectPath ||
+    !safeFilename ||
+    (apkSha256 != null && !/^[0-9a-f]{64}$/.test(apkSha256)) ||
+    (row.enforcement_enabled && (!row.bucket_id || !row.object_path || !row.filename || !apkBytes || !apkSha256 || !row.published_at))
+  ) {
+    throw new Error("AutoBattle release policy is invalid.");
+  }
+  return {
+    channel: row.channel,
+    requiredVersionCode,
+    versionName: row.version_name,
+    bucketId: row.bucket_id,
+    objectPath: row.object_path,
+    filename: row.filename,
+    apkBytes,
+    apkSha256,
+    releaseNotes: row.release_notes || "",
+    enforcementEnabled: Boolean(row.enforcement_enabled),
+    publishedAt: row.published_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 export async function getAutoBattleCheckoutQuote(userId: string, sku: string) {
   return rpc<AutoBattleCheckoutQuote>("autobattle_checkout_quote", {
     p_user_id: userId,
@@ -505,8 +588,8 @@ export async function exchangeDeviceLinkCode(codeHash: string, tokenHash: string
 
 export async function authenticateDeviceToken(rawToken: string) {
   const tokenHash = await sha256Hex(rawToken);
-  const rows = await serviceRequest<DeviceSessionRow[]>(
-    `autobattle_device_sessions?token_hash=eq.${tokenHash}&revoked_at=is.null&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,user_id,device_name,expires_at,last_seen_at,created_at&limit=1`,
+  const rows = await serviceRequest<AutoBattleDeviceSession[]>(
+    `autobattle_device_sessions?token_hash=eq.${tokenHash}&revoked_at=is.null&expires_at=gt.${encodeURIComponent(new Date().toISOString())}&select=id,user_id,device_name,expires_at,last_seen_at,created_at,release_channel&limit=1`,
   );
   const session = rows?.[0];
   if (!session) return null;

@@ -1,5 +1,5 @@
 import { webIdentity } from "@/app/autobattle-api";
-import { getAutoBattleReleaseAccessStatus } from "@/app/autobattle-db";
+import { getAutoBattleReleaseAccessStatus, getAutoBattleReleasePolicy } from "@/app/autobattle-db";
 import { streamAutoBattleRelease } from "@/app/autobattle-storage";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ async function download(request: Request) {
     if (!(await getAutoBattleReleaseAccessStatus(identity.id))) {
       return errorResponse("Your AutoBattle account has not been approved yet.", 403);
     }
-    return streamAutoBattleRelease(request);
+    return streamAutoBattleRelease(request, await getAutoBattleReleasePolicy("production"));
   } catch (error) {
     console.error("AutoBattle release download failed", error);
     return errorResponse("The AutoBattle download is temporarily unavailable.", 503);

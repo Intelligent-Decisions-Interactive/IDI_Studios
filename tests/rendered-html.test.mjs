@@ -388,11 +388,14 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
 });
 
 test("protects AutoBattle release downloads by approved account status", async () => {
-  const [route, storage, database, accountPage] = await Promise.all([
+  const [route, storage, database, accountPage, releaseRoute, releaseMigration, api] = await Promise.all([
     readFile(new URL("../app/api/autobattle/download/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-storage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/autobattle/mobile/release/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260911191340_autobattle_release_channels.sql", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(route, /webIdentity/);
@@ -400,12 +403,17 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(route, /streamAutoBattleRelease/);
   assert.match(storage, /\/storage\/v1\/object\/authenticated\//);
   assert.match(storage, /SUPABASE_SECRET_KEY/);
-  assert.match(storage, /autobattle-releases/);
-  assert.match(storage, /AutoBattle-1\.0\.116-153\.apk/);
-  assert.match(storage, /16788aaf42754fcdad92a448aa8127da53d53032dc57b922b4285be0b8bbee85/);
+  assert.match(route, /getAutoBattleReleasePolicy\("production"\)/);
+  assert.match(releaseMigration, /autobattle-releases/);
+  assert.match(releaseMigration, /AutoBattle-1\.0\.116-153\.apk/);
+  assert.match(releaseMigration, /16788aaf42754fcdad92a448aa8127da53d53032dc57b922b4285be0b8bbee85/);
   assert.doesNotMatch(storage, /\/object\/public\/|\/object\/sign\//);
   assert.doesNotMatch(storage, /AbortSignal\.timeout/);
   assert.match(database, /status === "beta" \|\| status === "active"/);
+  assert.match(database, /release_channel/);
+  assert.match(releaseRoute, /session\?\.release_channel \|\| "production"/);
+  assert.match(api, /requireCurrentAutoBattleRelease/);
+  assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);
   assert.match(accountPage, /href="\/api\/autobattle\/download"/);
   assert.match(accountPage, /Version 1\.0\.116/);
 });

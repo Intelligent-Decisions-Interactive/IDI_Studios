@@ -1,6 +1,6 @@
 begin;
 
-select plan(39);
+select plan(42);
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');
@@ -22,6 +22,9 @@ select ok(not has_table_privilege('anon', 'public.autobattle_device_sessions', '
 select ok(not has_table_privilege('authenticated', 'public.autobattle_device_sessions', 'select,insert,update,delete'), 'authenticated cannot access device sessions directly');
 select ok(not has_table_privilege('anon', 'public.autobattle_orders', 'select,insert,update,delete'), 'anon cannot access orders');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_orders', 'select,insert,update,delete'), 'authenticated cannot access orders directly');
+select ok(not has_table_privilege('anon', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'anon cannot access release policy');
+select ok(not has_table_privilege('authenticated', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'authenticated cannot access release policy directly');
+select ok(has_table_privilege('service_role', 'public.autobattle_release_channels', 'select'), 'service role can read release policy through the Worker');
 
 select ok(not has_function_privilege('anon', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'anon cannot ensure accounts');
 select ok(not has_function_privilege('authenticated', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'authenticated cannot ensure accounts directly');

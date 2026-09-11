@@ -1,5 +1,9 @@
 import { ACCESS_COOKIE, getIdentity, readCookie, requireSameOrigin } from "./autobattle-auth";
-import { authenticateDeviceToken } from "./autobattle-db";
+import {
+  authenticateDeviceToken,
+  getAutoBattleReleasePolicy,
+  type AutoBattleDeviceSession,
+} from "./autobattle-db";
 
 export function noStoreJson(body: unknown, status = 200, headers?: Headers) {
   const responseHeaders = headers || new Headers();
@@ -29,7 +33,50 @@ export async function deviceSession(request: Request) {
   return authenticateDeviceToken(match[1]);
 }
 
+function boundedVersionName(value: string | null) {
+  const normalized = value?.normalize("NFKC").trim() || "";
+  return normalized.length >= 1 && normalized.length <= 40 ? normalized : null;
+}
+
+function clientVersion(request: Request) {
+  const rawCode = request.headers.get("x-autobattle-version-code")?.trim() || "";
+  const parsedCode = /^\d{1,10}$/.test(rawCode) ? Number(rawCode) : null;
+  const code = parsedCode != null && Number.isSafeInteger(parsedCode) && parsedCode > 0
+    ? parsedCode
+    : null;
+  const explicitName = boundedVersionName(request.headers.get("x-autobattle-version-name"));
+  const legacyName = /^AutoBattle-Android\/(.{1,40})$/.exec(
+    request.headers.get("user-agent")?.trim() || "",
+  )?.[1] || null;
+  return { code, name: explicitName || boundedVersionName(legacyName) };
+}
+
+export async function requireCurrentAutoBattleRelease(
+  request: Request,
+  session: AutoBattleDeviceSession,
+) {
+  const policy = await getAutoBattleReleasePolicy(session.release_channel);
+  if (!policy.enforcementEnabled) return policy;
+  const version = clientVersion(request);
+  const codeMatches = version.code == null || version.code === policy.requiredVersionCode;
+  if (!codeMatches || version.name !== policy.versionName) {
+    throw new AutoBattleUpdateRequiredError(policy.versionName);
+  }
+  return policy;
+}
+
+export class AutoBattleUpdateRequiredError extends Error {
+  readonly status = 426;
+
+  constructor(readonly requiredVersionName: string) {
+    super(`Update AutoBattle to ${requiredVersionName} before continuing.`);
+  }
+}
+
 export function publicAccountError(error: unknown) {
+  if (error instanceof AutoBattleUpdateRequiredError) {
+    return { status: error.status, message: error.message };
+  }
   const message = error instanceof Error ? error.message : "";
   if (message.includes("token_balance_integrity_violation")) {
     return { status: 503, message: "This account requires token reconciliation before it can continue." };

@@ -1,4 +1,9 @@
-import { deviceSession, noStoreJson, publicAccountError } from "@/app/autobattle-api";
+import {
+  deviceSession,
+  noStoreJson,
+  publicAccountError,
+  requireCurrentAutoBattleRelease,
+} from "@/app/autobattle-api";
 import { reserveAutoBattleCycle } from "@/app/autobattle-db";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +12,7 @@ export async function POST(request: Request) {
   try {
     const session = await deviceSession(request);
     if (!session) return noStoreJson({ error: "Link this device to run workflows." }, 401);
+    await requireCurrentAutoBattleRelease(request, session);
     const body = (await request.json()) as { idempotencyKey?: unknown; workflowName?: unknown };
     const idempotencyKey = typeof body.idempotencyKey === "string"
       ? body.idempotencyKey.trim().slice(0, 160)

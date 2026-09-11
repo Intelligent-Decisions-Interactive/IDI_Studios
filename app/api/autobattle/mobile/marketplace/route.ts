@@ -1,4 +1,9 @@
-import { deviceSession, noStoreJson, publicAccountError } from "@/app/autobattle-api";
+import {
+  deviceSession,
+  noStoreJson,
+  publicAccountError,
+  requireCurrentAutoBattleRelease,
+} from "@/app/autobattle-api";
 import { getAutoBattleAccount, getAutoBattleCheckoutQuote } from "@/app/autobattle-db";
 import {
   autoBattleStripePublishableKey,
@@ -20,6 +25,7 @@ export async function GET(request: Request) {
   try {
     const session = await deviceSession(request);
     if (!session) return noStoreJson({ error: "Link this device to buy tokens." }, 401);
+    await requireCurrentAutoBattleRelease(request, session);
     const [account, packs] = await Promise.all([
       getAutoBattleAccount(session.user_id),
       Promise.all(PACK_SKUS.map((sku) => getAutoBattleCheckoutQuote(session.user_id, sku))),
