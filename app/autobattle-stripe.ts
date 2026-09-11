@@ -114,6 +114,7 @@ async function stripeJson<T>(
 ) {
   const response = await fetch(url, {
     ...init,
+    signal: init.signal || AbortSignal.timeout(15_000),
     headers: {
       Authorization: `Bearer ${secretKey}`,
       "Stripe-Version": STRIPE_API_VERSION,
@@ -121,7 +122,12 @@ async function stripeJson<T>(
       ...(init.headers || {}),
     },
   });
-  const body = await response.json() as T & { error?: { code?: unknown } };
+  let body: T & { error?: { code?: unknown } };
+  try {
+    body = await response.json() as T & { error?: { code?: unknown } };
+  } catch {
+    throw new StripeRequestError(response.ok ? 502 : response.status, "invalid_stripe_response");
+  }
   if (!response.ok) {
     throw new StripeRequestError(
       response.status,
@@ -386,6 +392,39 @@ export async function createAutoBattleWebPaymentIntent(input: {
     channel: "web",
   });
   return { ...intent, quote: taxQuote };
+}
+
+export async function stripePaymentIntentForCharge(chargeId: string) {
+  if (!/^ch_[A-Za-z0-9_]+$/.test(chargeId)) {
+    throw new StripeRequestError(400, "invalid_charge_id");
+  }
+  const secretKey = stripeSecretKey();
+  const charge = await stripeJson<{
+    id?: unknown;
+    object?: unknown;
+    livemode?: unknown;
+    payment_intent?: unknown;
+  }>(
+    `https://api.stripe.com/v1/charges/${chargeId}`,
+    { method: "GET" },
+    secretKey,
+  );
+  const paymentIntentId = typeof charge.payment_intent === "string"
+    ? charge.payment_intent
+    : stringValue(
+      charge.payment_intent && typeof charge.payment_intent === "object" && "id" in charge.payment_intent
+        ? (charge.payment_intent as { id?: unknown }).id
+        : "",
+    );
+  if (
+    charge.object !== "charge" ||
+    stringValue(charge.id) !== chargeId ||
+    Boolean(charge.livemode) !== secretKey.startsWith("sk_live_") ||
+    (paymentIntentId && !/^pi_[A-Za-z0-9_]+$/.test(paymentIntentId))
+  ) {
+    throw new StripeRequestError(502, "invalid_charge_response");
+  }
+  return paymentIntentId;
 }
 
 function timingSafeEqual(left: string, right: string) {

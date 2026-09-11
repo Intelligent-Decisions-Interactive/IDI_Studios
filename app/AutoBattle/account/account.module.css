@@ -153,6 +153,11 @@
 .panel > p:not(.panelLabel) { max-width: 540px; color: rgba(230, 224, 211, .53); font-size: .78rem; line-height: 1.65; }
 .panel form { margin-top: 26px; }
 .panel > button { margin-top: 28px; }
+.releaseDownload { display: grid; gap: 9px; margin-top: 24px; }
+.releaseDownload a { display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 18px; padding: 0 18px; border: 1px solid var(--teal); background: rgba(87, 197, 189, .08); color: var(--teal); font-size: .62rem; font-weight: 900; letter-spacing: .12em; text-decoration: none; text-transform: uppercase; }
+.releaseDownload a:hover { background: var(--teal); color: var(--ink); }
+.releaseDownload small { color: rgba(230, 224, 211, .38); font-size: .6rem; letter-spacing: .04em; }
+.releaseLocked { margin-top: 24px !important; padding: 13px 14px; border-left: 3px solid rgba(240, 199, 101, .65); background: rgba(201, 156, 54, .08); color: rgba(230, 224, 211, .62) !important; }
 .linkCode { display: grid; gap: 10px; margin-top: 30px; padding: 22px; border: 1px dashed var(--gold); background: rgba(5, 7, 9, .55); text-align: center; }
 .linkCode strong { color: var(--gold-hot); font-family: "Arial Narrow", "Segoe UI", sans-serif; font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: .1em; }
 .linkCode span { color: var(--ash); font-size: .62rem; }

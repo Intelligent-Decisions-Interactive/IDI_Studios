@@ -1,5 +1,8 @@
 import { getAdminActorFromHeaders } from "@/app/beta-admin";
-import { listAutoBattleAdminAccounts } from "@/app/autobattle-db";
+import {
+  listAutoBattleAdminAccounts,
+  listAutoBattlePaymentReviews,
+} from "@/app/autobattle-db";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +16,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    const accounts = await listAutoBattleAdminAccounts();
+    const [accounts, paymentReviews] = await Promise.all([
+      listAutoBattleAdminAccounts(),
+      listAutoBattlePaymentReviews(),
+    ]);
     return Response.json({
       success: true,
       accounts,
+      paymentReviews,
       actorEmail: actor.email,
       actorProvider: actor.provider,
     });

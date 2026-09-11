@@ -378,6 +378,7 @@ export function AutoBattleAccountPortal() {
   }
 
   const accessLabel = ({ pending: "Awaiting access", beta: "Beta access", active: "Active", suspended: "Suspended" } as Record<string, string>)[account.accessStatus] || account.accessStatus;
+  const releaseAccess = ["beta", "active"].includes(account.accessStatus);
 
   return (
     <section className={styles.dashboard}>
@@ -486,12 +487,20 @@ export function AutoBattleAccountPortal() {
 
         <article className={styles.panel}>
           <p className={styles.panelLabel}>Android access</p>
-          <h2>Link AutoBattle</h2>
+          <h2>Download and link AutoBattle</h2>
+          {releaseAccess ? (
+            <div className={styles.releaseDownload}>
+              <a href="/api/autobattle/download">Download AutoBattle <span aria-hidden="true">↓</span></a>
+              <small>Version 1.0.116 · Android 8 or newer · 76.4 MB</small>
+            </div>
+          ) : (
+            <p className={styles.releaseLocked}>The Android download unlocks when your account is approved.</p>
+          )}
           <p>Generate a one-time code, then enter it in AutoBattle under Settings → Account. It expires after 10 minutes.</p>
           {linkCode ? (
             <div className={styles.linkCode}><strong>{linkCode.code}</strong><span>Expires {formatDate(linkCode.expiresAt)}</span></div>
           ) : (
-            <button onClick={generateLinkCode} disabled={busy || !account.playerName || !["beta", "active"].includes(account.accessStatus)}>Generate device code</button>
+            <button onClick={generateLinkCode} disabled={busy || !account.playerName || !releaseAccess}>Generate device code</button>
           )}
         </article>
       </div>

@@ -40,6 +40,22 @@ type AutoBattleAdminAccount = {
   updatedAt: string;
 };
 
+type AutoBattlePaymentReview = {
+  id: string;
+  eventId: string;
+  eventType: string;
+  objectId: string;
+  receivedAt: string;
+  details: Record<string, unknown>;
+  orderId: string;
+  paymentIntentId: string;
+  orderStatus: string;
+  userId: string;
+  email: string;
+  playerName: string;
+  accessStatus: AutoBattleAccessStatus;
+};
+
 type BetaEvent = {
   id: number;
   eventType: string;
@@ -59,6 +75,7 @@ type ListResponse = {
 
 type AutoBattleListResponse = {
   accounts: AutoBattleAdminAccount[];
+  paymentReviews: AutoBattlePaymentReview[];
 };
 
 type DetailResponse = {
@@ -148,6 +165,9 @@ export function BetaAdminConsole({
 }) {
   const [applications, setApplications] = useState<BetaApplication[]>([]);
   const [autoBattleAccounts, setAutoBattleAccounts] = useState<AutoBattleAdminAccount[]>([]);
+  const [paymentReviews, setPaymentReviews] = useState<AutoBattlePaymentReview[]>([]);
+  const [paymentReviewAction, setPaymentReviewAction] = useState("");
+  const [paymentReviewResolutions, setPaymentReviewResolutions] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [selected, setSelected] = useState<BetaApplication | null>(null);
   const [events, setEvents] = useState<BetaEvent[]>([]);
@@ -184,8 +204,6 @@ export function BetaAdminConsole({
       setSelectedId(id);
       setDetailLoading(true);
       setClanCode("");
-      setPaymentReference("");
-      setPurchaseConfirmation(null);
       setMessage("");
       setMessageState("");
       try {
@@ -259,8 +277,10 @@ export function BetaAdminConsole({
     if (product === "autobattle") {
       if (accountsResult.status === "fulfilled" && accountsResult.value) {
         setAutoBattleAccounts(accountsResult.value.accounts || []);
+        setPaymentReviews(accountsResult.value.paymentReviews || []);
       } else if (accountsResult.status === "rejected") {
         setAutoBattleAccounts([]);
+        setPaymentReviews([]);
         setAutoBattleMessage(
           accountsResult.reason instanceof Error
             ? accountsResult.reason.message
@@ -270,6 +290,7 @@ export function BetaAdminConsole({
       }
     } else {
       setAutoBattleAccounts([]);
+      setPaymentReviews([]);
     }
 
     setLoading(false);
@@ -300,9 +321,11 @@ export function BetaAdminConsole({
         if (account.accessStatus === "pending") result.pending += 1;
         if (["beta", "active"].includes(account.accessStatus)) result.accepted += 1;
       }
+      result.total += paymentReviews.length;
+      result.pending += paymentReviews.length;
     }
     return result;
-  }, [applications, autoBattleAccounts, product]);
+  }, [applications, autoBattleAccounts, paymentReviews, product]);
 
   const sortedAutoBattleAccounts = useMemo(
     () => [...autoBattleAccounts].sort((left, right) => {
@@ -515,6 +538,39 @@ export function BetaAdminConsole({
     }
   }
 
+  async function resolvePaymentReview(review: AutoBattlePaymentReview) {
+    const resolution = (paymentReviewResolutions[review.id] || "").trim();
+    if (!resolution) {
+      setAutoBattleMessage("Enter a resolution note before closing the payment review.");
+      setAutoBattleMessageState("error");
+      return;
+    }
+    setPaymentReviewAction(review.id);
+    setAutoBattleMessage("Closing payment review…");
+    setAutoBattleMessageState("");
+    try {
+      await apiRequest<{ success: boolean }>(
+        `/beta/admin/api/autobattle/payment-reviews/${review.id}`,
+        { method: "PATCH", body: JSON.stringify({ resolution }) },
+      );
+      setPaymentReviews((current) => current.filter((item) => item.id !== review.id));
+      setPaymentReviewResolutions((current) => {
+        const next = { ...current };
+        delete next[review.id];
+        return next;
+      });
+      setAutoBattleMessage("Payment review closed. Restore the account separately only when appropriate.");
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "The payment review could not be closed.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setPaymentReviewAction("");
+    }
+  }
+
   return (
     <div className="beta-admin-root">
       <header className="beta-admin-header">
@@ -566,6 +622,7 @@ export function BetaAdminConsole({
         </section>
 
         {product === "autobattle" ? (
+          <>
           <section className="admin-autobattle" aria-labelledby="autobattle-accounts-title">
           <div className="admin-section-heading">
             <div>
@@ -655,6 +712,64 @@ export function BetaAdminConsole({
             )}
           </div>
           </section>
+          <section className="admin-autobattle" aria-labelledby="autobattle-payment-reviews-title">
+            <div className="admin-section-heading">
+              <div>
+                <p className="admin-eyebrow">AutoBattle / Payment integrity</p>
+                <h2 id="autobattle-payment-reviews-title">Refund and dispute reviews.</h2>
+                <p>
+                  Matching accounts are suspended automatically. Verify the Stripe case, record
+                  the outcome here, then restore access separately only when appropriate.
+                </p>
+              </div>
+              <span>{paymentReviews.length} open</span>
+            </div>
+            <div className="admin-autobattle-list" role="list">
+              {loading ? (
+                <p className="admin-list-state">Loading payment reviews…</p>
+              ) : paymentReviews.length ? (
+                paymentReviews.map((review) => (
+                  <article className="admin-autobattle-account" role="listitem" key={review.id}>
+                    <div>
+                      <span>{review.eventType}</span>
+                      <strong>{review.playerName || "Player name not set"}</strong>
+                      <a href={`mailto:${review.email}`}>{review.email}</a>
+                      <small>{review.paymentIntentId}</small>
+                    </div>
+                    <div className="admin-autobattle-meta">
+                      <StatusPill status={review.accessStatus} />
+                      <small>{review.orderStatus} · {formatDate(review.receivedAt, false)}</small>
+                    </div>
+                    <div className="admin-payment-review-resolution">
+                      <label>
+                        <span>Resolution note</span>
+                        <input
+                          value={paymentReviewResolutions[review.id] || ""}
+                          maxLength={500}
+                          onChange={(event) => setPaymentReviewResolutions((current) => ({
+                            ...current,
+                            [review.id]: event.target.value,
+                          }))}
+                          placeholder="Refund confirmed, dispute won, account restored…"
+                        />
+                      </label>
+                      <button
+                        className="admin-secondary-button"
+                        type="button"
+                        disabled={paymentReviewAction !== ""}
+                        onClick={() => void resolvePaymentReview(review)}
+                      >
+                        {paymentReviewAction === review.id ? "Closing…" : "Mark resolved"}
+                      </button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="admin-list-state">No refunds or disputes require review.</p>
+              )}
+            </div>
+          </section>
+          </>
         ) : null}
 
         {product === "conquest" ? (

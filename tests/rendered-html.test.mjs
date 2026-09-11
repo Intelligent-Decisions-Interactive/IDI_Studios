@@ -337,6 +337,10 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
   assert.deepEqual(viteWrangler.routes, [{ pattern: "idistudios.io", custom_domain: true }]);
   assert.equal(wrangler.vars.ACCESS_TEAM_DOMAIN, viteWrangler.vars.ACCESS_TEAM_DOMAIN);
   assert.equal(wrangler.vars.ACCESS_POLICY_AUD, viteWrangler.vars.ACCESS_POLICY_AUD);
+  assert.equal(wrangler.vars.SUPABASE_PUBLISHABLE_KEY, viteWrangler.vars.SUPABASE_PUBLISHABLE_KEY);
+  assert.deepEqual(wrangler.ratelimits, viteWrangler.ratelimits);
+  assert.equal(wrangler.ratelimits.length, 5);
+  assert.ok(wrangler.ratelimits.some(({ name }) => name === "AUTOBATTLE_DOWNLOAD_RATE_LIMITER"));
   assert.equal(packageJson.scripts.deploy, "wrangler deploy");
   assert.match(viteSource, /cloudflare\(\{/);
   assert.match(viteSource, /configPath: "\.\/wrangler\.vite\.jsonc"/);
@@ -345,6 +349,9 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
   assert.match(workerSource, /Content-Security-Policy/);
   assert.match(workerSource, /https:\/\/\*\.js\.stripe\.com/);
   assert.match(workerSource, /https:\/\/\*\.link\.com/);
+  assert.match(workerSource, /boundAutoBattleRequestBody/);
+  assert.match(workerSource, /enforceAutoBattleRateLimit/);
+  assert.match(workerSource, /path === "\/api\/autobattle\/download"/);
 });
 
 test("keeps AutoBattle accounts behind the server and an append-only token ledger", async () => {
@@ -380,14 +387,41 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
   assert.doesNotMatch(migration, /plaintext_code|plain_code/);
 });
 
+test("protects AutoBattle release downloads by approved account status", async () => {
+  const [route, storage, database, accountPage] = await Promise.all([
+    readFile(new URL("../app/api/autobattle/download/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-storage.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(route, /webIdentity/);
+  assert.match(route, /getAutoBattleReleaseAccessStatus/);
+  assert.match(route, /streamAutoBattleRelease/);
+  assert.match(storage, /\/storage\/v1\/object\/authenticated\//);
+  assert.match(storage, /SUPABASE_SECRET_KEY/);
+  assert.match(storage, /autobattle-releases/);
+  assert.match(storage, /AutoBattle-1\.0\.116-153\.apk/);
+  assert.match(storage, /16788aaf42754fcdad92a448aa8127da53d53032dc57b922b4285be0b8bbee85/);
+  assert.doesNotMatch(storage, /\/object\/public\/|\/object\/sign\//);
+  assert.doesNotMatch(storage, /AbortSignal\.timeout/);
+  assert.match(database, /status === "beta" \|\| status === "active"/);
+  assert.match(accountPage, /href="\/api\/autobattle\/download"/);
+  assert.match(accountPage, /Version 1\.0\.116/);
+});
+
 test("keeps new AutoBattle purchases in-page and creates only Payment Intents", async () => {
-  const [accountPage, marketplace, paymentRoute, stripeHelper, webhook, packageSource] =
+  const [accountPage, marketplace, paymentRoute, stripeHelper, webhook, paymentIntentMigration, packageSource] =
     await Promise.all([
       readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/AutoBattle/account/marketplace-checkout.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/api/autobattle/payment-intent/route.ts", import.meta.url), "utf8"),
       readFile(new URL("../app/autobattle-stripe.ts", import.meta.url), "utf8"),
       readFile(new URL("../app/api/autobattle/stripe/webhook/route.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL("../supabase/migrations/20260910193000_autobattle_payment_intents_only.sql", import.meta.url),
+        "utf8",
+      ),
       readFile(new URL("../package.json", import.meta.url), "utf8"),
     ]);
   const packageJson = JSON.parse(packageSource);
@@ -407,6 +441,8 @@ test("keeps new AutoBattle purchases in-page and creates only Payment Intents", 
   assert.match(stripeHelper, /token_pack_web_v1/);
   assert.doesNotMatch(stripeHelper, /checkout\/sessions/);
   assert.match(webhook, /"token_pack_mobile_v1", "token_pack_web_v1"/);
-  assert.equal(packageJson.dependencies["@stripe/react-stripe-js"], "6.9.0");
-  assert.equal(packageJson.dependencies["@stripe/stripe-js"], "9.10.0");
+  assert.match(paymentIntentMigration, /p_event_type <> 'payment_intent\.succeeded'/);
+  assert.match(paymentIntentMigration, /p_checkout_id[\s\S]*p_payment_intent_id/);
+  assert.equal(packageJson.dependencies["@stripe/react-stripe-js"], "6.10.0");
+  assert.equal(packageJson.dependencies["@stripe/stripe-js"], "9.16.0");
 });

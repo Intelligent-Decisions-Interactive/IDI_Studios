@@ -12,6 +12,7 @@
   ],
   "vars": {
     "SUPABASE_URL": "https://mbptywurviigpgigghna.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_EdMb7fo1zWJWvP9_msWWzg_8gKIRuVK",
     "AUTOBATTLE_PUBLIC_ORIGIN": "https://idistudios.io",
     "STRIPE_ALLOW_LIVE_MODE": "true",
     "STRIPE_PUBLISHABLE_KEY": "pk_live_51UDonx1njYGhP2jB9HFTWwhIfQA7e6zSfnRRhQqX9WNUribNIm5tEOEbluQkJtF32ukIIEnZ1dv8aHDgEKnQvFL200I7bdzrx1",
@@ -19,6 +20,33 @@
     "ACCESS_TEAM_DOMAIN": "https://long-lake-9cd8.cloudflareaccess.com",
     "ACCESS_POLICY_AUD": "2268643436b37cec6b1c87d586be7beeaddd0752fe392d47cc4471aca4140b68"
   },
+  "ratelimits": [
+    {
+      "name": "AUTOBATTLE_AUTH_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    },
+    {
+      "name": "AUTOBATTLE_LINK_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": { "limit": 12, "period": 60 }
+    },
+    {
+      "name": "AUTOBATTLE_PAYMENT_RATE_LIMITER",
+      "namespace_id": "1003",
+      "simple": { "limit": 12, "period": 60 }
+    },
+    {
+      "name": "AUTOBATTLE_CYCLE_RATE_LIMITER",
+      "namespace_id": "1004",
+      "simple": { "limit": 180, "period": 60 }
+    },
+    {
+      "name": "AUTOBATTLE_DOWNLOAD_RATE_LIMITER",
+      "namespace_id": "1005",
+      "simple": { "limit": 30, "period": 60 }
+    }
+  ],
   "rules": [
     { "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }
   ],

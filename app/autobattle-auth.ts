@@ -3,7 +3,6 @@ import { env } from "cloudflare:workers";
 type RuntimeEnv = {
   SUPABASE_URL?: string;
   SUPABASE_PUBLISHABLE_KEY?: string;
-  SUPABASE_SECRET_KEY?: string;
 };
 
 type SupabaseAuthUser = {
@@ -39,12 +38,10 @@ function configuration() {
   const runtime = env as unknown as RuntimeEnv;
   const url = runtime.SUPABASE_URL?.trim().replace(/\/+$/, "") || "";
   const publishable = runtime.SUPABASE_PUBLISHABLE_KEY?.trim() || "";
-  const secret = runtime.SUPABASE_SECRET_KEY?.trim() || "";
-  const key = publishable || secret;
-  if (!url || !key) {
+  if (!url || !publishable.startsWith("sb_publishable_")) {
     throw new Error("AutoBattle account authentication is not configured.");
   }
-  return { url, key, usingSecretKey: !publishable && Boolean(secret) };
+  return { url, key: publishable };
 }
 
 function normalizeSession(body: SupabaseSessionResponse): AutoBattleAuthSession {
@@ -64,7 +61,7 @@ async function authRequest<T>(
   body: Record<string, unknown> | null,
   options: { accessToken?: string; remoteIp?: string } = {},
 ) {
-  const { url, key, usingSecretKey } = configuration();
+  const { url, key } = configuration();
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -72,17 +69,23 @@ async function authRequest<T>(
     "X-Client-Info": "idi-autobattle-worker/1.0",
   };
   if (options.accessToken) headers.Authorization = `Bearer ${options.accessToken}`;
-  if (usingSecretKey && options.remoteIp) headers["Sb-Forwarded-For"] = options.remoteIp;
+  if (options.remoteIp) headers["X-Forwarded-For"] = options.remoteIp;
 
   const response = await fetch(`${url}/auth/v1/${path}`, {
     method: body === null ? "GET" : "POST",
     headers,
     body: body === null ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(12_000),
   });
   const text = await response.text();
-  const parsed = text
-    ? (JSON.parse(text) as T & { msg?: string; message?: string })
-    : ({} as T & { msg?: string; message?: string });
+  let parsed = {} as T & { msg?: string; message?: string };
+  if (text) {
+    try {
+      parsed = JSON.parse(text) as T & { msg?: string; message?: string };
+    } catch {
+      throw new Error("Authentication returned an invalid response.");
+    }
+  }
   if (!response.ok) {
     const error = new Error(parsed.msg || parsed.message || "Authentication failed.") as Error & {
       status?: number;
@@ -148,10 +151,10 @@ export function readCookie(request: Request, name: string) {
   return "";
 }
 
-function cookie(name: string, value: string, maxAge: number, secure: boolean) {
+function cookie(name: string, value: string, maxAge: number, secure: boolean, path: string) {
   return [
     `${name}=${encodeURIComponent(value)}`,
-    "Path=/",
+    `Path=${path}`,
     `Max-Age=${Math.max(0, Math.floor(maxAge))}`,
     "HttpOnly",
     "SameSite=Strict",
@@ -161,15 +164,15 @@ function cookie(name: string, value: string, maxAge: number, secure: boolean) {
 
 export function appendSessionCookies(headers: Headers, session: AutoBattleAuthSession, request: Request) {
   const secure = new URL(request.url).protocol === "https:";
-  headers.append("Set-Cookie", cookie(ACCESS_COOKIE, session.accessToken, session.expiresIn, secure));
-  headers.append("Set-Cookie", cookie(REFRESH_COOKIE, session.refreshToken, REFRESH_COOKIE_SECONDS, secure));
+  headers.append("Set-Cookie", cookie(ACCESS_COOKIE, session.accessToken, session.expiresIn, secure, "/api/autobattle"));
+  headers.append("Set-Cookie", cookie(REFRESH_COOKIE, session.refreshToken, REFRESH_COOKIE_SECONDS, secure, "/api/autobattle/auth"));
   headers.set("Cache-Control", "no-store");
 }
 
 export function appendExpiredSessionCookies(headers: Headers, request: Request) {
   const secure = new URL(request.url).protocol === "https:";
-  headers.append("Set-Cookie", cookie(ACCESS_COOKIE, "", 0, secure));
-  headers.append("Set-Cookie", cookie(REFRESH_COOKIE, "", 0, secure));
+  headers.append("Set-Cookie", cookie(ACCESS_COOKIE, "", 0, secure, "/api/autobattle"));
+  headers.append("Set-Cookie", cookie(REFRESH_COOKIE, "", 0, secure, "/api/autobattle/auth"));
   headers.set("Cache-Control", "no-store");
 }
 

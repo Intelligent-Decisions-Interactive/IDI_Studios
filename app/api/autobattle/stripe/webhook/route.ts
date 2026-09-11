@@ -2,11 +2,13 @@ import { noStoreJson } from "@/app/autobattle-api";
 import {
   fulfillAutoBattleStripeCheckout,
   recordAutoBattleStripeEvent,
+  recordAutoBattleStripeReviewEvent,
 } from "@/app/autobattle-db";
 import {
   StripeConfigurationError,
   stripeConfiguredLiveMode,
   stripeLiveModeAllowed,
+  stripePaymentIntentForCharge,
   verifyStripeEvent,
 } from "@/app/autobattle-stripe";
 
@@ -29,7 +31,7 @@ function objectId(value: unknown) {
 
 async function recordReviewEvent(
   event: Awaited<ReturnType<typeof verifyStripeEvent>>,
-  status: "failed" | "ignored" | "needs_review",
+  status: "failed" | "ignored",
 ) {
   const object = event.data.object;
   await recordAutoBattleStripeEvent({
@@ -42,7 +44,47 @@ async function recordReviewEvent(
       paymentIntentId: objectId(object.payment_intent),
       amount: integerValue(object.amount),
       amountRefunded: integerValue(object.amount_refunded),
-      reason: status === "needs_review" ? "manual_reconciliation_required" : status,
+      reason: status,
+    },
+  });
+}
+
+async function recordFinancialReviewEvent(
+  event: Awaited<ReturnType<typeof verifyStripeEvent>>,
+) {
+  const object = event.data.object;
+  const chargeId = stringValue(object.object) === "charge"
+    ? stringValue(object.id)
+    : objectId(object.charge);
+  const paymentIntentId = objectId(object.payment_intent) || (
+    chargeId ? await stripePaymentIntentForCharge(chargeId) : ""
+  );
+  if (!paymentIntentId.startsWith("pi_")) return;
+  const amount = event.type === "charge.refunded"
+    ? integerValue(object.amount_refunded)
+    : integerValue(object.amount);
+  const refundSucceeded = ["refund.created", "refund.updated"].includes(event.type) &&
+    stringValue(object.status) === "succeeded";
+  const suspendAccount = refundSucceeded || [
+    "charge.refunded",
+    "charge.dispute.created",
+    "charge.dispute.funds_withdrawn",
+  ].includes(event.type);
+  await recordAutoBattleStripeReviewEvent({
+    eventId: event.id,
+    eventType: event.type,
+    objectId: stringValue(object.id),
+    paymentIntentId,
+    liveMode: event.livemode,
+    amount,
+    suspendAccount,
+    details: {
+      paymentIntentId,
+      chargeId,
+      amount,
+      currency: stringValue(object.currency).toLowerCase(),
+      status: stringValue(object.status),
+      reason: stringValue(object.reason) || "manual_reconciliation_required",
     },
   });
 }
@@ -120,56 +162,15 @@ export async function POST(request: Request) {
         discountEntitlementId: stringValue(metadata.autobattle_discount_entitlement_id) || null,
         liveMode: event.livemode,
       });
-    } else if (["checkout.session.completed", "checkout.session.async_payment_succeeded"].includes(event.type)) {
-      const session = event.data.object;
-      if (stringValue(session.payment_status) !== "paid") {
-        await recordReviewEvent(event, "ignored");
-        return noStoreJson({ received: true });
-      }
-      const metadata = session.metadata && typeof session.metadata === "object"
-        ? session.metadata as Record<string, unknown>
-        : {};
-      const totalDetails = session.total_details && typeof session.total_details === "object"
-        ? session.total_details as Record<string, unknown>
-        : {};
-      const amountDiscount = integerValue(totalDetails.amount_discount);
-      const amountShipping = integerValue(totalDetails.amount_shipping);
-      const userId = stringValue(metadata.autobattle_user_id);
-      const listedSubtotal = integerValue(metadata.autobattle_subtotal_cents);
-      const discountCents = integerValue(metadata.autobattle_discount_cents);
-      const amountSubtotal = integerValue(session.amount_subtotal);
-      if (
-        stringValue(session.object) !== "checkout.session" ||
-        stringValue(session.mode) !== "payment" ||
-        stringValue(metadata.autobattle_flow) !== "token_pack_v1" ||
-        stringValue(session.client_reference_id) !== userId ||
-        listedSubtotal - discountCents !== amountSubtotal ||
-        amountDiscount > 0 ||
-        amountShipping > 0
-      ) {
-        throw new Error("unexpected_stripe_adjustment");
-      }
-      await fulfillAutoBattleStripeCheckout({
-        eventId: event.id,
-        eventType: event.type,
-        checkoutId: stringValue(session.id),
-        paymentIntentId: objectId(session.payment_intent),
-        userId,
-        sku: stringValue(metadata.autobattle_sku),
-        currency: stringValue(session.currency).toLowerCase(),
-        amountSubtotal,
-        amountTax: integerValue(totalDetails.amount_tax),
-        amountTotal: integerValue(session.amount_total),
-        discountPercent: integerValue(metadata.autobattle_discount_percent),
-        discountEntitlementId: stringValue(metadata.autobattle_discount_entitlement_id) || null,
-        liveMode: event.livemode,
-      });
-    } else if (["checkout.session.async_payment_failed", "payment_intent.payment_failed"].includes(event.type)) {
+    } else if (event.type === "payment_intent.payment_failed") {
       await recordReviewEvent(event, "failed");
-    } else if (["checkout.session.expired", "payment_intent.canceled", "payment_intent.processing"].includes(event.type)) {
+    } else if (["payment_intent.canceled", "payment_intent.processing"].includes(event.type)) {
       await recordReviewEvent(event, "ignored");
-    } else if (["invoice.paid", "invoice.payment_failed", "charge.refunded", "credit_note.created"].includes(event.type)) {
-      await recordReviewEvent(event, "needs_review");
+    } else if (
+      ["refund.created", "refund.updated", "refund.failed", "charge.refunded"].includes(event.type) ||
+      event.type.startsWith("charge.dispute.")
+    ) {
+      await recordFinancialReviewEvent(event);
     }
     return noStoreJson({ received: true });
   } catch (error) {

@@ -25,6 +25,22 @@ export type AutoBattleAdminAccount = {
   updatedAt: string;
 };
 
+export type AutoBattlePaymentReview = {
+  id: string;
+  eventId: string;
+  eventType: string;
+  objectId: string;
+  receivedAt: string;
+  details: Record<string, unknown>;
+  orderId: string;
+  paymentIntentId: string;
+  orderStatus: string;
+  userId: string;
+  email: string;
+  playerName: string;
+  accessStatus: AutoBattleAdminAccount["accessStatus"];
+};
+
 type BalanceRow = {
   purchased_balance: number | string;
   bonus_balance: number | string;
@@ -68,8 +84,6 @@ type BetaRequestRow = {
 
 type DeviceSessionRow = DeviceRow & { user_id: string };
 
-type ProfileIdRow = { user_id: string };
-
 export type AutoBattleAccount = {
   email: string;
   playerName: string;
@@ -103,23 +117,6 @@ export type AutoBattleAccount = {
     metadata: Record<string, unknown>;
     createdAt: string;
   }>;
-};
-
-export type ManualAutoBattlePurchase = {
-  alreadyFulfilled: boolean;
-  orderId: string;
-  sku: string;
-  paidTokens: number;
-  bonusTokens: number;
-  subtotalCents: number;
-  discountCents: number;
-  discountPercent?: number;
-  discountUnlimited: boolean;
-  totalCents: number;
-  currency: string;
-  purchasedBalance: number;
-  bonusBalance: number;
-  promotionalBalance: number;
 };
 
 export type AutoBattleCheckoutQuote = {
@@ -176,6 +173,7 @@ async function serviceRequest<T>(
   const { url, secret } = configuration();
   const response = await fetch(`${url}/rest/v1/${path}`, {
     ...options,
+    signal: options.signal || AbortSignal.timeout(15_000),
     headers: {
       ...serviceHeaders(secret, prefer),
       ...(options.headers || {}),
@@ -237,7 +235,8 @@ export async function ensureAutoBattleAccount(identity: AutoBattleIdentity) {
 
 function integer(value: number | string) {
   const parsed = Number(value);
-  return Number.isSafeInteger(parsed) ? parsed : 0;
+  if (!Number.isSafeInteger(parsed)) throw new Error("invalid_autobattle_integer");
+  return parsed;
 }
 
 export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAccount | null> {
@@ -299,32 +298,12 @@ export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAc
   };
 }
 
-export async function fulfillManualAutoBattlePurchase(input: {
-  email: string;
-  sku: string;
-  paymentReference: string;
-  createdBy: string;
-  applyDiscount: boolean;
-}): Promise<ManualAutoBattlePurchase> {
-  const normalizedEmail = input.email.trim().toLowerCase();
-  const profiles = await serviceRequest<ProfileIdRow[]>(
-    `autobattle_profiles?email=eq.${encodeURIComponent(normalizedEmail)}&select=user_id&limit=1`,
+export async function getAutoBattleReleaseAccessStatus(userId: string) {
+  const rows = await serviceRequest<Array<{ access_status: string }>>(
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=access_status&limit=1`,
   );
-  const profile = profiles?.[0];
-  if (!profile) {
-    throw new AutoBattleDatabaseError(
-      "The player must sign in to AutoBattle once before a purchase can be credited.",
-      404,
-    );
-  }
-
-  return rpc<ManualAutoBattlePurchase>("autobattle_fulfill_manual_purchase", {
-    p_user_id: profile.user_id,
-    p_sku: input.sku,
-    p_payment_reference: input.paymentReference,
-    p_created_by: input.createdBy,
-    p_apply_discount: input.applyDiscount,
-  });
+  const status = rows?.[0]?.access_status || "";
+  return status === "beta" || status === "active" ? status : null;
 }
 
 export async function getAutoBattleCheckoutQuote(userId: string, sku: string) {
@@ -382,6 +361,43 @@ export async function recordAutoBattleStripeEvent(input: {
     p_livemode: input.liveMode,
     p_status: input.status,
     p_details: input.details,
+  });
+}
+
+export async function recordAutoBattleStripeReviewEvent(input: {
+  eventId: string;
+  eventType: string;
+  objectId: string;
+  paymentIntentId: string;
+  liveMode: boolean;
+  amount: number;
+  suspendAccount: boolean;
+  details: Record<string, unknown>;
+}) {
+  return rpc<{ matched: boolean; eventId?: string; userId?: string; alreadyRecorded: boolean }>(
+    "autobattle_record_stripe_review_event",
+    {
+      p_event_id: input.eventId,
+      p_event_type: input.eventType,
+      p_object_id: input.objectId,
+      p_payment_intent_id: input.paymentIntentId,
+      p_livemode: input.liveMode,
+      p_amount: input.amount,
+      p_suspend_account: input.suspendAccount,
+      p_details: input.details,
+    },
+  );
+}
+
+export async function listAutoBattlePaymentReviews() {
+  return rpc<AutoBattlePaymentReview[]>("autobattle_list_payment_reviews", {});
+}
+
+export async function resolveAutoBattlePaymentReview(eventId: string, resolution: string, actor: string) {
+  return rpc<{ id: string; status: string }>("autobattle_resolve_payment_review", {
+    p_event_id: eventId,
+    p_resolution: resolution,
+    p_actor: actor,
   });
 }
 
@@ -494,10 +510,14 @@ export async function authenticateDeviceToken(rawToken: string) {
   );
   const session = rows?.[0];
   if (!session) return null;
-  await serviceRequest(
-    `autobattle_device_sessions?id=eq.${encodeURIComponent(session.id)}`,
-    { method: "PATCH", body: JSON.stringify({ last_seen_at: new Date().toISOString() }) },
-  );
+  const now = Date.now();
+  const lastSeenAt = Date.parse(session.last_seen_at);
+  if (!Number.isFinite(lastSeenAt) || now - lastSeenAt >= 5 * 60 * 1000) {
+    await serviceRequest(
+      `autobattle_device_sessions?id=eq.${encodeURIComponent(session.id)}`,
+      { method: "PATCH", body: JSON.stringify({ last_seen_at: new Date(now).toISOString() }) },
+    );
+  }
   return session;
 }
 
