@@ -1,5 +1,6 @@
 import {
   autoBattleReleaseChannelForApplicationId,
+  autoBattleReleaseChannelForRequest,
   noStoreJson,
   publicAccountError,
 } from "@/app/autobattle-api";
@@ -28,7 +29,9 @@ export async function POST(request: Request) {
       deviceName?: unknown;
     };
     const code = normalizeCode(body.code);
-    const releaseChannel = autoBattleReleaseChannelForApplicationId(body.applicationId);
+    const releaseChannel = body.applicationId == null
+      ? autoBattleReleaseChannelForRequest(request, "production")
+      : autoBattleReleaseChannelForApplicationId(body.applicationId);
     const deviceName = typeof body.deviceName === "string"
       ? body.deviceName.normalize("NFKC").trim().replace(/\s+/g, " ").slice(0, 120)
       : "";

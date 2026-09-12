@@ -8,8 +8,8 @@ import {
 export type AutoBattleReleaseChannel = "production" | "internal";
 
 const AUTOBATTLE_APPLICATION_CHANNELS = new Map<string, AutoBattleReleaseChannel>([
-  ["io.intelligentdecisions.io", "production"],
-  ["test.intelligentdecisions.io", "internal"],
+  ["io.intelligentdecisions.tapflow", "production"],
+  ["test.intelligentdecisions.tapflow", "internal"],
 ]);
 
 export function autoBattleReleaseChannelForApplicationId(value: unknown) {
@@ -17,10 +17,18 @@ export function autoBattleReleaseChannelForApplicationId(value: unknown) {
   return AUTOBATTLE_APPLICATION_CHANNELS.get(value.normalize("NFKC").trim()) || null;
 }
 
-export function autoBattleReleaseChannelForRequest(request: Request) {
-  return autoBattleReleaseChannelForApplicationId(
-    request.headers.get("x-autobattle-application-id"),
-  );
+export function autoBattleReleaseChannelForRequest(
+  request: Request,
+  fallback: AutoBattleReleaseChannel | null = null,
+) {
+  const applicationId = request.headers.get("x-autobattle-application-id");
+  if (applicationId !== null) {
+    return autoBattleReleaseChannelForApplicationId(applicationId);
+  }
+  const legacyChannel = request.headers.get("x-autobattle-release-channel")?.trim();
+  return legacyChannel === "production" || legacyChannel === "internal"
+    ? legacyChannel
+    : fallback;
 }
 
 export function noStoreJson(body: unknown, status = 200, headers?: Headers) {
@@ -73,7 +81,10 @@ export async function requireCurrentAutoBattleRelease(
   request: Request,
   session: AutoBattleDeviceSession,
 ) {
-  const applicationChannel = autoBattleReleaseChannelForRequest(request);
+  const applicationChannel = autoBattleReleaseChannelForRequest(
+    request,
+    session.release_channel,
+  );
   if (!applicationChannel || applicationChannel !== session.release_channel) {
     throw new AutoBattleRetiredBuildError();
   }

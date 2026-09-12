@@ -435,12 +435,13 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
 });
 
 test("protects AutoBattle release downloads by approved account status", async () => {
-  const [route, storage, database, accountPage, releaseRoute, releaseMigration, api] = await Promise.all([
+  const [route, storage, database, accountPage, releaseRoute, linkRoute, releaseMigration, api] = await Promise.all([
     readFile(new URL("../app/api/autobattle/download/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-storage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/autobattle/mobile/release/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/autobattle/mobile/link/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260911191340_autobattle_release_channels.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
   ]);
@@ -460,8 +461,13 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(database, /release_channel/);
   assert.match(releaseRoute, /session\?\.release_channel \|\| applicationChannel/);
   assert.match(releaseRoute, /autoBattleReleaseChannelForRequest/);
-  assert.match(api, /io\.intelligentdecisions\.io/);
-  assert.match(api, /test\.intelligentdecisions\.io/);
+  assert.match(api, /io\.intelligentdecisions\.tapflow/);
+  assert.match(api, /test\.intelligentdecisions\.tapflow/);
+  assert.doesNotMatch(api, /["'](?:io|test)\.intelligentdecisions\.io["']/);
+  assert.match(api, /applicationId !== null/);
+  assert.match(api, /x-autobattle-release-channel/);
+  assert.match(releaseRoute, /session\?\.release_channel \|\| "production"/);
+  assert.match(linkRoute, /body\.applicationId == null/);
   assert.match(api, /AutoBattleRetiredBuildError/);
   assert.match(api, /requireCurrentAutoBattleRelease/);
   assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);

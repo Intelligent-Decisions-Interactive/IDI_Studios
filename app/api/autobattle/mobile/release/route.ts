@@ -9,14 +9,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const applicationChannel = autoBattleReleaseChannelForRequest(request);
+    const session = await deviceSession(request);
+    const applicationChannel = autoBattleReleaseChannelForRequest(
+      request,
+      session?.release_channel || "production",
+    );
     if (!applicationChannel) {
       return noStoreJson(
         { error: "This AutoBattle build has been retired. Install AutoBattle Test or AutoBattle Production to continue." },
         410,
       );
     }
-    const session = await deviceSession(request);
     if (session && session.release_channel !== applicationChannel) {
       return noStoreJson(
         { error: "This app is linked to the wrong AutoBattle release channel. Relink the account to continue." },
