@@ -435,7 +435,7 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
 });
 
 test("protects AutoBattle release downloads by approved account status", async () => {
-  const [route, storage, database, accountPage, releaseRoute, linkRoute, releaseMigration, api] = await Promise.all([
+  const [route, storage, database, accountPage, releaseRoute, linkRoute, releaseMigration, internalReleaseMigration, api] = await Promise.all([
     readFile(new URL("../app/api/autobattle/download/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-storage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
@@ -443,6 +443,7 @@ test("protects AutoBattle release downloads by approved account status", async (
     readFile(new URL("../app/api/autobattle/mobile/release/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/autobattle/mobile/link/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260911191340_autobattle_release_channels.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260912224715_autobattle_internal_release_174.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
   ]);
 
@@ -455,6 +456,9 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(releaseMigration, /autobattle-releases/);
   assert.match(releaseMigration, /AutoBattle-1\.0\.116-153\.apk/);
   assert.match(releaseMigration, /16788aaf42754fcdad92a448aa8127da53d53032dc57b922b4285be0b8bbee85/);
+  assert.match(internalReleaseMigration, /required_version_code = 174/);
+  assert.match(internalReleaseMigration, /version_name = '1\.0\.148'/);
+  assert.match(internalReleaseMigration, /where channel = 'internal'/);
   assert.doesNotMatch(storage, /\/object\/public\/|\/object\/sign\//);
   assert.doesNotMatch(storage, /AbortSignal\.timeout/);
   assert.match(database, /status === "beta" \|\| status === "active"/);
