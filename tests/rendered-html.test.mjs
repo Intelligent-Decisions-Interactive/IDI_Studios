@@ -465,6 +465,8 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(database, /release_channel/);
   assert.match(releaseRoute, /session\?\.release_channel \|\| applicationChannel/);
   assert.match(releaseRoute, /autoBattleReleaseChannelForRequest/);
+  assert.match(releaseRoute, /policy\.apkBytes != null && policy\.apkSha256 != null/);
+  assert.match(releaseRoute, /\.\.\.artifact/);
   assert.match(api, /io\.intelligentdecisions\.tapflow/);
   assert.match(api, /test\.intelligentdecisions\.tapflow/);
   assert.doesNotMatch(api, /["'](?:io|test)\.intelligentdecisions\.io["']/);

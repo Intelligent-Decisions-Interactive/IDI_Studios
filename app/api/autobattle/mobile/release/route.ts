@@ -27,14 +27,16 @@ export async function GET(request: Request) {
       );
     }
     const policy = await getAutoBattleReleasePolicy(session?.release_channel || applicationChannel);
+    const artifact = policy.apkBytes != null && policy.apkSha256 != null
+      ? { apkBytes: policy.apkBytes, apkSha256: policy.apkSha256 }
+      : {};
     return noStoreJson({
       ok: true,
       release: {
         channel: policy.channel,
         requiredVersionCode: policy.requiredVersionCode,
         versionName: policy.versionName,
-        apkBytes: policy.apkBytes,
-        apkSha256: policy.apkSha256,
+        ...artifact,
         releaseNotes: policy.releaseNotes,
         enforcementEnabled: policy.enforcementEnabled,
         publishedAt: policy.publishedAt,
