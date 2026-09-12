@@ -36,6 +36,10 @@ type AutoBattleAdminAccount = {
   email: string;
   playerName: string;
   accessStatus: AutoBattleAccessStatus;
+  purchasedTokens: number;
+  bonusTokens: number;
+  promotionalTokens: number;
+  totalTokens: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -76,6 +80,8 @@ type ListResponse = {
 type AutoBattleListResponse = {
   accounts: AutoBattleAdminAccount[];
   paymentReviews: AutoBattlePaymentReview[];
+  actorEmail: string;
+  actorProvider: string;
 };
 
 type DetailResponse = {
@@ -186,6 +192,8 @@ export function BetaAdminConsole({
   const [clanCode, setClanCode] = useState("");
   const [autoBattleAction, setAutoBattleAction] = useState("");
   const [redemptionCodeAction, setRedemptionCodeAction] = useState("");
+  const [testCreditAction, setTestCreditAction] = useState("");
+  const [testCreditAmount, setTestCreditAmount] = useState("100");
   const [autoBattleMessage, setAutoBattleMessage] = useState("");
   const [autoBattleMessageState, setAutoBattleMessageState] = useState<"" | "error" | "success">("");
 
@@ -278,6 +286,8 @@ export function BetaAdminConsole({
       if (accountsResult.status === "fulfilled" && accountsResult.value) {
         setAutoBattleAccounts(accountsResult.value.accounts || []);
         setPaymentReviews(accountsResult.value.paymentReviews || []);
+        setActorEmail(accountsResult.value.actorEmail || initialActorEmail);
+        setActorProvider(accountsResult.value.actorProvider || initialActorProvider);
       } else if (accountsResult.status === "rejected") {
         setAutoBattleAccounts([]);
         setPaymentReviews([]);
@@ -538,6 +548,43 @@ export function BetaAdminConsole({
     }
   }
 
+  async function addAutoBattleTestCredits(account: AutoBattleAdminAccount) {
+    const amount = Number(testCreditAmount);
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > 10_000) {
+      setAutoBattleMessage("Choose 1 to 10,000 test credits.");
+      setAutoBattleMessageState("error");
+      return;
+    }
+    setTestCreditAction(account.userId);
+    setAutoBattleMessage(`Adding ${amount.toLocaleString()} test credits to ${account.email}…`);
+    setAutoBattleMessageState("");
+    try {
+      const result = await apiRequest<{ account: AutoBattleAdminAccount }>(
+        `/beta/admin/api/autobattle/accounts/${account.userId}/test-credits`,
+        {
+          method: "POST",
+          body: JSON.stringify({ amount, requestId: crypto.randomUUID() }),
+        },
+      );
+      setAutoBattleAccounts((current) =>
+        current.map((item) =>
+          item.userId === result.account.userId ? result.account : item,
+        ),
+      );
+      setAutoBattleMessage(
+        `${amount.toLocaleString()} test credits added. Balance: ${result.account.totalTokens.toLocaleString()} tokens.`,
+      );
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "The test credits could not be added.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setTestCreditAction("");
+    }
+  }
+
   async function resolvePaymentReview(review: AutoBattlePaymentReview) {
     const resolution = (paymentReviewResolutions[review.id] || "").trim();
     if (!resolution) {
@@ -631,7 +678,8 @@ export function BetaAdminConsole({
               <p>
                 These are users who created an AutoBattle account. Approving a pending
                 account enables Android device linking. Founding codes add 30 starting
-                tokens and the permanent 50% clan price when redeemed.
+                tokens and the permanent 50% clan price when redeemed. Your own account
+                also has a protected test-credit control for exercising token flow without payment.
               </p>
             </div>
             <span>{autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending</span>
@@ -644,7 +692,7 @@ export function BetaAdminConsole({
           <div className="admin-autobattle-list" role="list">
             {loading ? (
               <p className="admin-list-state">Loading AutoBattle accounts…</p>
-            ) : autoBattleMessageState === "error" ? null : sortedAutoBattleAccounts.length ? (
+            ) : sortedAutoBattleAccounts.length ? (
               sortedAutoBattleAccounts.map((account) => (
                 <article className="admin-autobattle-account" role="listitem" key={account.userId}>
                   <div>
@@ -654,15 +702,42 @@ export function BetaAdminConsole({
                   </div>
                   <div className="admin-autobattle-meta">
                     <StatusPill status={account.accessStatus} />
+                    <small>
+                      {account.totalTokens.toLocaleString()} tokens · {account.promotionalTokens.toLocaleString()} test
+                    </small>
                     <small>Created {formatDate(account.createdAt, false)}</small>
                   </div>
                   <div className="admin-autobattle-actions">
+                    {account.email.toLowerCase() === actorEmail.toLowerCase() ? (
+                      <div className="admin-test-credit-control">
+                        <label htmlFor={`test-credit-${account.userId}`}>Test credits</label>
+                        <input
+                          id={`test-credit-${account.userId}`}
+                          type="number"
+                          min="1"
+                          max="10000"
+                          step="1"
+                          inputMode="numeric"
+                          value={testCreditAmount}
+                          onChange={(event) => setTestCreditAmount(event.target.value)}
+                        />
+                        <button
+                          className="admin-primary-button"
+                          type="button"
+                          disabled={testCreditAction !== "" || autoBattleAction !== "" || redemptionCodeAction !== ""}
+                          onClick={() => void addAutoBattleTestCredits(account)}
+                        >
+                          {testCreditAction === account.userId ? "Adding…" : "Add test credits"}
+                        </button>
+                      </div>
+                    ) : null}
                     <button
                       className="admin-secondary-button"
                       type="button"
                       disabled={
                         autoBattleAction !== "" ||
                         redemptionCodeAction !== "" ||
+                        testCreditAction !== "" ||
                         account.accessStatus === "suspended"
                       }
                       onClick={() => void sendAutoBattleRedemptionCode(account)}
@@ -680,7 +755,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Approving…" : "Approve beta access"}
@@ -689,7 +764,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Restoring…" : "Restore beta access"}
@@ -698,7 +773,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== ""}
+                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "suspended")}
                       >
                         {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}

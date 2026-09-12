@@ -1,12 +1,29 @@
-import { deviceSession, noStoreJson } from "@/app/autobattle-api";
+import {
+  autoBattleReleaseChannelForRequest,
+  deviceSession,
+  noStoreJson,
+} from "@/app/autobattle-api";
 import { getAutoBattleReleasePolicy } from "@/app/autobattle-db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
+    const applicationChannel = autoBattleReleaseChannelForRequest(request);
+    if (!applicationChannel) {
+      return noStoreJson(
+        { error: "This AutoBattle build has been retired. Install AutoBattle Test or AutoBattle Production to continue." },
+        410,
+      );
+    }
     const session = await deviceSession(request);
-    const policy = await getAutoBattleReleasePolicy(session?.release_channel || "production");
+    if (session && session.release_channel !== applicationChannel) {
+      return noStoreJson(
+        { error: "This app is linked to the wrong AutoBattle release channel. Relink the account to continue." },
+        409,
+      );
+    }
+    const policy = await getAutoBattleReleasePolicy(session?.release_channel || applicationChannel);
     return noStoreJson({
       ok: true,
       release: {

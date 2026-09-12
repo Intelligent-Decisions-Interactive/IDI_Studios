@@ -91,6 +91,9 @@ references public.autobattle_release_channels(channel)
 on update restrict
 on delete restrict;
 
+create index if not exists autobattle_device_sessions_release_channel_idx
+on public.autobattle_device_sessions (release_channel);
+
 alter table public.autobattle_release_channels enable row level security;
 
 revoke all on table public.autobattle_release_channels from public, anon, authenticated;

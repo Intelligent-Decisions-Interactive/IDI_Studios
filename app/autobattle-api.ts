@@ -5,6 +5,24 @@ import {
   type AutoBattleDeviceSession,
 } from "./autobattle-db";
 
+export type AutoBattleReleaseChannel = "production" | "internal";
+
+const AUTOBATTLE_APPLICATION_CHANNELS = new Map<string, AutoBattleReleaseChannel>([
+  ["io.intelligentdecisions.io", "production"],
+  ["test.intelligentdecisions.io", "internal"],
+]);
+
+export function autoBattleReleaseChannelForApplicationId(value: unknown) {
+  if (typeof value !== "string") return null;
+  return AUTOBATTLE_APPLICATION_CHANNELS.get(value.normalize("NFKC").trim()) || null;
+}
+
+export function autoBattleReleaseChannelForRequest(request: Request) {
+  return autoBattleReleaseChannelForApplicationId(
+    request.headers.get("x-autobattle-application-id"),
+  );
+}
+
 export function noStoreJson(body: unknown, status = 200, headers?: Headers) {
   const responseHeaders = headers || new Headers();
   responseHeaders.set("Cache-Control", "no-store");
@@ -55,6 +73,10 @@ export async function requireCurrentAutoBattleRelease(
   request: Request,
   session: AutoBattleDeviceSession,
 ) {
+  const applicationChannel = autoBattleReleaseChannelForRequest(request);
+  if (!applicationChannel || applicationChannel !== session.release_channel) {
+    throw new AutoBattleRetiredBuildError();
+  }
   const policy = await getAutoBattleReleasePolicy(session.release_channel);
   if (!policy.enforcementEnabled) return policy;
   const version = clientVersion(request);
@@ -63,6 +85,14 @@ export async function requireCurrentAutoBattleRelease(
     throw new AutoBattleUpdateRequiredError(policy.versionName);
   }
   return policy;
+}
+
+export class AutoBattleRetiredBuildError extends Error {
+  readonly status = 410;
+
+  constructor() {
+    super("This AutoBattle build has been retired. Install AutoBattle Test or AutoBattle Production to continue.");
+  }
 }
 
 export class AutoBattleUpdateRequiredError extends Error {
@@ -74,6 +104,9 @@ export class AutoBattleUpdateRequiredError extends Error {
 }
 
 export function publicAccountError(error: unknown) {
+  if (error instanceof AutoBattleRetiredBuildError) {
+    return { status: error.status, message: error.message };
+  }
   if (error instanceof AutoBattleUpdateRequiredError) {
     return { status: error.status, message: error.message };
   }

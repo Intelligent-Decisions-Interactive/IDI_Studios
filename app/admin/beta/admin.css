@@ -363,6 +363,42 @@ body:has(.beta-admin-denied) {
   gap: 8px;
 }
 
+.admin-test-credit-control {
+  display: grid;
+  grid-template-columns: minmax(92px, 118px) auto;
+  align-items: end;
+  gap: 6px 8px;
+  width: 100%;
+  margin-bottom: 2px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--admin-gold) 34%, var(--admin-line));
+  background: color-mix(in srgb, var(--admin-gold) 6%, transparent);
+}
+
+.admin-test-credit-control label {
+  grid-column: 1 / -1;
+  color: var(--admin-gold);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.admin-test-credit-control input {
+  width: 100%;
+  min-height: 37px;
+  border: 1px solid var(--admin-line);
+  border-radius: 2px;
+  background: #080b0f;
+  color: var(--admin-white);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.admin-test-credit-control input:focus-visible {
+  outline: 2px solid var(--admin-gold);
+  outline-offset: 2px;
+}
+
 .admin-payment-review-resolution {
   display: flex;
   align-items: end;
@@ -911,6 +947,10 @@ body:has(.beta-admin-denied) {
   .admin-payment-review-resolution button {
     width: 100%;
   }
+
+  .admin-test-credit-control button {
+    width: auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -965,6 +1005,15 @@ body:has(.beta-admin-denied) {
   }
 
   .admin-autobattle-actions {
+    grid-column: auto;
+  }
+
+  .admin-test-credit-control {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-test-credit-control label,
+  .admin-test-credit-control button {
     grid-column: auto;
   }
 

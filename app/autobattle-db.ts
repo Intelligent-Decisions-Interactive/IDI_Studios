@@ -21,6 +21,10 @@ export type AutoBattleAdminAccount = {
   email: string;
   playerName: string;
   accessStatus: "pending" | "beta" | "active" | "suspended";
+  purchasedTokens: number;
+  bonusTokens: number;
+  promotionalTokens: number;
+  totalTokens: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -46,6 +50,10 @@ type BalanceRow = {
   bonus_balance: number | string;
   promotional_balance: number | string;
   updated_at: string;
+};
+
+type AdminBalanceRow = BalanceRow & {
+  user_id: string;
 };
 
 type DiscountRow = {
@@ -493,29 +501,50 @@ export async function updateAutoBattlePlayerName(userId: string, playerName: str
   if (!rows?.[0]) throw new Error("AutoBattle account was not found.");
 }
 
-function mapAutoBattleAdminAccount(row: ProfileRow): AutoBattleAdminAccount {
+function mapAutoBattleAdminAccount(
+  row: ProfileRow,
+  balance?: AdminBalanceRow,
+): AutoBattleAdminAccount {
+  const purchasedTokens = balance ? integer(balance.purchased_balance) : 0;
+  const bonusTokens = balance ? integer(balance.bonus_balance) : 0;
+  const promotionalTokens = balance ? integer(balance.promotional_balance) : 0;
   return {
     userId: row.user_id,
     email: row.email,
     playerName: row.player_name || "",
     accessStatus: row.access_status as AutoBattleAdminAccount["accessStatus"],
+    purchasedTokens,
+    bonusTokens,
+    promotionalTokens,
+    totalTokens: purchasedTokens + bonusTokens + promotionalTokens,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 export async function listAutoBattleAdminAccounts() {
-  const rows = await serviceRequest<ProfileRow[]>(
-    "autobattle_profiles?select=user_id,email,player_name,access_status,created_at,updated_at&order=created_at.desc&limit=250",
-  );
-  return (rows || []).map(mapAutoBattleAdminAccount);
+  const [rows, balances] = await Promise.all([
+    serviceRequest<ProfileRow[]>(
+      "autobattle_profiles?select=user_id,email,player_name,access_status,created_at,updated_at&order=created_at.desc&limit=250",
+    ),
+    serviceRequest<AdminBalanceRow[]>(
+      "autobattle_token_accounts?select=user_id,purchased_balance,bonus_balance,promotional_balance,updated_at&limit=250",
+    ),
+  ]);
+  const balancesByUser = new Map((balances || []).map((balance) => [balance.user_id, balance]));
+  return (rows || []).map((row) => mapAutoBattleAdminAccount(row, balancesByUser.get(row.user_id)));
 }
 
 export async function getAutoBattleAdminAccount(userId: string) {
-  const rows = await serviceRequest<ProfileRow[]>(
-    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,created_at,updated_at&limit=1`,
-  );
-  return rows?.[0] ? mapAutoBattleAdminAccount(rows[0]) : null;
+  const [rows, balances] = await Promise.all([
+    serviceRequest<ProfileRow[]>(
+      `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,created_at,updated_at&limit=1`,
+    ),
+    serviceRequest<AdminBalanceRow[]>(
+      `autobattle_token_accounts?user_id=eq.${encodeURIComponent(userId)}&select=user_id,purchased_balance,bonus_balance,promotional_balance,updated_at&limit=1`,
+    ),
+  ]);
+  return rows?.[0] ? mapAutoBattleAdminAccount(rows[0], balances?.[0]) : null;
 }
 
 export async function hasAutoBattleCampaignRedemption(
@@ -561,7 +590,34 @@ export async function updateAutoBattleAccessStatus(
     "return=representation",
   );
   if (!rows?.[0]) throw new Error("AutoBattle account was not found.");
-  return mapAutoBattleAdminAccount(rows[0]);
+  const account = await getAutoBattleAdminAccount(userId);
+  if (!account) throw new Error("AutoBattle account was not found.");
+  return account;
+}
+
+export async function grantAutoBattleAdminTestCredits(input: {
+  userId: string;
+  amount: number;
+  requestId: string;
+  actorEmail: string;
+}) {
+  const grant = await rpc<{
+    ledgerId: string;
+    status: string;
+    purchased: number | string;
+    bonus: number | string;
+    promotional: number | string;
+  }>("autobattle_admin_grant_test_tokens", {
+    p_user_id: input.userId,
+    p_amount: input.amount,
+    p_request_id: input.requestId,
+    p_actor_email: input.actorEmail,
+    p_reason: "Manual token-flow testing",
+    p_capability: creditMintCapability(),
+  });
+  const account = await getAutoBattleAdminAccount(input.userId);
+  if (!account) throw new Error("AutoBattle account was not found after the credit grant.");
+  return { grant, account };
 }
 
 export async function redeemAutoBattleInvite(userId: string, normalizedCode: string) {
@@ -579,10 +635,20 @@ export async function createDeviceLinkCode(userId: string, codeHash: string, exp
   );
 }
 
-export async function exchangeDeviceLinkCode(codeHash: string, tokenHash: string, deviceName: string) {
+export async function exchangeDeviceLinkCode(
+  codeHash: string,
+  tokenHash: string,
+  deviceName: string,
+  releaseChannel: "production" | "internal",
+) {
   return rpc<{ sessionId: string; userId: string; deviceName: string; expiresAt: string }>(
-    "autobattle_link_device",
-    { p_code_hash: codeHash, p_session_token_hash: tokenHash, p_device_name: deviceName },
+    "autobattle_link_device_for_channel",
+    {
+      p_code_hash: codeHash,
+      p_session_token_hash: tokenHash,
+      p_device_name: deviceName,
+      p_release_channel: releaseChannel,
+    },
   );
 }
 

@@ -220,6 +220,44 @@ test("protects and operates the beta administration console", async () => {
   assert.match(autoBattleDatabase, /access_status: accessStatus/);
 });
 
+test("protects owner test-credit grants and records them as promotional ledger entries", async () => {
+  const [consoleSource, route, protectedRoute, database, migration] = await Promise.all([
+    readFile(
+      new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/admin/api/autobattle/accounts/[id]/test-credits/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/beta/admin/api/autobattle/accounts/[id]/test-credits/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../supabase/migrations/20260912172109_autobattle_admin_test_credits.sql", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(consoleSource, /Add test credits/);
+  assert.match(consoleSource, /crypto\.randomUUID\(\)/);
+  assert.match(consoleSource, /account\.email\.toLowerCase\(\) === actorEmail\.toLowerCase\(\)/);
+  assert.match(route, /getAdminActorFromHeaders/);
+  assert.match(route, /requireSameOrigin/);
+  assert.match(route, /account\.email\.toLowerCase\(\) !== actor\.email\.toLowerCase\(\)/);
+  assert.match(route, /body\.amount > 10_000/);
+  assert.match(protectedRoute, /@\/app\/admin\/api\/autobattle\/accounts\/\[id\]\/test-credits\/route/);
+  assert.match(database, /autobattle_admin_grant_test_tokens/);
+  assert.match(database, /p_capability: creditMintCapability\(\)/);
+  assert.match(migration, /require_capability\('credit_mint', p_capability\)/);
+  assert.match(migration, /'admin_grant'/);
+  assert.match(migration, /'creditClass', 'test_promotional'/);
+  assert.match(migration, /grant execute on function public\.autobattle_admin_grant_test_tokens/);
+  assert.doesNotMatch(migration, /p_purchased[^\n]*p_amount|p_bonus[^\n]*p_amount/);
+});
+
 test("emails account-bound single-use AutoBattle founding codes", async () => {
   const [consoleSource, route, protectedRoute, database, emailHelper, migration] =
     await Promise.all([
@@ -411,7 +449,11 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.doesNotMatch(storage, /AbortSignal\.timeout/);
   assert.match(database, /status === "beta" \|\| status === "active"/);
   assert.match(database, /release_channel/);
-  assert.match(releaseRoute, /session\?\.release_channel \|\| "production"/);
+  assert.match(releaseRoute, /session\?\.release_channel \|\| applicationChannel/);
+  assert.match(releaseRoute, /autoBattleReleaseChannelForRequest/);
+  assert.match(api, /io\.intelligentdecisions\.io/);
+  assert.match(api, /test\.intelligentdecisions\.io/);
+  assert.match(api, /AutoBattleRetiredBuildError/);
   assert.match(api, /requireCurrentAutoBattleRelease/);
   assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);
   assert.match(accountPage, /href="\/api\/autobattle\/download"/);

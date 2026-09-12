@@ -1,6 +1,6 @@
 begin;
 
-select plan(42);
+select plan(47);
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');
@@ -25,6 +25,12 @@ select ok(not has_table_privilege('authenticated', 'public.autobattle_orders', '
 select ok(not has_table_privilege('anon', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'anon cannot access release policy');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'authenticated cannot access release policy directly');
 select ok(has_table_privilege('service_role', 'public.autobattle_release_channels', 'select'), 'service role can read release policy through the Worker');
+select ok(not has_function_privilege('service_role', 'public.autobattle_link_device(text, text, text)', 'execute'), 'service role cannot link retired clients without an explicit channel');
+select ok(not has_function_privilege('anon', 'public.autobattle_link_device_for_channel(text, text, text, text)', 'execute'), 'anon cannot link a device to a release channel');
+select ok(has_function_privilege('service_role', 'public.autobattle_link_device_for_channel(text, text, text, text)', 'execute'), 'service role can link active application products to a release channel');
+select ok(not has_function_privilege('anon', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'anon cannot mint test credits');
+select ok(not has_function_privilege('authenticated', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'authenticated users cannot mint test credits');
+select ok(has_function_privilege('service_role', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'service role can mint test credits through the protected admin route');
 
 select ok(not has_function_privilege('anon', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'anon cannot ensure accounts');
 select ok(not has_function_privilege('authenticated', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'authenticated cannot ensure accounts directly');
