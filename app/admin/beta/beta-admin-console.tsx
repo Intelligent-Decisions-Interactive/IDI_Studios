@@ -40,6 +40,7 @@ type AutoBattleAdminAccount = {
   bonusTokens: number;
   promotionalTokens: number;
   totalTokens: number;
+  canGrantTestCredits: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -708,27 +709,27 @@ export function BetaAdminConsole({
                     <small>Created {formatDate(account.createdAt, false)}</small>
                   </div>
                   <div className="admin-autobattle-actions">
-                    {account.email.toLowerCase() === actorEmail.toLowerCase() ? (
+                    {account.canGrantTestCredits ? (
                       <div className="admin-test-credit-control">
-                        <label htmlFor={`test-credit-${account.userId}`}>Test credits</label>
-                        <input
-                          id={`test-credit-${account.userId}`}
-                          type="number"
-                          min="1"
-                          max="10000"
-                          step="1"
-                          inputMode="numeric"
-                          value={testCreditAmount}
-                          onChange={(event) => setTestCreditAmount(event.target.value)}
-                        />
-                        <button
-                          className="admin-primary-button"
-                          type="button"
-                          disabled={testCreditAction !== "" || autoBattleAction !== "" || redemptionCodeAction !== ""}
-                          onClick={() => void addAutoBattleTestCredits(account)}
-                        >
-                          {testCreditAction === account.userId ? "Adding…" : "Add test credits"}
-                        </button>
+                      <label htmlFor={`test-credit-${account.userId}`}>Test credits</label>
+                      <input
+                        id={`test-credit-${account.userId}`}
+                        type="number"
+                        min="1"
+                        max="10000"
+                        step="1"
+                        inputMode="numeric"
+                        value={testCreditAmount}
+                        onChange={(event) => setTestCreditAmount(event.target.value)}
+                      />
+                      <button
+                        className="admin-primary-button"
+                        type="button"
+                        disabled={testCreditAction !== "" || autoBattleAction !== "" || redemptionCodeAction !== ""}
+                        onClick={() => void addAutoBattleTestCredits(account)}
+                      >
+                        {testCreditAction === account.userId ? "Adding…" : "Add test credits"}
+                      </button>
                       </div>
                     ) : null}
                     <button

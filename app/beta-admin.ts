@@ -7,6 +7,8 @@ type RuntimeEnv = {
   BETA_INVITE_URL?: string;
   ACCESS_TEAM_DOMAIN?: string;
   ACCESS_POLICY_AUD?: string;
+  AUTOBATTLE_TEST_CREDIT_ADMIN_EMAIL?: string;
+  AUTOBATTLE_TEST_CREDIT_USER_ID?: string;
 };
 
 type AccessJwk = JsonWebKey & { kid?: string; alg?: string };
@@ -32,6 +34,22 @@ export type BetaStatus = (typeof BETA_STATUSES)[number];
 
 function normalizeEmail(value: string | null) {
   return value?.trim().toLowerCase() || "";
+}
+
+export function canGrantAutoBattleTestCredits(input: {
+  actorEmail: string;
+  accountEmail: string;
+  userId: string;
+}) {
+  const actorEmail = normalizeEmail(input.actorEmail);
+  if (!actorEmail) return false;
+  if (actorEmail === normalizeEmail(input.accountEmail)) return true;
+
+  const runtime = env as unknown as RuntimeEnv;
+  return (
+    actorEmail === normalizeEmail(runtime.AUTOBATTLE_TEST_CREDIT_ADMIN_EMAIL || null) &&
+    input.userId === runtime.AUTOBATTLE_TEST_CREDIT_USER_ID?.trim()
+  );
 }
 
 function accessConfiguration() {

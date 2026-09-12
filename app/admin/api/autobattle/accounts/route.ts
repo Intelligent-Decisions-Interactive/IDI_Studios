@@ -1,4 +1,7 @@
-import { getAdminActorFromHeaders } from "@/app/beta-admin";
+import {
+  canGrantAutoBattleTestCredits,
+  getAdminActorFromHeaders,
+} from "@/app/beta-admin";
 import {
   listAutoBattleAdminAccounts,
   listAutoBattlePaymentReviews,
@@ -22,7 +25,14 @@ export async function GET(request: Request) {
     ]);
     return Response.json({
       success: true,
-      accounts,
+      accounts: accounts.map((account) => ({
+        ...account,
+        canGrantTestCredits: canGrantAutoBattleTestCredits({
+          actorEmail: actor.email,
+          accountEmail: account.email,
+          userId: account.userId,
+        }),
+      })),
       paymentReviews,
       actorEmail: actor.email,
       actorProvider: actor.provider,

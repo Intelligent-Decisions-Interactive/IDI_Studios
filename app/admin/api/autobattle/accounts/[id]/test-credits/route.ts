@@ -1,4 +1,7 @@
-import { getAdminActorFromHeaders } from "@/app/beta-admin";
+import {
+  canGrantAutoBattleTestCredits,
+  getAdminActorFromHeaders,
+} from "@/app/beta-admin";
 import {
   getAutoBattleAdminAccount,
   grantAutoBattleAdminTestCredits,
@@ -59,13 +62,16 @@ export async function POST(request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
-    if (account.email.toLowerCase() !== actor.email.toLowerCase()) {
+    if (!canGrantAutoBattleTestCredits({
+      actorEmail: actor.email,
+      accountEmail: account.email,
+      userId: account.userId,
+    })) {
       return Response.json(
-        { success: false, message: "Test credits can only be added to your own AutoBattle account." },
+        { success: false, message: "Test credits are not enabled for this admin and account." },
         { status: 403 },
       );
     }
-
     const result = await grantAutoBattleAdminTestCredits({
       userId: id,
       amount: body.amount,

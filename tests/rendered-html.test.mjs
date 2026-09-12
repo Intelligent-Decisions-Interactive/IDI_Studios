@@ -220,10 +220,14 @@ test("protects and operates the beta administration console", async () => {
   assert.match(autoBattleDatabase, /access_status: accessStatus/);
 });
 
-test("protects owner test-credit grants and records them as promotional ledger entries", async () => {
-  const [consoleSource, route, protectedRoute, database, migration] = await Promise.all([
+test("protects mapped test-credit grants and records them as promotional ledger entries", async () => {
+  const [consoleSource, listRoute, route, protectedRoute, auth, database, migration] = await Promise.all([
     readFile(
       new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/admin/api/autobattle/accounts/route.ts", import.meta.url),
       "utf8",
     ),
     readFile(
@@ -234,6 +238,7 @@ test("protects owner test-credit grants and records them as promotional ledger e
       new URL("../app/beta/admin/api/autobattle/accounts/[id]/test-credits/route.ts", import.meta.url),
       "utf8",
     ),
+    readFile(new URL("../app/beta-admin.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(
       new URL("../supabase/migrations/20260912172109_autobattle_admin_test_credits.sql", import.meta.url),
@@ -243,11 +248,15 @@ test("protects owner test-credit grants and records them as promotional ledger e
 
   assert.match(consoleSource, /Add test credits/);
   assert.match(consoleSource, /crypto\.randomUUID\(\)/);
-  assert.match(consoleSource, /account\.email\.toLowerCase\(\) === actorEmail\.toLowerCase\(\)/);
+  assert.match(consoleSource, /account\.canGrantTestCredits/);
+  assert.match(listRoute, /canGrantAutoBattleTestCredits/);
   assert.match(route, /getAdminActorFromHeaders/);
   assert.match(route, /requireSameOrigin/);
-  assert.match(route, /account\.email\.toLowerCase\(\) !== actor\.email\.toLowerCase\(\)/);
+  assert.match(route, /getAutoBattleAdminAccount/);
+  assert.match(route, /canGrantAutoBattleTestCredits/);
   assert.match(route, /body\.amount > 10_000/);
+  assert.match(auth, /AUTOBATTLE_TEST_CREDIT_ADMIN_EMAIL/);
+  assert.match(auth, /AUTOBATTLE_TEST_CREDIT_USER_ID/);
   assert.match(protectedRoute, /@\/app\/admin\/api\/autobattle\/accounts\/\[id\]\/test-credits\/route/);
   assert.match(database, /autobattle_admin_grant_test_tokens/);
   assert.match(database, /p_capability: creditMintCapability\(\)/);
