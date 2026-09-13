@@ -24,6 +24,11 @@ type Account = {
   }>;
 };
 
+type ReleaseArtifact = {
+  versionName: string;
+  apkBytes: number | null;
+};
+
 type TurnstileApi = {
   render: (element: HTMLElement, options: Record<string, unknown>) => string;
   reset: (id?: string) => void;
@@ -47,6 +52,10 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function formatReleaseSize(bytes: number | null) {
+  return bytes ? `${(bytes / (1024 * 1024)).toFixed(1)} MB` : "size shown at download";
+}
+
 function activityAmount(entry: Account["activity"][number]) {
   return entry.purchasedDelta + entry.bonusDelta + entry.promotionalDelta;
 }
@@ -62,7 +71,7 @@ function activityLabel(type: string) {
   } as Record<string, string>)[type] || "Account activity";
 }
 
-export function AutoBattleAccountPortal() {
+export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -491,7 +500,7 @@ export function AutoBattleAccountPortal() {
           {releaseAccess ? (
             <div className={styles.releaseDownload}>
               <a href="/api/autobattle/download">Download AutoBattle <span aria-hidden="true">↓</span></a>
-              <small>Version 1.0.116 · Android 8 or newer · 76.4 MB</small>
+              <small>Version {release.versionName} · Android 8 or newer · {formatReleaseSize(release.apkBytes)}</small>
             </div>
           ) : (
             <p className={styles.releaseLocked}>The Android download unlocks when your account is approved.</p>

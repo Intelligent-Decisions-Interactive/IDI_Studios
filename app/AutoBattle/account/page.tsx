@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getAutoBattleReleasePolicy } from "../../autobattle-db";
 import { AutoBattleLogo } from "../autobattle-logo";
 import { AutoBattleAccountPortal } from "./account-portal";
 import styles from "./account.module.css";
@@ -10,7 +11,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AutoBattleAccountPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AutoBattleAccountPage() {
+  const release = await getAutoBattleReleasePolicy("production");
   return (
     <main className={styles.page}>
       <header className={styles.header}>
@@ -19,7 +23,7 @@ export default function AutoBattleAccountPage() {
         </Link>
         <Link href="/AutoBattle">← AutoBattle</Link>
       </header>
-      <AutoBattleAccountPortal />
+      <AutoBattleAccountPortal release={{ versionName: release.versionName, apkBytes: release.apkBytes }} />
       <footer className={styles.footer}>
         <p>AutoBattle accounts are secured by one-time email codes and revocable device access.</p>
         <div>
