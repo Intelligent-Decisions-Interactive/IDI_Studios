@@ -124,6 +124,14 @@ type CloudBackupRow = {
   completed_at: string;
 };
 
+type CloudUploadRow = {
+  id: string;
+  object_path: string;
+  file_bytes: number | string;
+};
+
+const CLOUD_BACKUP_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export type AutoBattleCloudBackup = {
   id: string;
   sourceReleaseChannel: "production" | "internal";
@@ -465,6 +473,22 @@ export async function getAutoBattleCloudBackup(
   );
   const row = rows?.[0];
   return row ? { ...mapCloudBackup(row), objectPath: row.object_path } : null;
+}
+
+export async function getAutoBattleCloudUpload(
+  userId: string,
+  backupId: string,
+): Promise<{ id: string; objectPath: string; fileBytes: number } | null> {
+  const rows = await serviceRequest<CloudUploadRow[]>(
+    `autobattle_cloud_backups?id=eq.${encodeURIComponent(backupId)}&user_id=eq.${encodeURIComponent(userId)}&status=eq.uploading&select=id,object_path,file_bytes&limit=1`,
+  );
+  const row = rows?.[0];
+  const fileBytes = row ? integer(row.file_bytes) : 0;
+  if (!row) return null;
+  if (!CLOUD_BACKUP_UUID_PATTERN.test(row.id) || !row.object_path || fileBytes < 1 || fileBytes > 100 * 1024 * 1024) {
+    throw new Error("AutoBattle cloud upload metadata is invalid.");
+  }
+  return { id: row.id, objectPath: row.object_path, fileBytes };
 }
 
 export async function beginAutoBattleCloudBackup(input: {

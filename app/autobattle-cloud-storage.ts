@@ -29,21 +29,60 @@ function objectUrl(url: string, objectPath: string, authenticated = false) {
   return `${url}/storage/v1/object/${access}${encodeURIComponent(BACKUP_BUCKET)}/${encoded}`;
 }
 
-export async function uploadAutoBattleCloudBackup(objectPath: string, body: ReadableStream<Uint8Array>) {
+export async function createAutoBattleCloudBackupUpload(objectPath: string) {
   const { url, secret } = configuration();
-  const response = await fetch(objectUrl(url, objectPath), {
+  const encoded = objectPath.split("/").map(encodeURIComponent).join("/");
+  const response = await fetch(
+    `${url}/storage/v1/object/upload/sign/${encodeURIComponent(BACKUP_BUCKET)}/${encoded}`,
+    {
     method: "POST",
     headers: {
       ...storageHeaders(secret),
-      "Content-Type": BACKUP_CONTENT_TYPE,
-      "Cache-Control": "private, no-store",
-      "x-upsert": "false",
+      "Content-Type": "application/json",
     },
-    body,
+    body: "{}",
   });
   const responseText = await response.text();
   if (!response.ok) {
-    throw new Error(`AutoBattle profile upload returned ${response.status}: ${responseText.slice(0, 160)}`);
+    throw new Error(`AutoBattle signed upload returned ${response.status}: ${responseText.slice(0, 160)}`);
+  }
+  const value = JSON.parse(responseText) as { url?: unknown };
+  if (typeof value.url !== "string") throw new Error("AutoBattle signed upload response is invalid.");
+  if (!value.url.startsWith(`/object/upload/sign/${BACKUP_BUCKET}/`)) {
+    throw new Error("AutoBattle signed upload path is invalid.");
+  }
+  const signedUrl = new URL(`${url}/storage/v1${value.url}`);
+  const token = signedUrl.searchParams.get("token") || "";
+  const project = new URL(url);
+  const match = /^([a-z0-9-]+)\.supabase\.co$/i.exec(project.hostname);
+  const expectedPrefix = `/storage/v1/object/upload/sign/${BACKUP_BUCKET}/`;
+  if (
+    !match || !signedUrl.pathname.startsWith(expectedPrefix) ||
+    !/^[A-Za-z0-9._-]{20,4096}$/.test(token)
+  ) {
+    throw new Error("AutoBattle signed upload target is invalid.");
+  }
+  signedUrl.hostname = `${match[1]}.storage.supabase.co`;
+  return {
+    objectPath,
+    uploadUrl: signedUrl.toString(),
+  };
+}
+
+export async function verifyAutoBattleCloudBackupObject(objectPath: string, expectedBytes: number) {
+  const { url, secret } = configuration();
+  const response = await fetch(objectUrl(url, objectPath, true), {
+    method: "HEAD",
+    headers: storageHeaders(secret),
+  });
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new Error(`AutoBattle profile verification returned ${response.status}.`);
+  }
+  const actualBytes = Number(response.headers.get("content-length"));
+  await response.body?.cancel();
+  if (!Number.isSafeInteger(actualBytes) || actualBytes !== expectedBytes) {
+    throw new Error("AutoBattle profile upload size does not match its manifest.");
   }
 }
 
