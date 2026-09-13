@@ -19,6 +19,7 @@ type RuntimeEnv = {
   BETA_NOTIFICATION_EMAIL?: string;
   BETA_INVITE_URL?: string;
   AUTOBATTLE_BETA_INVITE_URL?: string;
+  AUTOBATTLE_AUTH_FROM_EMAIL?: string;
 };
 
 type RequestProduct = "conquest" | "autobattle" | "autobattle-clan";
@@ -263,5 +264,30 @@ export async function sendAutoBattleRedemptionCodeEmail(
     html: `<h1>Your AutoBattle founding code is ready.</h1><p>Hi ${safeName},</p><p>Enter this single-use code in your AutoBattle account:</p><p style="font-size:24px;font-weight:700;letter-spacing:0.08em"><code>${safeCode}</code></p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Redeeming it adds 30 starting tokens and unlocks the permanent 50% founding-clan price on every token pack.</p><p>If you did not expect this email, you can ignore it.</p><p>— IDI Studios</p>`,
     text: `Hi ${recipient.playerName || "AutoBattle player"},\n\nEnter this single-use code in your AutoBattle account:\n\n${recipient.code}\n\nOpen your account: ${accountUrl}\n\nRedeeming it adds 30 starting tokens and unlocks the permanent 50% founding-clan price on every token pack.\n\nIf you did not expect this email, you can ignore it.\n\n— IDI Studios`,
     tags: [{ name: "request_type", value: "autobattle_redemption_code" }],
+  });
+}
+
+export async function sendAutoBattleAuthCodeEmail(
+  recipient: { email: string; code: string },
+  idempotencyKey: string,
+) {
+  const config = getBetaEmailConfig();
+  const runtime = env as unknown as RuntimeEnv;
+  if (!config.apiKey) throw new Error("RESEND_API_KEY is not configured.");
+  if (!/^\d{6}$/.test(recipient.code)) {
+    throw new Error("The AutoBattle sign-in code is invalid.");
+  }
+
+  const from = runtime.AUTOBATTLE_AUTH_FROM_EMAIL?.trim() || config.from;
+  const safeCode = escapeHtml(recipient.code);
+
+  return sendResendEmail(config.apiKey, idempotencyKey, {
+    from,
+    to: [recipient.email],
+    reply_to: config.notify,
+    subject: "Your AutoBattle sign-in code",
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.6;color:#17130d"><p style="font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8a6514">IDI Studios · AutoBattle</p><h1 style="font-size:26px">Your sign-in code</h1><p>Enter this six-digit code in your AutoBattle account:</p><p style="font-size:34px;font-weight:700;letter-spacing:.18em"><code>${safeCode}</code></p><p>This code expires shortly and can only be used once.</p><p>If you did not request this code, you can ignore this email.</p><p>— IDI Studios</p></div>`,
+    text: `IDI Studios · AutoBattle\n\nYour sign-in code is:\n\n${recipient.code}\n\nThis code expires shortly and can only be used once.\n\nIf you did not request this code, you can ignore this email.\n\n— IDI Studios`,
+    tags: [{ name: "request_type", value: "autobattle_auth_code" }],
   });
 }

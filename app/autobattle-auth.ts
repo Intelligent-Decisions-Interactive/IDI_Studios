@@ -1,8 +1,10 @@
 import { env } from "cloudflare:workers";
+import { sendAutoBattleAuthCodeEmail } from "./beta-email";
 
 type RuntimeEnv = {
   SUPABASE_URL?: string;
   SUPABASE_PUBLISHABLE_KEY?: string;
+  SUPABASE_SECRET_KEY?: string;
 };
 
 type SupabaseAuthUser = {
@@ -15,6 +17,11 @@ type SupabaseSessionResponse = {
   refresh_token?: unknown;
   expires_in?: unknown;
   user?: SupabaseAuthUser;
+};
+
+type SupabaseGeneratedLinkResponse = {
+  email_otp?: unknown;
+  hashed_token?: unknown;
 };
 
 export type AutoBattleIdentity = {
@@ -42,6 +49,16 @@ function configuration() {
     throw new Error("AutoBattle account authentication is not configured.");
   }
   return { url, key: publishable };
+}
+
+function adminConfiguration() {
+  const runtime = env as unknown as RuntimeEnv;
+  const url = runtime.SUPABASE_URL?.trim().replace(/\/+$/, "") || "";
+  const secret = runtime.SUPABASE_SECRET_KEY?.trim() || "";
+  if (!url || !secret) {
+    throw new Error("AutoBattle account email authentication is not configured.");
+  }
+  return { url, secret };
 }
 
 function normalizeSession(body: SupabaseSessionResponse): AutoBattleAuthSession {
@@ -96,6 +113,59 @@ async function authRequest<T>(
   return parsed;
 }
 
+async function generateEmailCode(email: string, remoteIp: string) {
+  const { url, secret } = adminConfiguration();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    apikey: secret,
+    "X-Client-Info": "idi-autobattle-worker/1.0",
+  };
+  if (!secret.startsWith("sb_")) {
+    headers.Authorization = `Bearer ${secret}`;
+  }
+  if (remoteIp) headers["X-Forwarded-For"] = remoteIp;
+
+  const response = await fetch(`${url}/auth/v1/admin/generate_link`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      type: "magiclink",
+      email,
+      data: { product: "autobattle" },
+    }),
+    signal: AbortSignal.timeout(12_000),
+  });
+  const text = await response.text();
+  let parsed: SupabaseGeneratedLinkResponse = {};
+  if (text) {
+    try {
+      parsed = JSON.parse(text) as SupabaseGeneratedLinkResponse;
+    } catch {
+      throw new Error("Authentication returned an invalid response.");
+    }
+  }
+  if (!response.ok) {
+    const failure = parsed as SupabaseGeneratedLinkResponse & {
+      msg?: string;
+      message?: string;
+    };
+    const error = new Error(
+      failure.msg || failure.message || "Authentication failed.",
+    ) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+
+  const code = typeof parsed.email_otp === "string" ? parsed.email_otp.trim() : "";
+  const tokenHash =
+    typeof parsed.hashed_token === "string" ? parsed.hashed_token.trim() : "";
+  if (!/^\d{6}$/.test(code) || !tokenHash) {
+    throw new Error("Authentication returned an incomplete email code.");
+  }
+  return { code, tokenHash };
+}
+
 export function normalizeEmail(value: unknown) {
   return typeof value === "string" ? value.trim().toLowerCase().slice(0, 320) : "";
 }
@@ -105,11 +175,11 @@ export function validEmail(email: string) {
 }
 
 export async function requestEmailCode(email: string, remoteIp: string) {
-  await authRequest("otp", {
-    email,
-    create_user: true,
-    data: { product: "autobattle" },
-  }, { remoteIp });
+  const generated = await generateEmailCode(email, remoteIp);
+  await sendAutoBattleAuthCodeEmail(
+    { email, code: generated.code },
+    `autobattle-auth-${generated.tokenHash.slice(0, 160)}`,
+  );
 }
 
 export async function verifyEmailCode(email: string, token: string) {

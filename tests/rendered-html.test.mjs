@@ -402,8 +402,9 @@ test("uses Wrangler as the Cloudflare configuration source of truth", async () =
 });
 
 test("keeps AutoBattle accounts behind the server and an append-only token ledger", async () => {
-  const [auth, api, database, linkRoute, accountPage, migration] = await Promise.all([
+  const [auth, email, api, database, linkRoute, accountPage, migration] = await Promise.all([
     readFile(new URL("../app/autobattle-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/beta-email.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/autobattle/mobile/link/route.ts", import.meta.url), "utf8"),
@@ -414,7 +415,15 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
     ),
   ]);
 
-  assert.match(auth, /create_user: true/);
+  assert.match(auth, /auth\/v1\/admin\/generate_link/);
+  assert.match(auth, /type: "magiclink"/);
+  assert.match(auth, /email_otp/);
+  assert.match(auth, /sendAutoBattleAuthCodeEmail/);
+  assert.doesNotMatch(auth, /authRequest\("otp"/);
+  assert.match(email, /subject: "Your AutoBattle sign-in code"/);
+  assert.match(email, /IDI Studios · AutoBattle/);
+  assert.match(email, /autobattle_auth_code/);
+  assert.doesNotMatch(email, /ConfirmationURL/);
   assert.match(auth, /HttpOnly/);
   assert.match(auth, /SameSite=Strict/);
   assert.match(auth, /Secure/);
