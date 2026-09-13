@@ -89,7 +89,11 @@ async function enforceAutoBattleRateLimit(request: Request, env: Env) {
   let category = "";
   let credential = "";
 
-  if (path === "/api/autobattle/auth/request-code" || path === "/api/autobattle/auth/verify-code") {
+  if (
+    path === "/api/autobattle/auth/request-code" ||
+    path === "/api/autobattle/auth/verify-code" ||
+    path === "/api/autobattle/referral/claim"
+  ) {
     limiter = env.AUTOBATTLE_AUTH_RATE_LIMITER;
     category = "auth";
   } else if (path === "/api/autobattle/mobile/link") {

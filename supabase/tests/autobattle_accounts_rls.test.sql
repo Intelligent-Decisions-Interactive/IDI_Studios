@@ -1,6 +1,6 @@
 begin;
 
-select plan(56);
+select plan(61);
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');
@@ -44,6 +44,11 @@ select ok(has_function_privilege('service_role', 'public.autobattle_link_device_
 select ok(not has_function_privilege('anon', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'anon cannot mint test credits');
 select ok(not has_function_privilege('authenticated', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'authenticated users cannot mint test credits');
 select ok(has_function_privilege('service_role', 'public.autobattle_admin_grant_test_tokens(uuid, bigint, uuid, text, text, text)', 'execute'), 'service role can mint test credits through the protected admin route');
+select ok(not has_table_privilege('service_role', 'autobattle_private.autobattle_referral_codes', 'select,insert,update,delete'), 'service role cannot bypass referral functions');
+select ok(not has_table_privilege('service_role', 'autobattle_private.autobattle_referrals', 'select,insert,update,delete'), 'service role cannot alter referral claims directly');
+select ok(not has_function_privilege('anon', 'public.autobattle_claim_referral(uuid,text,text)', 'execute'), 'anon cannot claim referral rewards');
+select ok(not has_function_privilege('authenticated', 'public.autobattle_claim_referral(uuid,text,text)', 'execute'), 'authenticated clients cannot claim referral rewards directly');
+select ok(has_function_privilege('service_role', 'public.autobattle_claim_referral(uuid,text,text)', 'execute'), 'service role can claim referrals through the protected Worker route');
 
 select ok(not has_function_privilege('anon', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'anon cannot ensure accounts');
 select ok(not has_function_privilege('authenticated', 'public.autobattle_ensure_account(uuid,text,text,text)', 'execute'), 'authenticated cannot ensure accounts directly');

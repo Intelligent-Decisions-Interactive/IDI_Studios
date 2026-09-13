@@ -11,6 +11,13 @@ type Account = {
   accessStatus: string;
   balances: { purchased: number; bonus: number; promotional: number; total: number };
   discount: null | { id: string; percentOff: number; remainingUses: number; unlimited: boolean };
+  referral: {
+    code: string;
+    referredCount: number;
+    cycleRewardCount: number;
+    purchaseRewardCount: number;
+    earnedCredits: number;
+  };
   devices: Array<{ id: string; name: string; expiresAt: string; lastSeenAt: string; createdAt: string }>;
   activity: Array<{
     id: string;
@@ -68,7 +75,16 @@ function activityLabel(type: string) {
     cycle: "Automation cycle",
     refund: "Token refund",
     adjustment: "Account adjustment",
+    referral: "Referral credit",
   } as Record<string, string>)[type] || "Account activity";
+}
+
+function normalizeReferralCode(value: string | null) {
+  return (value || "").normalize("NFKC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+}
+
+function formatReferralCode(value: string) {
+  return value.match(/.{1,4}/g)?.join("-") || value;
 }
 
 export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact }) {
@@ -85,6 +101,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
     publishableKey: string;
   }>(null);
   const [linkCode, setLinkCode] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [referralCode, setReferralCode] = useState("");
   const turnstileNode = useRef<HTMLDivElement>(null);
   const turnstileId = useRef("");
   const turnstileToken = useRef("");
@@ -94,25 +111,55 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
     if (first.ok) {
       const data = await responseJson<{ account: Account }>(first);
       setAccount(data.account);
-      return;
+      return data.account;
     }
     if (first.status !== 401) throw new Error("Your account could not be loaded.");
     const refreshed = await fetch("/api/autobattle/auth/refresh", { method: "POST" });
     if (!refreshed.ok) {
       setAccount(null);
-      return;
+      return null;
     }
     const data = await responseJson<{ account: Account }>(refreshed);
     setAccount(data.account);
+    return data.account;
+  }
+
+  async function claimReferralCode(code: string) {
+    const response = await fetch("/api/autobattle/referral/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    try {
+      const data = await responseJson<{
+        account: Account;
+        claim: { claimed: boolean; alreadyClaimed: boolean };
+      }>(response);
+      setAccount(data.account);
+      setReferralCode("");
+      window.history.replaceState({}, "", "/AutoBattle/account");
+      setMessage(data.claim.alreadyClaimed
+        ? "This referral offer was already applied to your account."
+        : "Referral applied: 30 free credits and 50% off your next purchase are ready.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "That referral could not be applied.");
+    }
   }
 
   useEffect(() => {
     const search = new URLSearchParams(window.location.search);
     const paymentReturn = search.get("payment") === "return";
     const paymentStatus = search.get("redirect_status");
+    const requestedReferralCode = normalizeReferralCode(search.get("ref"));
     // Session discovery is the effect's external synchronization target.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadAccount().catch((reason) => setError(reason instanceof Error ? reason.message : "Your account could not be loaded."))
+    loadAccount().then(async (loadedAccount) => {
+      if (loadedAccount && requestedReferralCode.length === 12) {
+        await claimReferralCode(requestedReferralCode);
+      } else if (!loadedAccount && requestedReferralCode.length === 12) {
+        setReferralCode(requestedReferralCode);
+      }
+    }).catch((reason) => setError(reason instanceof Error ? reason.message : "Your account could not be loaded."))
       .finally(() => {
         setLoading(false);
         if (paymentReturn) {
@@ -217,11 +264,27 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       }));
       setAccount(data.account);
       setCodeSent(false);
-      setMessage("You are signed in.");
+      if (referralCode.length === 12) {
+        await claimReferralCode(referralCode);
+      } else {
+        setMessage("You are signed in.");
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "That code could not be verified.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copyReferralLink() {
+    resetMessages();
+    if (!account) return;
+    const link = `${window.location.origin}/AutoBattle/account?ref=${account.referral.code}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setMessage("Referral link copied.");
+    } catch {
+      setError("Your browser could not copy the referral link. Open this page in a secure browser and try again.");
     }
   }
 
@@ -368,6 +431,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           {codeSent ? (
             <form onSubmit={verifyCode}>
               <label>Email<input value={email} readOnly /></label>
+              {referralCode && <label>Referral code<input value={formatReferralCode(referralCode)} readOnly /></label>}
               <label>Six-digit code<input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required autoFocus /></label>
               <button disabled={busy}>{busy ? "Verifying…" : "Open my account"}<span>↗</span></button>
               <button type="button" className={styles.textButton} onClick={() => { setCodeSent(false); resetMessages(); }} disabled={busy}>Use a different email</button>
@@ -375,6 +439,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           ) : (
             <form onSubmit={requestCode}>
               <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required /></label>
+              {referralCode && <label>Referral code<input value={formatReferralCode(referralCode)} readOnly /></label>}
               <label className={styles.trap} aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
               <div className={styles.turnstile} ref={turnstileNode} />
               <button disabled={busy}>{busy ? "Sending…" : "Email me a code"}<span>↗</span></button>
@@ -432,12 +497,14 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
         <p>
           {account.discount?.unlimited && account.discount.percentOff === 50
             ? "Your permanent founding-clan price is applied below. Every pack keeps its normal bonus."
-            : "Pay without leaving AutoBattle. Your billing address and included tax are reviewed before you confirm."}
+            : account.discount?.percentOff === 50
+              ? "Your one-time referral price is applied below. Every pack keeps its normal bonus."
+              : "Pay without leaving AutoBattle. Your billing address and included tax are reviewed before you confirm."}
         </p>
       </div>
       <div className={styles.storeGrid}>
         {AUTOBATTLE_PRODUCTS.map((pack) => {
-          const clanPrice = account.discount?.unlimited && account.discount.percentOff === 50
+          const discountedPrice = account.discount?.percentOff === 50
             ? Math.ceil(pack.priceCents / 2)
             : pack.priceCents;
           return (
@@ -446,9 +513,11 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
               <div><strong>{pack.paidTokens}</strong><span>Purchased tokens</span></div>
               <p>{pack.bonusTokens ? `+ ${pack.bonusTokens} bonus tokens` : "Starter pack"}</p>
               <div className={styles.storePrice}>
-                {clanPrice < pack.priceCents && <del>{formatUsd(pack.priceCents)}</del>}
-                <strong>{formatUsd(clanPrice)}</strong>
-                <small>{clanPrice < pack.priceCents ? "Founding clan · 50% off" : "Tax calculated and included"}</small>
+                {discountedPrice < pack.priceCents && <del>{formatUsd(pack.priceCents)}</del>}
+                <strong>{formatUsd(discountedPrice)}</strong>
+                <small>{discountedPrice < pack.priceCents
+                  ? account.discount?.unlimited ? "Founding clan · 50% off" : "Referral offer · 50% off once"
+                  : "Tax calculated and included"}</small>
               </div>
               <button
                 type="button"
@@ -456,7 +525,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
                   sku: pack.sku,
                   paidTokens: pack.paidTokens,
                   bonusTokens: pack.bonusTokens,
-                  priceCents: clanPrice,
+                  priceCents: discountedPrice,
                 })}
                 disabled={busy || account.accessStatus === "suspended"}
               >
@@ -482,15 +551,33 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
 
       <div className={styles.dashboardGrid}>
         <article className={styles.panel}>
+          <p className={styles.panelLabel}>Refer a friend</p>
+          <h2>Give 30. Earn up to 60.</h2>
+          <p>
+            Your friend receives 30 free credits and 50% off one purchase. You receive 30 credits
+            after their first completed cycle, plus 30 more after their first verified purchase.
+            Refer as many different people as you like; each verified email can claim the signup offer once.
+          </p>
+          <div className={styles.referralCode}>
+            <strong>{formatReferralCode(account.referral.code)}</strong>
+            <span>{account.referral.referredCount} referred · {account.referral.earnedCredits} credits earned</span>
+          </div>
+          <button type="button" onClick={copyReferralLink} disabled={busy}>Copy referral link</button>
+        </article>
+
+        <article className={styles.panel}>
           <p className={styles.panelLabel}>Clan offer</p>
-          <h2>{account.discount ? `Permanent ${account.discount.percentOff}% clan discount` : "Redeem your invite"}</h2>
-          {account.discount ? (
+          <h2>{account.discount?.unlimited ? `Permanent ${account.discount.percentOff}% clan discount` : "Redeem your invite"}</h2>
+          {account.discount?.unlimited ? (
             <p>Your clan price applies to every token pack. Each pack keeps its normal bonus tokens.</p>
           ) : (
-            <form onSubmit={redeemInvite}>
-              <label>Invite code<input name="inviteCode" autoComplete="off" placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={24} required /></label>
-              <button disabled={busy || !account.playerName}>Redeem offer</button>
-            </form>
+            <>
+              {account.discount && <p>Your one-time referral discount is ready. A valid clan invite can still replace it with the permanent clan price.</p>}
+              <form onSubmit={redeemInvite}>
+                <label>Invite code<input name="inviteCode" autoComplete="off" placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={24} required /></label>
+                <button disabled={busy || !account.playerName}>Redeem offer</button>
+              </form>
+            </>
           )}
         </article>
 

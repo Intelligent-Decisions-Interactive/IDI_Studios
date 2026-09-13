@@ -478,7 +478,7 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(api, /requireCurrentAutoBattleRelease/);
   assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);
   assert.match(accountPage, /href="\/api\/autobattle\/download"/);
-  assert.match(accountPage, /Version 1\.0\.116/);
+  assert.match(accountPage, /Version \{release\.versionName\}/);
 });
 
 test("keeps new AutoBattle purchases in-page and creates only Payment Intents", async () => {
@@ -516,4 +516,39 @@ test("keeps new AutoBattle purchases in-page and creates only Payment Intents", 
   assert.match(paymentIntentMigration, /p_checkout_id[\s\S]*p_payment_intent_id/);
   assert.equal(packageJson.dependencies["@stripe/react-stripe-js"], "6.10.0");
   assert.equal(packageJson.dependencies["@stripe/stripe-js"], "9.16.0");
+});
+
+test("keeps refer-a-friend rewards email-bound, idempotent, and server-owned", async () => {
+  const [accountPage, claimRoute, database, api, worker, migration] = await Promise.all([
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/autobattle/referral/claim/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
+    readFile(new URL("../worker/index.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL("../supabase/migrations/20260913181952_autobattle_referrals.sql", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(accountPage, /Refer as many different people as you like/);
+  assert.match(accountPage, /each verified email can claim the signup offer once/);
+  assert.match(accountPage, /Copy referral link/);
+  assert.match(accountPage, /Referral offer · 50% off once/);
+  assert.match(claimRoute, /webIdentity/);
+  assert.match(claimRoute, /requireWebMutation/);
+  assert.match(database, /autobattle_claim_referral/);
+  assert.match(database, /p_capability: creditMintCapability\(\)/);
+  assert.match(api, /referral_already_claimed/);
+  assert.match(worker, /\/api\/autobattle\/referral\/claim/);
+  assert.match(migration, /referee_email_hash text not null unique/);
+  assert.match(migration, /extensions\.digest\(profile\.email, 'sha256'\)/);
+  assert.match(migration, /'referral:signup:' \|\| referral\.id::text/);
+  assert.match(migration, /'referral:' \|\| p_milestone \|\| ':' \|\| referral\.id::text/);
+  assert.match(migration, /count\(cycle_reward_ledger_id\)/);
+  assert.match(migration, /count\(purchase_reward_ledger_id\)/);
+  assert.match(migration, /remaining_uses = remaining_uses - 1/);
+  assert.match(migration, /autobattle_private\.reward_referrer\(p_user_id, 'cycle', entry\.id\)/);
+  assert.match(migration, /autobattle_private\.reward_referrer\(p_user_id, 'purchase', purchase_order\.id\)/);
+  assert.match(migration, /revoke all on function public\.autobattle_claim_referral/);
 });

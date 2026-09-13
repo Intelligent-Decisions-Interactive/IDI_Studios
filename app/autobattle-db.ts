@@ -176,6 +176,13 @@ export type AutoBattleAccount = {
     remainingUses: number;
     unlimited: boolean;
   };
+  referral: {
+    code: string;
+    referredCount: number;
+    cycleRewardCount: number;
+    purchaseRewardCount: number;
+    earnedCredits: number;
+  };
   devices: Array<{
     id: string;
     name: string;
@@ -318,7 +325,7 @@ function integer(value: number | string) {
 export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAccount | null> {
   await rpc<void>("autobattle_assert_token_integrity", { p_user_id: userId });
   await rpc<number>("autobattle_release_stale_cycles", { p_user_id: userId });
-  const [profiles, balances, discounts, devices, activity] = await Promise.all([
+  const [profiles, balances, discounts, devices, activity, referral] = await Promise.all([
     serviceRequest<ProfileRow[]>(
       `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,created_at,updated_at&limit=1`,
     ),
@@ -334,6 +341,13 @@ export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAc
     serviceRequest<LedgerRow[]>(
       `autobattle_token_ledger?user_id=eq.${encodeURIComponent(userId)}&select=id,entry_type,status,purchased_delta,bonus_delta,promotional_delta,metadata,created_at&order=created_at.desc&limit=30`,
     ),
+    rpc<{
+      code: string;
+      referredCount: number | string;
+      cycleRewardCount: number | string;
+      purchaseRewardCount: number | string;
+      earnedCredits: number | string;
+    }>("autobattle_get_referral_summary", { p_user_id: userId }),
   ]);
 
   const profile = profiles?.[0];
@@ -354,6 +368,13 @@ export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAc
       remainingUses: integer(discount.remaining_uses),
       unlimited: Boolean(discount.unlimited),
     } : null,
+    referral: {
+      code: referral.code,
+      referredCount: integer(referral.referredCount),
+      cycleRewardCount: integer(referral.cycleRewardCount),
+      purchaseRewardCount: integer(referral.purchaseRewardCount),
+      earnedCredits: integer(referral.earnedCredits),
+    },
     devices: (devices || []).map((device) => ({
       id: device.id,
       name: device.device_name,
@@ -766,6 +787,21 @@ export async function redeemAutoBattleInvite(userId: string, normalizedCode: str
   return rpc<Record<string, unknown>>("autobattle_redeem_invite_code", {
     p_user_id: userId,
     p_code_hash: await sha256Hex(normalizedCode),
+    p_capability: creditMintCapability(),
+  });
+}
+
+export async function claimAutoBattleReferral(userId: string, normalizedCode: string) {
+  return rpc<{
+    claimed: boolean;
+    alreadyClaimed: boolean;
+    referralId: string;
+    promotionalCredits?: number;
+    discountPercent?: number;
+    discountUses?: number;
+  }>("autobattle_claim_referral", {
+    p_user_id: userId,
+    p_code: normalizedCode,
     p_capability: creditMintCapability(),
   });
 }

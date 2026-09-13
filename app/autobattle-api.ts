@@ -134,6 +134,18 @@ export function publicAccountError(error: unknown) {
   if (message.includes("invalid_invite_code") || message.includes("invite_code_exhausted")) {
     return { status: 400, message: "That invite code is invalid or no longer available." };
   }
+  if (message.includes("invalid_referral_code")) {
+    return { status: 400, message: "That referral code is invalid or no longer available." };
+  }
+  if (message.includes("self_referral_not_allowed")) {
+    return { status: 400, message: "You cannot use your own referral code." };
+  }
+  if (message.includes("referral_already_claimed")) {
+    return { status: 409, message: "This verified email has already used a referral signup offer." };
+  }
+  if (message.includes("referral_signup_offer_unavailable")) {
+    return { status: 409, message: "Referral signup offers must be claimed before the account uses credits or makes a purchase." };
+  }
   if (message.includes("invalid_device_link_code")) {
     return { status: 400, message: "That device-link code is invalid or has expired." };
   }
