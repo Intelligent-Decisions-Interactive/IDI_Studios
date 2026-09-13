@@ -542,7 +542,10 @@ test("keeps refer-a-friend rewards email-bound, idempotent, and server-owned", a
 
   assert.match(accountPage, /Refer as many different people as you like/);
   assert.match(accountPage, /each verified email can claim the signup offer once/);
-  assert.match(accountPage, /Copy referral link/);
+  assert.match(accountPage, /Copy invite link/);
+  assert.match(accountPage, /Referral offer attached/);
+  assert.match(accountPage, /included automatically in the invite link/);
+  assert.doesNotMatch(accountPage, /formatReferralCode|Referral code<input/);
   assert.match(accountPage, /Referral offer · 50% off once/);
   assert.match(accountPage, /className=\{styles\.playerHeadingLine\}/);
   assert.match(accountPage, /Clan verified/);
@@ -564,4 +567,20 @@ test("keeps refer-a-friend rewards email-bound, idempotent, and server-owned", a
   assert.match(migration, /autobattle_private\.reward_referrer\(p_user_id, 'cycle', entry\.id\)/);
   assert.match(migration, /autobattle_private\.reward_referrer\(p_user_id, 'purchase', purchase_order\.id\)/);
   assert.match(migration, /revoke all on function public\.autobattle_claim_referral/);
+});
+
+test("uses one AutoBattle account flow and collapses the header before actions overlap", async () => {
+  const [page, styles, accountPage] = await Promise.all([
+    readFile(new URL("../app/AutoBattle/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/autobattle.module.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(page, /Access \/ Account/);
+  assert.match(page, /Get AutoBattle access/);
+  assert.match(page, /href="\/AutoBattle\/account"/);
+  assert.doesNotMatch(page, /BetaAccessTrigger|BetaAccessModal|Request founding access/);
+  assert.match(accountPage, /create an account and request access, or to sign back in/);
+  assert.match(styles, /@media \(max-width: 1120px\) \{[\s\S]*?\.header nav \{ display: none; \}/);
+  assert.match(styles, /\.accessLink \{[^}]*white-space: nowrap;/);
 });

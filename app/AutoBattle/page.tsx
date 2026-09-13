@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BetaAccessModal, BetaAccessTrigger } from "../beta-access-form";
 import { StudioMark } from "../studio-mark";
 import { AUTOBATTLE_PRODUCTS, formatUsd } from "../autobattle-products";
 import { AutoBattleLogo } from "./autobattle-logo";
@@ -75,10 +74,9 @@ export default function AutoBattlePage() {
           <a href="#tokens">Tokens</a>
         </nav>
         <div className={styles.headerActions}>
-          <Link className={styles.accountLink} href="/AutoBattle/account">Account</Link>
-          <BetaAccessTrigger className={styles.accessLink} product="autobattle-clan">
-            Request access <span aria-hidden="true">↗</span>
-          </BetaAccessTrigger>
+          <Link className={styles.accessLink} href="/AutoBattle/account">
+            Access / Account <span aria-hidden="true">↗</span>
+          </Link>
         </div>
       </header>
 
@@ -102,9 +100,9 @@ export default function AutoBattlePage() {
               <small>Total Battle specialist tools included</small>
             </p>
             <div className={styles.heroActions}>
-              <BetaAccessTrigger className={styles.primaryButton} product="autobattle-clan">
-                Request founding access <span aria-hidden="true">↗</span>
-              </BetaAccessTrigger>
+              <Link className={styles.primaryButton} href="/AutoBattle/account">
+                Get AutoBattle access <span aria-hidden="true">↗</span>
+              </Link>
               <a className={styles.textLink} href="#clan-access">
                 Clan member? See your offer <span aria-hidden="true">↓</span>
               </a>
@@ -425,10 +423,10 @@ export default function AutoBattlePage() {
                 account. The account receives 30 starting tokens and permanently pays
                 50% of the listed price for every token pack.
               </p>
-              <BetaAccessTrigger className={styles.primaryButton} product="autobattle-clan">
-                Request clan access <span aria-hidden="true">↗</span>
-              </BetaAccessTrigger>
-              <small>Your request and clan-leader answer are reviewed before a clan access token is issued.</small>
+              <Link className={styles.primaryButton} href="/AutoBattle/account">
+                Open your account <span aria-hidden="true">↗</span>
+              </Link>
+              <small>Create or sign in to your account, then redeem the clan invitation you received.</small>
             </div>
 
             <aside className={styles.offerTicket} aria-label="Founding clan offer details">
@@ -468,7 +466,6 @@ export default function AutoBattlePage() {
           <Link href="/AutoBattle/support">Support</Link>
         </div>
       </footer>
-      <BetaAccessModal product="autobattle-clan" />
     </main>
   );
 }

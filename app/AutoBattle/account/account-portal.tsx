@@ -83,10 +83,6 @@ function normalizeReferralCode(value: string | null) {
   return (value || "").normalize("NFKC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
 
-function formatReferralCode(value: string) {
-  return value.match(/.{1,4}/g)?.join("-") || value;
-}
-
 export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact }) {
   const [account, setAccount] = useState<Account | null>(null);
   const [loading, setLoading] = useState(true);
@@ -282,7 +278,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
     const link = `${window.location.origin}/AutoBattle/account?ref=${account.referral.code}`;
     try {
       await navigator.clipboard.writeText(link);
-      setMessage("Referral link copied.");
+      setMessage("Invite link copied.");
     } catch {
       setError("Your browser could not copy the referral link. Open this page in a secure browser and try again.");
     }
@@ -417,8 +413,8 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           <p className={styles.eyebrow}>AutoBattle account / Secure access</p>
           <h1>Your cycles.<br /><span>Your devices.</span></h1>
           <p>
-            Sign in with a one-time email code. No password to store, reuse, or forget.
-            Use the email connected to your beta or clan request.
+            Enter your email to create an account and request access, or to sign back in.
+            No password to store, reuse, or forget.
           </p>
           <ul>
             <li>Purchased, bonus, and promotional tokens stay separate.</li>
@@ -427,11 +423,16 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           </ul>
         </div>
         <div className={styles.authCard}>
-          <p>{codeSent ? "Enter your code" : "Sign in or create account"}</p>
+          <p>{codeSent ? "Enter your code" : "Create or sign in"}</p>
+          {referralCode && (
+            <div className={styles.referralNotice}>
+              <strong>Referral offer attached</strong>
+              <span>30 free credits and 50% off one purchase will apply after sign-in.</span>
+            </div>
+          )}
           {codeSent ? (
             <form onSubmit={verifyCode}>
               <label>Email<input value={email} readOnly /></label>
-              {referralCode && <label>Referral code<input value={formatReferralCode(referralCode)} readOnly /></label>}
               <label>Six-digit code<input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required autoFocus /></label>
               <button disabled={busy}>{busy ? "Verifying…" : "Open my account"}<span>↗</span></button>
               <button type="button" className={styles.textButton} onClick={() => { setCodeSent(false); resetMessages(); }} disabled={busy}>Use a different email</button>
@@ -439,7 +440,6 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           ) : (
             <form onSubmit={requestCode}>
               <label>Email<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} required /></label>
-              {referralCode && <label>Referral code<input value={formatReferralCode(referralCode)} readOnly /></label>}
               <label className={styles.trap} aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>
               <div className={styles.turnstile} ref={turnstileNode} />
               <button disabled={busy}>{busy ? "Sending…" : "Email me a code"}<span>↗</span></button>
@@ -587,11 +587,11 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
             after their first completed cycle, plus 30 more after their first verified purchase.
             Refer as many different people as you like; each verified email can claim the signup offer once.
           </p>
-          <div className={styles.referralCode}>
-            <strong>{formatReferralCode(account.referral.code)}</strong>
+          <div className={styles.referralStats}>
             <span>{account.referral.referredCount} referred · {account.referral.earnedCredits} credits earned</span>
+            <small>Your unique referral offer is included automatically in the invite link.</small>
           </div>
-          <button type="button" onClick={copyReferralLink} disabled={busy}>Copy referral link</button>
+          <button type="button" onClick={copyReferralLink} disabled={busy}>Copy invite link</button>
         </article>
 
         <article className={styles.panel}>
