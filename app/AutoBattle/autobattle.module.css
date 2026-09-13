@@ -406,6 +406,8 @@
 .tokenHeading > div:last-child span { display: block; margin-top: 12px; color: rgba(230, 224, 211, .4); font-size: .68rem; line-height: 1.5; }
 
 .packShelf { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; align-items: end; margin-top: 82px; }
+.purchaseTerms { max-width: 760px; margin: 28px 0 0; color: rgba(230, 224, 211, .48); font-size: .68rem; line-height: 1.6; }
+.purchaseTerms a { color: var(--ab-gold-hot); }
 .pack { position: relative; display: flex; min-height: 326px; flex-direction: column; justify-content: space-between; padding: 24px 20px 20px; border: 1px solid rgba(230, 224, 211, .14); background: linear-gradient(160deg, rgba(230, 224, 211, .055), rgba(230, 224, 211, .018)); }
 .pack::before { content: ""; position: absolute; inset: 0 auto auto 0; width: 38px; height: 4px; background: rgba(201, 156, 54, .62); }
 .packAmount { display: grid; gap: 4px; }

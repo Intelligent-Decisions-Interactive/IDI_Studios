@@ -28,7 +28,8 @@ export default async function AutoBattleAccountPage() {
         <p>AutoBattle accounts are secured by one-time email codes and revocable device access.</p>
         <div>
           <Link href="/AutoBattle/privacy">Privacy</Link>
-          <a href="mailto:development@idistudios.io">Contact</a>
+          <Link href="/AutoBattle/terms">Terms &amp; refunds</Link>
+          <Link href="/AutoBattle/support">Support</Link>
         </div>
       </footer>
     </main>

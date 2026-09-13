@@ -84,7 +84,8 @@ export default function AutoBattlePrivacyPage() {
 
       <footer className={styles.footer}>
         <Link href="/AutoBattle/account">Manage account</Link>
-        <a href="mailto:development@idistudios.io">Contact</a>
+        <Link href="/AutoBattle/terms">Terms &amp; refunds</Link>
+        <Link href="/AutoBattle/support">Support</Link>
       </footer>
     </main>
   );

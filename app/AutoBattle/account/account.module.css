@@ -143,7 +143,9 @@
 .checkoutTotals dd { margin: 0; font-size: .78rem; font-weight: 900; }
 .checkoutTotals > div:last-child dt,
 .checkoutTotals > div:last-child dd { color: var(--gold-hot); font-size: .9rem; }
-.checkoutLegal { color: rgba(230, 224, 211, .38); font-size: .61rem; line-height: 1.55; }
+.checkoutLegal { color: rgba(230, 224, 211, .48); font-size: .61rem; line-height: 1.55; }
+.checkoutLegal a,
+.storeNote a { color: var(--gold-hot); }
 
 .dashboardGrid,
 .detailGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }

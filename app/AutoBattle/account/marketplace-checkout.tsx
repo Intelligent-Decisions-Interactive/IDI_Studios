@@ -158,7 +158,11 @@ function MarketplacePaymentForm({
             {busy ? "Processing…" : `Pay ${formatUsd(prepared.quote.totalCents)}`}
           </button>
         </div>
-        <small className={styles.checkoutLegal}>Tokens are granted only after Stripe confirms payment to our signed webhook.</small>
+        <small className={styles.checkoutLegal}>
+          Tokens are granted only after Stripe confirms payment. By paying, you agree to the
+          {" "}<a href="/AutoBattle/terms" target="_blank" rel="noreferrer">Terms &amp; Refund Policy</a>;
+          completed purchases are generally non-refundable after delivery.
+        </small>
       </div>
     );
   }

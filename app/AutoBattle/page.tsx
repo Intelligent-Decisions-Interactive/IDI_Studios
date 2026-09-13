@@ -405,6 +405,11 @@ export default function AutoBattlePage() {
                 </article>
               ))}
             </div>
+            <p className={styles.purchaseTerms}>
+              One-time purchases in USD. Completed token purchases are generally non-refundable
+              after delivery. <Link href="/AutoBattle/terms">Read the Terms &amp; Refund Policy</Link>{" "}
+              or <Link href="/AutoBattle/support">contact support</Link>.
+            </p>
 
           </div>
         </section>
@@ -459,7 +464,8 @@ export default function AutoBattlePage() {
         <div>
           <Link href="/AutoBattle/account">Account</Link>
           <Link href="/AutoBattle/privacy">Privacy</Link>
-          <a href="mailto:development@idistudios.io">Contact</a>
+          <Link href="/AutoBattle/terms">Terms</Link>
+          <Link href="/AutoBattle/support">Support</Link>
         </div>
       </footer>
       <BetaAccessModal product="autobattle-clan" />
