@@ -24,6 +24,17 @@ export default function AutoBattleSupportPage() {
         <p className={styles.updated}>Account, payment, installation, and product support</p>
 
         <section>
+          <h2>Cloud recovery</h2>
+          <p>
+            Link the device to the same AutoBattle account, open Cloud recovery in the app,
+            and choose Restore. AutoBattle Test and AutoBattle Production share the same backup
+            history. Restore replaces the local profiles and saved reference pictures only after
+            confirmation, and the app keeps a local rollback copy. If another device has a newer
+            backup, automatic sync pauses instead of overwriting it.
+          </p>
+        </section>
+
+        <section>
           <h2>Contact support</h2>
           <p>
             Email <a href="mailto:development@idistudios.io">development@idistudios.io</a>{" "}

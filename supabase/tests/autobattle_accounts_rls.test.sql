@@ -1,6 +1,6 @@
 begin;
 
-select plan(47);
+select plan(56);
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');
@@ -25,6 +25,19 @@ select ok(not has_table_privilege('authenticated', 'public.autobattle_orders', '
 select ok(not has_table_privilege('anon', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'anon cannot access release policy');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'authenticated cannot access release policy directly');
 select ok(has_table_privilege('service_role', 'public.autobattle_release_channels', 'select'), 'service role can read release policy through the Worker');
+select ok(not has_table_privilege('anon', 'public.autobattle_cloud_backups', 'select,insert,update,delete'), 'anon cannot access profile backups');
+select ok(not has_table_privilege('authenticated', 'public.autobattle_cloud_backups', 'select,insert,update,delete'), 'authenticated cannot access profile backups directly');
+select ok(has_table_privilege('service_role', 'public.autobattle_cloud_backups', 'select,insert,update,delete'), 'service role manages profile backups through the Worker');
+select results_eq(
+    $$select public from storage.buckets where id = 'autobattle-profile-backups'$$,
+    array[false],
+    'profile backup storage is private'
+);
+select ok(not has_function_privilege('anon', 'public.autobattle_begin_cloud_backup(uuid,uuid,boolean,text,text,integer,bigint,text,integer,integer)', 'execute'), 'anon cannot begin profile backups');
+select ok(has_function_privilege('service_role', 'public.autobattle_begin_cloud_backup(uuid,uuid,boolean,text,text,integer,bigint,text,integer,integer)', 'execute'), 'service role can begin profile backups through the Worker');
+select ok(not has_function_privilege('authenticated', 'public.autobattle_finalize_cloud_backup(uuid,uuid)', 'execute'), 'authenticated users cannot finalize profile backups directly');
+select ok(has_function_privilege('service_role', 'public.autobattle_finalize_cloud_backup(uuid,uuid)', 'execute'), 'service role can finalize profile backups through the Worker');
+select ok(has_function_privilege('service_role', 'public.autobattle_fail_cloud_backup(uuid,uuid,text)', 'execute'), 'service role can mark failed profile backups through the Worker');
 select ok(not has_function_privilege('service_role', 'public.autobattle_link_device(text, text, text)', 'execute'), 'service role cannot link retired clients without an explicit channel');
 select ok(not has_function_privilege('anon', 'public.autobattle_link_device_for_channel(text, text, text, text)', 'execute'), 'anon cannot link a device to a release channel');
 select ok(has_function_privilege('service_role', 'public.autobattle_link_device_for_channel(text, text, text, text)', 'execute'), 'service role can link active application products to a release channel');

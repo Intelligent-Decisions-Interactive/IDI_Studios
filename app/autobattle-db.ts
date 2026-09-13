@@ -110,6 +110,33 @@ type ReleaseChannelRow = {
   updated_at: string;
 };
 
+type CloudBackupRow = {
+  id: string;
+  object_path: string;
+  source_release_channel: string;
+  source_version_name: string;
+  schema_version: number | string;
+  file_bytes: number | string;
+  sha256: string;
+  profile_count: number | string;
+  image_count: number | string;
+  created_at: string;
+  completed_at: string;
+};
+
+export type AutoBattleCloudBackup = {
+  id: string;
+  sourceReleaseChannel: "production" | "internal";
+  sourceVersionName: string;
+  schemaVersion: number;
+  fileBytes: number;
+  sha256: string;
+  profileCount: number;
+  imageCount: number;
+  createdAt: string;
+  completedAt: string;
+};
+
 export type AutoBattleReleasePolicy = {
   channel: "production" | "internal";
   requiredVersionCode: number;
@@ -395,6 +422,97 @@ export async function getAutoBattleReleasePolicy(
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
   };
+}
+
+function mapCloudBackup(row: CloudBackupRow): AutoBattleCloudBackup {
+  if (
+    !/^[0-9a-f-]{36}$/i.test(row.id) ||
+    (row.source_release_channel !== "production" && row.source_release_channel !== "internal") ||
+    !/^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/.test(row.source_version_name) ||
+    !/^[0-9a-f]{64}$/.test(row.sha256)
+  ) {
+    throw new Error("AutoBattle cloud backup metadata is invalid.");
+  }
+  return {
+    id: row.id,
+    sourceReleaseChannel: row.source_release_channel,
+    sourceVersionName: row.source_version_name,
+    schemaVersion: integer(row.schema_version),
+    fileBytes: integer(row.file_bytes),
+    sha256: row.sha256,
+    profileCount: integer(row.profile_count),
+    imageCount: integer(row.image_count),
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+  };
+}
+
+export async function listAutoBattleCloudBackups(
+  userId: string,
+): Promise<AutoBattleCloudBackup[]> {
+  const rows = await serviceRequest<CloudBackupRow[]>(
+    `autobattle_cloud_backups?user_id=eq.${encodeURIComponent(userId)}&status=eq.ready&select=id,object_path,source_release_channel,source_version_name,schema_version,file_bytes,sha256,profile_count,image_count,created_at,completed_at&order=created_at.desc,id.desc&limit=5`,
+  );
+  return (rows || []).map(mapCloudBackup);
+}
+
+export async function getAutoBattleCloudBackup(
+  userId: string,
+  backupId: string,
+): Promise<(AutoBattleCloudBackup & { objectPath: string }) | null> {
+  const rows = await serviceRequest<CloudBackupRow[]>(
+    `autobattle_cloud_backups?id=eq.${encodeURIComponent(backupId)}&user_id=eq.${encodeURIComponent(userId)}&status=eq.ready&select=id,object_path,source_release_channel,source_version_name,schema_version,file_bytes,sha256,profile_count,image_count,created_at,completed_at&limit=1`,
+  );
+  const row = rows?.[0];
+  return row ? { ...mapCloudBackup(row), objectPath: row.object_path } : null;
+}
+
+export async function beginAutoBattleCloudBackup(input: {
+  userId: string;
+  expectedBackupId: string | null;
+  force: boolean;
+  sourceReleaseChannel: "production" | "internal";
+  sourceVersionName: string;
+  schemaVersion: number;
+  fileBytes: number;
+  sha256: string;
+  profileCount: number;
+  imageCount: number;
+}) {
+  return rpc<{
+    accepted: boolean;
+    backupId?: string;
+    objectPath?: string;
+    latestBackupId?: string;
+    latestStatus?: string;
+    latestCreatedAt?: string;
+  }>("autobattle_begin_cloud_backup", {
+    p_user_id: input.userId,
+    p_expected_backup_id: input.expectedBackupId,
+    p_force: input.force,
+    p_source_release_channel: input.sourceReleaseChannel,
+    p_source_version_name: input.sourceVersionName,
+    p_schema_version: input.schemaVersion,
+    p_file_bytes: input.fileBytes,
+    p_sha256: input.sha256,
+    p_profile_count: input.profileCount,
+    p_image_count: input.imageCount,
+  });
+}
+
+export async function finalizeAutoBattleCloudBackup(userId: string, backupId: string) {
+  return rpc<AutoBattleCloudBackup & { prunedObjectPaths: string[] }>(
+    "autobattle_finalize_cloud_backup",
+    { p_user_id: userId, p_backup_id: backupId },
+  );
+}
+
+export async function failAutoBattleCloudBackup(userId: string, backupId: string, reason: string) {
+  return rpc<void>("autobattle_fail_cloud_backup", {
+    p_user_id: userId,
+    p_backup_id: backupId,
+    p_reason: reason,
+  });
 }
 
 export async function getAutoBattleCheckoutQuote(userId: string, sku: string) {
