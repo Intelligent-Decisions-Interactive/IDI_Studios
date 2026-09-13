@@ -535,6 +535,10 @@ test("keeps refer-a-friend rewards email-bound, idempotent, and server-owned", a
   assert.match(accountPage, /each verified email can claim the signup offer once/);
   assert.match(accountPage, /Copy referral link/);
   assert.match(accountPage, /Referral offer · 50% off once/);
+  assert.match(accountPage, /className=\{styles\.playerHeadingLine\}/);
+  assert.match(accountPage, /Clan verified/);
+  assert.match(accountPage, /className=\{styles\.clanOfferTag\}/);
+  assert.doesNotMatch(accountPage, /<p className=\{styles\.panelLabel\}>Clan offer<\/p>/);
   assert.match(claimRoute, /webIdentity/);
   assert.match(claimRoute, /requireWebMutation/);
   assert.match(database, /autobattle_claim_referral/);

@@ -459,7 +459,36 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       <div className={styles.accountHeading}>
         <div>
           <p className={styles.eyebrow}>AutoBattle account</p>
-          <h1>{account.playerName || "Set your"}<br /><span>{account.playerName ? "command center." : "player name."}</span></h1>
+          <div className={styles.playerHeadingLine}>
+            <h1>{account.playerName || "Set your"}<br /><span>{account.playerName ? "command center." : "player name."}</span></h1>
+            {account.discount?.unlimited ? (
+              <span
+                className={`${styles.clanTag} ${styles.clanTagVerified}`}
+                title={`Permanent ${account.discount.percentOff}% clan discount`}
+              >
+                Clan verified
+              </span>
+            ) : (
+              <details className={styles.clanOfferTag}>
+                <summary className={styles.clanTag}>Clan offer</summary>
+                <div className={styles.clanOfferPopover}>
+                  <strong>Unlock your permanent clan price</strong>
+                  {account.discount && <p>Your one-time referral discount is active. A clan invite makes the discount permanent.</p>}
+                  <form onSubmit={redeemInvite}>
+                    <input
+                      aria-label="Clan invite code"
+                      name="inviteCode"
+                      autoComplete="off"
+                      placeholder="XXXX-XXXX-XXXX-XXXX"
+                      maxLength={24}
+                      required
+                    />
+                    <button disabled={busy || !account.playerName}>Redeem</button>
+                  </form>
+                </div>
+              </details>
+            )}
+          </div>
           <p>{account.email}</p>
         </div>
         <div className={styles.accountActions}>
@@ -563,22 +592,6 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
             <span>{account.referral.referredCount} referred · {account.referral.earnedCredits} credits earned</span>
           </div>
           <button type="button" onClick={copyReferralLink} disabled={busy}>Copy referral link</button>
-        </article>
-
-        <article className={styles.panel}>
-          <p className={styles.panelLabel}>Clan offer</p>
-          <h2>{account.discount?.unlimited ? `Permanent ${account.discount.percentOff}% clan discount` : "Redeem your invite"}</h2>
-          {account.discount?.unlimited ? (
-            <p>Your clan price applies to every token pack. Each pack keeps its normal bonus tokens.</p>
-          ) : (
-            <>
-              {account.discount && <p>Your one-time referral discount is ready. A valid clan invite can still replace it with the permanent clan price.</p>}
-              <form onSubmit={redeemInvite}>
-                <label>Invite code<input name="inviteCode" autoComplete="off" placeholder="XXXX-XXXX-XXXX-XXXX" maxLength={24} required /></label>
-                <button disabled={busy || !account.playerName}>Redeem offer</button>
-              </form>
-            </>
-          )}
         </article>
 
         <article className={styles.panel}>

@@ -64,6 +64,21 @@
 .dashboard { width: min(1320px, calc(100% - 80px)); margin: 0 auto; padding: 92px 0 120px; }
 .accountHeading { display: flex; align-items: end; justify-content: space-between; gap: 48px; }
 .accountHeading h1 { font-size: clamp(4.2rem, 7vw, 7.4rem); }
+.playerHeadingLine { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 14px; }
+.clanTag { display: inline-flex; min-height: 28px; align-items: center; padding: 0 10px; border: 1px solid rgba(201, 156, 54, .5); background: rgba(201, 156, 54, .08); color: var(--gold-hot); font-size: .55rem; font-weight: 900; letter-spacing: .13em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+.clanTagVerified { margin-top: 8px; }
+.clanOfferTag { position: relative; margin-top: 8px; }
+.clanOfferTag summary { cursor: pointer; list-style: none; }
+.clanOfferTag summary::-webkit-details-marker { display: none; }
+.clanOfferTag[open] summary { background: var(--gold-hot); color: var(--ink); }
+.clanOfferPopover { position: absolute; z-index: 20; top: calc(100% + 10px); right: 0; width: min(360px, calc(100vw - 40px)); padding: 18px; border: 1px solid rgba(201, 156, 54, .5); background: #0d1316; box-shadow: 0 22px 60px rgba(0, 0, 0, .56); }
+.clanOfferPopover > strong { font-size: .72rem; letter-spacing: .05em; text-transform: uppercase; }
+.clanOfferPopover > p { margin: 10px 0 0; color: rgba(230, 224, 211, .55); font-size: .69rem; line-height: 1.55; }
+.clanOfferPopover form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 14px; }
+.clanOfferPopover input { min-width: 0; min-height: 42px; padding: 0 11px; border: 1px solid rgba(230, 224, 211, .18); outline: none; background: #080c0f; color: var(--bone); font: inherit; font-size: .65rem; }
+.clanOfferPopover input:focus { border-color: var(--gold-hot); box-shadow: 0 0 0 2px rgba(240, 199, 101, .13); }
+.clanOfferPopover button { min-height: 42px; padding: 0 13px; border: 1px solid var(--gold-hot); background: var(--gold-hot); color: var(--ink); cursor: pointer; font-size: .56rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.clanOfferPopover button:disabled { cursor: not-allowed; opacity: .48; }
 .accountHeading > div:first-child > p:last-child { margin: 25px 0 0; color: rgba(230, 224, 211, .46); font-size: .75rem; letter-spacing: .04em; }
 .accountActions { display: flex; align-items: center; gap: 16px; padding-bottom: 6px; }
 .accountActions button { padding: 10px 0; border: 0; background: transparent; color: rgba(230, 224, 211, .45); cursor: pointer; font-size: .58rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
@@ -211,6 +226,8 @@
   .authCard { padding: 24px 18px; }
   .dashboard { width: calc(100% - 30px); padding: 72px 0 88px; }
   .accountActions { width: 100%; justify-content: space-between; }
+  .clanOfferPopover { right: auto; left: 0; }
+  .clanOfferPopover form { grid-template-columns: 1fr; }
   .balanceHeader { align-items: start; flex-direction: column; }
   .balanceGrid { grid-template-columns: 1fr; }
   .balanceGrid article { min-height: 160px; border-right: 1px solid rgba(230, 224, 211, .12); }
