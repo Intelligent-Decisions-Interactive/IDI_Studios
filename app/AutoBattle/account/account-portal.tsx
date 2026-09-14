@@ -9,6 +9,7 @@ type Account = {
   email: string;
   playerName: string;
   accessStatus: string;
+  signupAffiliation: "not_provided" | "clan" | "individual";
   balances: { purchased: number; bonus: number; promotional: number; total: number };
   discount: null | { id: string; percentOff: number; remainingUses: number; unlimited: boolean };
   referral: {
@@ -304,6 +305,26 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
     }
   }
 
+  async function saveSignupAffiliation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    resetMessages();
+    setBusy(true);
+    const signupAffiliation = new FormData(event.currentTarget).get("signupAffiliation");
+    try {
+      const data = await responseJson<{ account: Account }>(await fetch("/api/autobattle/account", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signupAffiliation }),
+      }));
+      setAccount(data.account);
+      setMessage("Account type saved.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Your account type could not be saved.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function redeemInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     resetMessages();
@@ -445,6 +466,41 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
               <button disabled={busy}>{busy ? "Sending…" : "Email me a code"}<span>↗</span></button>
             </form>
           )}
+          {(message || error) && <p className={error ? styles.error : styles.message} role="status">{error || message}</p>}
+        </div>
+      </section>
+    );
+  }
+
+  if (account.signupAffiliation === "not_provided") {
+    return (
+      <section className={styles.authShell}>
+        <div className={styles.authIntro}>
+          <p className={styles.eyebrow}>AutoBattle account / One-time setup</p>
+          <h1>Tell us<br /><span>who you are.</span></h1>
+          <p>
+            Choose the account type that applies to you. A clan selection lets the
+            AutoBattle team identify your account for review; it does not grant clan
+            pricing until membership is verified.
+          </p>
+        </div>
+        <div className={styles.authCard}>
+          <p>Choose your account type</p>
+          <form onSubmit={saveSignupAffiliation}>
+            <fieldset className={styles.affiliationChoices}>
+              <legend>Are you a clan member?</legend>
+              <label className={styles.affiliationChoice}>
+                <input type="radio" name="signupAffiliation" value="clan" required />
+                <span><strong>Clan member</strong><small>I am joining through the clan.</small></span>
+              </label>
+              <label className={styles.affiliationChoice}>
+                <input type="radio" name="signupAffiliation" value="individual" required />
+                <span><strong>Individual</strong><small>I am not joining as a clan member.</small></span>
+              </label>
+            </fieldset>
+            <button disabled={busy}>{busy ? "Saving…" : "Continue to my account"}<span>↗</span></button>
+            <button type="button" className={styles.textButton} onClick={signOut} disabled={busy}>Sign out</button>
+          </form>
           {(message || error) && <p className={error ? styles.error : styles.message} role="status">{error || message}</p>}
         </div>
       </section>

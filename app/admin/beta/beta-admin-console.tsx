@@ -37,6 +37,7 @@ type AutoBattleAdminAccount = {
   playerName: string;
   accessStatus: AutoBattleAccessStatus;
   clanMember: boolean;
+  signupAffiliation: "not_provided" | "clan" | "individual";
   purchasedTokens: number;
   bonusTokens: number;
   promotionalTokens: number;
@@ -718,15 +719,17 @@ export function BetaAdminConsole({
               <h2 id="autobattle-accounts-title">Account approvals.</h2>
               <p>
                 These are users who created an AutoBattle account. Approving a pending
-                account enables Android device linking. Mark clan members before sending
-                their founding code; the classification does not revoke an offer that was
-                already redeemed. Your own account also has a protected test-credit control
-                for exercising token flow without payment.
+                account enables Android device linking. New users identify themselves as a
+                clan member or individual during account setup; verify clan declarations
+                before sending a founding code. Verification does not revoke an offer that
+                was already redeemed. Your own account also has a protected test-credit
+                control for exercising token flow without payment.
               </p>
             </div>
             <span>
               {autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending ·{" "}
-              {autoBattleAccounts.filter((account) => account.clanMember).length} clan
+              {autoBattleAccounts.filter((account) => account.signupAffiliation === "clan").length} declared clan ·{" "}
+              {autoBattleAccounts.filter((account) => account.clanMember).length} verified
             </span>
           </div>
           {autoBattleMessage ? (
@@ -747,8 +750,15 @@ export function BetaAdminConsole({
                   </div>
                   <div className="admin-autobattle-meta">
                     <StatusPill status={account.accessStatus} />
+                    <span className="admin-signup-affiliation" data-affiliation={account.signupAffiliation}>
+                      {account.signupAffiliation === "clan"
+                        ? "Signup: Clan member"
+                        : account.signupAffiliation === "individual"
+                          ? "Signup: Individual"
+                          : "Signup: Not recorded"}
+                    </span>
                     <span className="admin-clan-member-pill" data-member={account.clanMember}>
-                      {account.clanMember ? "Clan member" : "Not clan member"}
+                      {account.clanMember ? "Verified clan" : "Not verified"}
                     </span>
                     <small>
                       {account.totalTokens.toLocaleString()} tokens · {account.promotionalTokens.toLocaleString()} test

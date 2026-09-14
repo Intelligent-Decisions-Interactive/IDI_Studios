@@ -13,9 +13,12 @@ type ProfileRow = {
   player_name: string | null;
   access_status: string;
   clan_member: boolean;
+  signup_affiliation: AutoBattleSignupAffiliation;
   created_at: string;
   updated_at: string;
 };
+
+export type AutoBattleSignupAffiliation = "not_provided" | "clan" | "individual";
 
 export type AutoBattleAdminAccount = {
   userId: string;
@@ -23,6 +26,7 @@ export type AutoBattleAdminAccount = {
   playerName: string;
   accessStatus: "pending" | "beta" | "active" | "suspended";
   clanMember: boolean;
+  signupAffiliation: AutoBattleSignupAffiliation;
   purchasedTokens: number;
   bonusTokens: number;
   promotionalTokens: number;
@@ -166,6 +170,7 @@ export type AutoBattleAccount = {
   email: string;
   playerName: string;
   accessStatus: string;
+  signupAffiliation: AutoBattleSignupAffiliation;
   balances: {
     purchased: number;
     bonus: number;
@@ -329,7 +334,7 @@ export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAc
   await rpc<number>("autobattle_release_stale_cycles", { p_user_id: userId });
   const [profiles, balances, discounts, devices, activity, referral] = await Promise.all([
     serviceRequest<ProfileRow[]>(
-      `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,created_at,updated_at&limit=1`,
+      `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,signup_affiliation,created_at,updated_at&limit=1`,
     ),
     serviceRequest<BalanceRow[]>(
       `autobattle_token_accounts?user_id=eq.${encodeURIComponent(userId)}&select=purchased_balance,bonus_balance,promotional_balance,updated_at&limit=1`,
@@ -363,6 +368,7 @@ export async function getAutoBattleAccount(userId: string): Promise<AutoBattleAc
     email: profile.email,
     playerName: profile.player_name || "",
     accessStatus: profile.access_status,
+    signupAffiliation: profile.signup_affiliation,
     balances: { purchased, bonus, promotional, total: purchased + bonus + promotional },
     discount: discount ? {
       id: discount.id,
@@ -666,6 +672,23 @@ export async function updateAutoBattlePlayerName(userId: string, playerName: str
   if (!rows?.[0]) throw new Error("AutoBattle account was not found.");
 }
 
+export async function recordAutoBattleSignupAffiliation(
+  userId: string,
+  signupAffiliation: Exclude<AutoBattleSignupAffiliation, "not_provided">,
+) {
+  await serviceRequest<ProfileRow[]>(
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&signup_affiliation=eq.not_provided`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        signup_affiliation: signupAffiliation,
+        updated_at: new Date().toISOString(),
+      }),
+    },
+    "return=representation",
+  );
+}
+
 function mapAutoBattleAdminAccount(
   row: ProfileRow,
   balance?: AdminBalanceRow,
@@ -679,6 +702,7 @@ function mapAutoBattleAdminAccount(
     playerName: row.player_name || "",
     accessStatus: row.access_status as AutoBattleAdminAccount["accessStatus"],
     clanMember: Boolean(row.clan_member),
+    signupAffiliation: row.signup_affiliation,
     purchasedTokens,
     bonusTokens,
     promotionalTokens,
@@ -691,7 +715,7 @@ function mapAutoBattleAdminAccount(
 export async function listAutoBattleAdminAccounts() {
   const [rows, balances] = await Promise.all([
     serviceRequest<ProfileRow[]>(
-      "autobattle_profiles?select=user_id,email,player_name,access_status,clan_member,created_at,updated_at&order=created_at.desc&limit=250",
+      "autobattle_profiles?select=user_id,email,player_name,access_status,clan_member,signup_affiliation,created_at,updated_at&order=created_at.desc&limit=250",
     ),
     serviceRequest<AdminBalanceRow[]>(
       "autobattle_token_accounts?select=user_id,purchased_balance,bonus_balance,promotional_balance,updated_at&limit=250",
@@ -704,7 +728,7 @@ export async function listAutoBattleAdminAccounts() {
 export async function getAutoBattleAdminAccount(userId: string) {
   const [rows, balances] = await Promise.all([
     serviceRequest<ProfileRow[]>(
-      `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,created_at,updated_at&limit=1`,
+      `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,signup_affiliation,created_at,updated_at&limit=1`,
     ),
     serviceRequest<AdminBalanceRow[]>(
       `autobattle_token_accounts?user_id=eq.${encodeURIComponent(userId)}&select=user_id,purchased_balance,bonus_balance,promotional_balance,updated_at&limit=1`,
@@ -745,7 +769,7 @@ export async function updateAutoBattleAccessStatus(
   accessStatus: AutoBattleAdminAccount["accessStatus"],
 ) {
   const rows = await serviceRequest<ProfileRow[]>(
-    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,created_at,updated_at`,
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,signup_affiliation,created_at,updated_at`,
     {
       method: "PATCH",
       body: JSON.stringify({
@@ -796,7 +820,7 @@ export async function redeemAutoBattleInvite(userId: string, normalizedCode: str
 
 export async function updateAutoBattleClanMembership(userId: string, clanMember: boolean) {
   const rows = await serviceRequest<ProfileRow[]>(
-    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,created_at,updated_at`,
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(userId)}&select=user_id,email,player_name,access_status,clan_member,signup_affiliation,created_at,updated_at`,
     {
       method: "PATCH",
       body: JSON.stringify({

@@ -602,3 +602,27 @@ test("uses one AutoBattle account flow and collapses the header before actions o
   assert.match(styles, /@media \(max-width: 1120px\) \{[\s\S]*?\.header nav \{ display: none; \}/);
   assert.match(styles, /\.accessLink \{[^}]*white-space: nowrap;/);
 });
+
+test("collects signup affiliation separately from verified clan membership", async () => {
+  const [accountPage, accountRoute, database, adminConsole, migration] = await Promise.all([
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/autobattle/account/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../supabase/migrations/20260914003244_autobattle_signup_affiliation.sql", import.meta.url),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(accountPage, /Choose your account type/);
+  assert.match(accountPage, /name="signupAffiliation" value="clan"/);
+  assert.match(accountPage, /name="signupAffiliation" value="individual"/);
+  assert.match(accountPage, /does not grant clan\s+pricing until membership is verified/);
+  assert.match(accountRoute, /recordAutoBattleSignupAffiliation/);
+  assert.match(database, /signup_affiliation=eq\.not_provided/);
+  assert.match(adminConsole, /Signup: Clan member/);
+  assert.match(adminConsole, /Verified clan/);
+  assert.match(migration, /signup_affiliation in \('not_provided', 'clan', 'individual'\)/);
+  assert.match(migration, /Admin verification remains in clan_member/);
+});

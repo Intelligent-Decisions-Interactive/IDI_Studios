@@ -375,6 +375,29 @@ body:has(.beta-admin-denied) {
   color: var(--admin-gold);
 }
 
+.admin-signup-affiliation {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--admin-line);
+  color: var(--admin-slate);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-signup-affiliation[data-affiliation="clan"] {
+  border-color: rgba(90, 198, 191, 0.46);
+  background: rgba(90, 198, 191, 0.07);
+  color: var(--admin-success);
+}
+
+.admin-signup-affiliation[data-affiliation="individual"] {
+  color: var(--admin-white);
+}
+
 .admin-autobattle-actions {
   display: flex;
   flex-wrap: wrap;

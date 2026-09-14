@@ -56,6 +56,15 @@
 .authCard .textButton { justify-content: center; border: 0; background: transparent; color: rgba(230, 224, 211, .46); }
 .turnstile { min-height: 65px; }
 .trap { position: absolute; left: -10000px; }
+.affiliationChoices { display: grid; gap: 10px; margin: 0; padding: 0; border: 0; }
+.affiliationChoices legend { margin-bottom: 10px; color: rgba(230, 224, 211, .55); font-size: .58rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.authCard .affiliationChoice { position: relative; display: block; cursor: pointer; }
+.authCard .affiliationChoice input { position: absolute; width: 1px; min-height: 0; height: 1px; padding: 0; opacity: 0; }
+.affiliationChoice > span { display: grid; gap: 5px; padding: 15px; border: 1px solid rgba(230, 224, 211, .18); background: #080c0f; transition: border-color 150ms ease, background 150ms ease; }
+.affiliationChoice strong { color: var(--bone); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+.affiliationChoice small { color: rgba(230, 224, 211, .46); font-size: .65rem; font-weight: 400; letter-spacing: 0; line-height: 1.4; text-transform: none; }
+.affiliationChoice input:checked + span { border-color: var(--gold-hot); background: rgba(201, 156, 54, .1); }
+.affiliationChoice input:focus-visible + span { outline: 2px solid var(--teal); outline-offset: 2px; }
 .message,
 .error { margin: 18px 0 0; font-size: .72rem; line-height: 1.5; }
 .message { color: var(--teal); }
