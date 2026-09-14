@@ -236,7 +236,7 @@ test("protects and operates the beta administration console", async () => {
   assert.match(clanMembershipMigration, /redemption\.campaign_key = 'founding-clan'/);
 });
 
-test("protects mapped test-credit grants and records them as promotional ledger entries", async () => {
+test("restricts test-credit grants to the zero-trusted owner account", async () => {
   const [consoleSource, listRoute, route, protectedRoute, auth, database, migration] = await Promise.all([
     readFile(
       new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url),
@@ -271,8 +271,13 @@ test("protects mapped test-credit grants and records them as promotional ledger 
   assert.match(route, /getAutoBattleAdminAccount/);
   assert.match(route, /canGrantAutoBattleTestCredits/);
   assert.match(route, /body\.amount > 10_000/);
-  assert.match(auth, /AUTOBATTLE_TEST_CREDIT_ADMIN_EMAIL/);
-  assert.match(auth, /AUTOBATTLE_TEST_CREDIT_USER_ID/);
+  assert.match(auth, /AUTOBATTLE_TEST_CREDIT_ACCOUNT_EMAIL = "bhall@idistudios\.io"/);
+  assert.match(auth, /normalizeEmail\(input\.actorEmail\) === AUTOBATTLE_TEST_CREDIT_ACCOUNT_EMAIL/);
+  assert.match(auth, /normalizeEmail\(input\.accountEmail\) === AUTOBATTLE_TEST_CREDIT_ACCOUNT_EMAIL/);
+  assert.doesNotMatch(auth, /actorEmail === normalizeEmail\(input\.accountEmail\)/);
+  assert.doesNotMatch(auth, /AUTOBATTLE_TEST_CREDIT_USER_ID/);
+  assert.match(listRoute, /canGrantAutoBattleTestCredits\(\{\s*actorEmail: actor\.email,\s*accountEmail: account\.email,\s*\}\)/);
+  assert.match(route, /canGrantAutoBattleTestCredits\(\{\s*actorEmail: actor\.email,\s*accountEmail: account\.email,\s*\}\)/);
   assert.match(protectedRoute, /@\/app\/admin\/api\/autobattle\/accounts\/\[id\]\/test-credits\/route/);
   assert.match(database, /autobattle_admin_grant_test_tokens/);
   assert.match(database, /p_capability: creditMintCapability\(\)/);

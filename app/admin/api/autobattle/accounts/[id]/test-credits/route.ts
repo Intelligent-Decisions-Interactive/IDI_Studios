@@ -65,10 +65,9 @@ export async function POST(request: Request, context: RouteContext) {
     if (!canGrantAutoBattleTestCredits({
       actorEmail: actor.email,
       accountEmail: account.email,
-      userId: account.userId,
     })) {
       return Response.json(
-        { success: false, message: "Test credits are not enabled for this admin and account." },
+        { success: false, message: "Test credits are not enabled for this account." },
         { status: 403 },
       );
     }

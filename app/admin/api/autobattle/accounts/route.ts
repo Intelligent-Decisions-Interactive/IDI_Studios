@@ -30,7 +30,6 @@ export async function GET(request: Request) {
         canGrantTestCredits: canGrantAutoBattleTestCredits({
           actorEmail: actor.email,
           accountEmail: account.email,
-          userId: account.userId,
         }),
       })),
       paymentReviews,
