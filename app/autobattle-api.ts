@@ -91,8 +91,10 @@ export async function requireCurrentAutoBattleRelease(
   const policy = await getAutoBattleReleasePolicy(session.release_channel);
   if (!policy.enforcementEnabled) return policy;
   const version = clientVersion(request);
-  const codeMatches = version.code == null || version.code === policy.requiredVersionCode;
-  if (!codeMatches || version.name !== policy.versionName) {
+  const supportsRelease = version.code != null
+    ? version.code >= policy.requiredVersionCode
+    : version.name === policy.versionName;
+  if (!supportsRelease) {
     throw new AutoBattleUpdateRequiredError(policy.versionName);
   }
   return policy;

@@ -519,6 +519,9 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(linkRoute, /body\.applicationId == null/);
   assert.match(api, /AutoBattleRetiredBuildError/);
   assert.match(api, /requireCurrentAutoBattleRelease/);
+  assert.match(api, /version\.code >= policy\.requiredVersionCode/);
+  assert.match(api, /version\.name === policy\.versionName/);
+  assert.doesNotMatch(api, /version\.code === policy\.requiredVersionCode/);
   assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);
   assert.match(accountPage, /href="\/api\/autobattle\/download"/);
   assert.match(accountPage, /Version \{release\.versionName\}/);
