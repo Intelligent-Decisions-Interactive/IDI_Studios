@@ -718,19 +718,16 @@ export function BetaAdminConsole({
               <p className="admin-eyebrow">AutoBattle / Account access</p>
               <h2 id="autobattle-accounts-title">Account approvals.</h2>
               <p>
-                These are users who created an AutoBattle account. Approving a pending
-                account enables Android device linking. New users identify themselves as a
-                clan member or individual during account setup; verify clan declarations
-                before sending a founding code. Verification does not revoke an offer that
-                was already redeemed. Your own account also has a protected test-credit
-                control for exercising token flow without payment.
+                Review access, compare each player&apos;s declared affiliation with verified
+                clan status, and manage test credits. Accounts created before the affiliation
+                question show “Legacy — not asked” until the player signs in again.
               </p>
             </div>
-            <span>
-              {autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending ·{" "}
-              {autoBattleAccounts.filter((account) => account.signupAffiliation === "clan").length} declared clan ·{" "}
-              {autoBattleAccounts.filter((account) => account.clanMember).length} verified
-            </span>
+            <div className="admin-autobattle-summary-stats" aria-label="AutoBattle account summary">
+              <span><strong>{autoBattleAccounts.filter((account) => account.accessStatus === "pending").length}</strong> Pending</span>
+              <span><strong>{autoBattleAccounts.filter((account) => account.signupAffiliation === "clan").length}</strong> Declared clan</span>
+              <span><strong>{autoBattleAccounts.filter((account) => account.clanMember).length}</strong> Verified</span>
+            </div>
           </div>
           {autoBattleMessage ? (
             <p className="admin-autobattle-message" data-state={autoBattleMessageState} role="status">
@@ -743,31 +740,45 @@ export function BetaAdminConsole({
             ) : sortedAutoBattleAccounts.length ? (
               sortedAutoBattleAccounts.map((account) => (
                 <article className="admin-autobattle-account" role="listitem" key={account.userId}>
-                  <div>
-                    <span>AutoBattle account</span>
-                    <strong>{account.playerName || "Player name not set"}</strong>
-                    <a href={`mailto:${account.email}`}>{account.email}</a>
-                  </div>
-                  <div className="admin-autobattle-meta">
-                    <StatusPill status={account.accessStatus} />
-                    <span className="admin-signup-affiliation" data-affiliation={account.signupAffiliation}>
-                      {account.signupAffiliation === "clan"
-                        ? "Signup: Clan member"
-                        : account.signupAffiliation === "individual"
-                          ? "Signup: Individual"
-                          : "Signup: Not recorded"}
-                    </span>
-                    <span className="admin-clan-member-pill" data-member={account.clanMember}>
-                      {account.clanMember ? "Verified clan" : "Not verified"}
-                    </span>
-                    <small>
-                      {account.totalTokens.toLocaleString()} tokens · {account.promotionalTokens.toLocaleString()} test
-                    </small>
-                    <small>Created {formatDate(account.createdAt, false)}</small>
+                  <div className="admin-autobattle-account-overview">
+                    <div className="admin-autobattle-identity">
+                      <span>Player</span>
+                      <strong>{account.playerName || "Player name not set"}</strong>
+                      <a href={`mailto:${account.email}`}>{account.email}</a>
+                    </div>
+                    <dl className="admin-autobattle-meta">
+                      <div><dt>Access</dt><dd><StatusPill status={account.accessStatus} /></dd></div>
+                      <div>
+                        <dt>Player selected</dt>
+                        <dd>
+                          <span
+                            className="admin-signup-affiliation"
+                            data-affiliation={account.signupAffiliation}
+                            title={account.signupAffiliation === "not_provided"
+                              ? "This account predates the affiliation question. The player will be asked on their next sign-in."
+                              : undefined}
+                          >
+                            {account.signupAffiliation === "clan"
+                              ? "Clan member"
+                              : account.signupAffiliation === "individual"
+                                ? "Individual"
+                                : "Legacy — not asked"}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Clan status</dt>
+                        <dd><span className="admin-clan-member-pill" data-member={account.clanMember}>
+                          {account.clanMember ? "Verified" : "Not verified"}
+                        </span></dd>
+                      </div>
+                      <div><dt>Credits</dt><dd><strong>{account.totalTokens.toLocaleString()}</strong><small>{account.promotionalTokens.toLocaleString()} promotional</small></dd></div>
+                      <div><dt>Joined</dt><dd>{formatDate(account.createdAt, false)}</dd></div>
+                    </dl>
                   </div>
                   <div className="admin-autobattle-actions">
                     <div className="admin-clan-membership-control">
-                      <span>Clan membership</span>
+                      <span>Clan verification</span>
                       <button
                         className={account.clanMember ? "admin-secondary-button" : "admin-primary-button"}
                         type="button"
@@ -814,30 +825,28 @@ export function BetaAdminConsole({
                       </button>
                       </div>
                     ) : null}
-                    <button
-                      className="admin-secondary-button"
-                      type="button"
-                      disabled={
-                        autoBattleAction !== "" ||
-                        clanMembershipAction !== "" ||
-                        redemptionCodeAction !== "" ||
-                        testCreditAction !== "" ||
-                        account.accessStatus === "suspended" ||
-                        !account.clanMember
-                      }
-                      onClick={() => void sendAutoBattleRedemptionCode(account)}
-                      title={
-                        account.accessStatus === "suspended"
+                    <div className="admin-autobattle-account-buttons">
+                    {account.clanMember ? (
+                      <button
+                        className="admin-secondary-button"
+                        type="button"
+                        disabled={
+                          autoBattleAction !== "" ||
+                          clanMembershipAction !== "" ||
+                          redemptionCodeAction !== "" ||
+                          testCreditAction !== "" ||
+                          account.accessStatus === "suspended"
+                        }
+                        onClick={() => void sendAutoBattleRedemptionCode(account)}
+                        title={account.accessStatus === "suspended"
                           ? "Restore this account before sending a redemption code."
-                          : !account.clanMember
-                            ? "Mark this account as a clan member before sending a founding code."
-                          : "Email a single-use code for 30 tokens and the permanent 50% clan price."
-                      }
-                    >
-                      {redemptionCodeAction === account.userId
-                        ? "Emailing code…"
-                        : "Email founding code"}
-                    </button>
+                          : "Email a single-use code for 30 tokens and the permanent 50% clan price."}
+                      >
+                        {redemptionCodeAction === account.userId
+                          ? "Emailing code…"
+                          : "Email founding code"}
+                      </button>
+                    ) : null}
                     {account.accessStatus === "pending" ? (
                       <button
                         className="admin-primary-button"
@@ -866,6 +875,7 @@ export function BetaAdminConsole({
                         {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}
                       </button>
                     )}
+                    </div>
                   </div>
                 </article>
               ))

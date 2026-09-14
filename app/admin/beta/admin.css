@@ -265,7 +265,7 @@ body:has(.beta-admin-denied) {
   max-width: 720px;
   margin: 10px 0 0;
   color: var(--admin-slate);
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   line-height: 1.65;
 }
 
@@ -275,8 +275,36 @@ body:has(.beta-admin-denied) {
   border: 1px solid rgba(210, 173, 101, 0.36);
   border-radius: 999px;
   color: var(--admin-warning);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 750;
+}
+
+.admin-autobattle-summary-stats {
+  display: flex;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  background: #0b0e12;
+}
+
+.admin-autobattle-summary-stats span {
+  display: grid;
+  min-width: 104px;
+  gap: 3px;
+  padding: 11px 14px;
+  border-right: 1px solid var(--admin-line);
+  color: var(--admin-slate);
+  font-size: 0.75rem;
+}
+
+.admin-autobattle-summary-stats span:last-child {
+  border-right: 0;
+}
+
+.admin-autobattle-summary-stats strong {
+  color: var(--admin-white);
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .admin-autobattle-message {
@@ -295,102 +323,133 @@ body:has(.beta-admin-denied) {
 
 .admin-autobattle-list {
   display: grid;
-  gap: 1px;
-  margin-top: 22px;
-  border: 1px solid var(--admin-line);
-  background: var(--admin-line);
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .admin-autobattle-account {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.42fr) auto;
-  align-items: center;
-  gap: 20px;
-  padding: 18px;
-  background: #0d1014;
+  overflow: hidden;
+  border: 1px solid var(--admin-line);
+  background: #0b0e12;
 }
 
-.admin-autobattle-account > div:first-child {
+.admin-autobattle-account-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(640px, 2fr);
+  align-items: stretch;
+}
+
+.admin-autobattle-identity {
   display: grid;
   min-width: 0;
-  gap: 4px;
+  align-content: center;
+  gap: 6px;
+  padding: 20px 22px;
+  border-right: 1px solid var(--admin-line);
 }
 
-.admin-autobattle-account > div:first-child > span {
+.admin-autobattle-identity > span {
   color: var(--admin-gold);
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-weight: 750;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
-.admin-autobattle-account strong,
-.admin-autobattle-account a {
+.admin-autobattle-identity strong,
+.admin-autobattle-identity a {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.admin-autobattle-account strong {
-  font-size: 0.9rem;
+.admin-autobattle-identity strong {
+  font-size: 1rem;
 }
 
-.admin-autobattle-account a {
+.admin-autobattle-identity a {
   color: var(--admin-slate);
-  font-size: 0.7rem;
+  font-size: 0.875rem;
   text-decoration: none;
 }
 
-.admin-autobattle-account a:hover {
+.admin-autobattle-identity a:hover {
   color: var(--admin-gold);
 }
 
 .admin-autobattle-meta {
   display: grid;
+  grid-template-columns: repeat(5, minmax(112px, 1fr));
+  margin: 0;
+}
+
+.admin-autobattle-meta > div {
+  display: grid;
+  min-width: 0;
+  align-content: center;
   gap: 8px;
-  justify-items: start;
+  padding: 18px;
+  border-right: 1px solid var(--admin-line);
+}
+
+.admin-autobattle-meta > div:last-child {
+  border-right: 0;
+}
+
+.admin-autobattle-meta dt {
+  color: var(--admin-slate);
+  font-size: 0.75rem;
+}
+
+.admin-autobattle-meta dd {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  margin: 0;
+  color: var(--admin-white);
+  font-size: 0.875rem;
+}
+
+.admin-autobattle-meta dd > strong {
+  font-size: 1rem;
 }
 
 .admin-autobattle-meta small {
   color: var(--admin-slate);
-  font-size: 0.64rem;
+  font-size: 0.72rem;
 }
 
-.admin-clan-member-pill {
+.admin-autobattle-meta .admin-status-pill {
+  min-height: 30px;
+  font-size: 0.72rem;
+}
+
+.admin-clan-member-pill,
+.admin-signup-affiliation {
   display: inline-flex;
-  min-height: 28px;
   align-items: center;
-  padding: 0 10px;
-  border: 1px solid var(--admin-line);
+  gap: 7px;
   color: var(--admin-slate);
-  font-size: 0.62rem;
+  font-size: 0.875rem;
   font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+}
+
+.admin-clan-member-pill::before,
+.admin-signup-affiliation::before {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
 }
 
 .admin-clan-member-pill[data-member="true"] {
-  border-color: rgba(210, 173, 101, 0.48);
-  background: rgba(210, 173, 101, 0.08);
   color: var(--admin-gold);
 }
 
-.admin-signup-affiliation {
-  display: inline-flex;
-  min-height: 28px;
-  align-items: center;
-  padding: 0 10px;
-  border: 1px solid var(--admin-line);
-  color: var(--admin-slate);
-  font-size: 0.62rem;
-  font-weight: 750;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 .admin-signup-affiliation[data-affiliation="clan"] {
-  border-color: rgba(90, 198, 191, 0.46);
-  background: rgba(90, 198, 191, 0.07);
   color: var(--admin-success);
 }
 
@@ -398,56 +457,68 @@ body:has(.beta-admin-denied) {
   color: var(--admin-white);
 }
 
+.admin-signup-affiliation[data-affiliation="not_provided"] {
+  color: var(--admin-warning);
+}
+
 .admin-autobattle-actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--admin-line);
+  background: rgba(255, 255, 255, 0.018);
 }
 
 .admin-clan-membership-control {
   display: flex;
-  width: 100%;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 2px;
+  gap: 9px;
 }
 
 .admin-clan-membership-control > span {
   color: var(--admin-slate);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
 }
 
 .admin-test-credit-control {
-  display: grid;
-  grid-template-columns: minmax(92px, 118px) auto;
-  align-items: end;
-  gap: 6px 8px;
-  width: 100%;
-  margin-bottom: 2px;
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, var(--admin-gold) 34%, var(--admin-line));
-  background: color-mix(in srgb, var(--admin-gold) 6%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--admin-line);
 }
 
 .admin-test-credit-control label {
-  grid-column: 1 / -1;
   color: var(--admin-gold);
   font-size: 0.8rem;
   font-weight: 700;
 }
 
 .admin-test-credit-control input {
-  width: 100%;
-  min-height: 37px;
+  width: 72px;
+  min-height: 40px;
   border: 1px solid var(--admin-line);
   border-radius: 2px;
   background: #080b0f;
   color: var(--admin-white);
   padding: 8px 10px;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+}
+
+.admin-autobattle-account-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.admin-autobattle-actions .admin-primary-button,
+.admin-autobattle-actions .admin-secondary-button {
+  min-height: 40px;
+  font-size: 0.875rem;
 }
 
 .admin-test-credit-control input:focus-visible {
@@ -990,22 +1061,25 @@ body:has(.beta-admin-denied) {
   }
 
   .admin-autobattle-account {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: 1fr;
   }
 
-  .admin-autobattle-actions,
+  .admin-autobattle-account-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-autobattle-identity {
+    border-right: 0;
+    border-bottom: 1px solid var(--admin-line);
+  }
+
   .admin-payment-review-resolution {
     grid-column: 1 / -1;
     justify-content: stretch;
   }
 
-  .admin-autobattle-actions button,
   .admin-payment-review-resolution button {
     width: 100%;
-  }
-
-  .admin-test-credit-control button {
-    width: auto;
   }
 }
 
@@ -1056,21 +1130,47 @@ body:has(.beta-admin-denied) {
     align-items: start;
   }
 
-  .admin-autobattle-meta {
-    justify-items: start;
+  .admin-autobattle-summary-stats {
+    width: 100%;
   }
 
-  .admin-autobattle-actions {
-    grid-column: auto;
+  .admin-autobattle-summary-stats span {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .admin-autobattle-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-autobattle-meta > div {
+    border-bottom: 1px solid var(--admin-line);
+  }
+
+  .admin-autobattle-meta > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .admin-autobattle-meta > div:last-child {
+    border-bottom: 0;
   }
 
   .admin-test-credit-control {
-    grid-template-columns: 1fr;
+    width: 100%;
+    padding: 12px 0 0;
+    border-top: 1px solid var(--admin-line);
+    border-left: 0;
   }
 
-  .admin-test-credit-control label,
-  .admin-test-credit-control button {
-    grid-column: auto;
+  .admin-autobattle-account-buttons {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-left: 0;
+  }
+
+  .admin-autobattle-account-buttons button {
+    width: 100%;
   }
 
   .admin-payment-review-resolution {
@@ -1142,6 +1242,37 @@ body:has(.beta-admin-denied) {
   .admin-card dl > div {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .admin-autobattle-summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-autobattle-summary-stats span {
+    padding: 10px;
+  }
+
+  .admin-autobattle-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-autobattle-meta > div,
+  .admin-autobattle-meta > div:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .admin-test-credit-control {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .admin-test-credit-control label {
+    grid-column: 1 / -1;
+  }
+
+  .admin-autobattle-account-buttons {
+    grid-template-columns: 1fr;
   }
 
   .admin-email-actions {

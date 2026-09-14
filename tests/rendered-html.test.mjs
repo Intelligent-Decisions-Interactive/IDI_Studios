@@ -621,8 +621,9 @@ test("collects signup affiliation separately from verified clan membership", asy
   assert.match(accountPage, /does not grant clan\s+pricing until membership is verified/);
   assert.match(accountRoute, /recordAutoBattleSignupAffiliation/);
   assert.match(database, /signup_affiliation=eq\.not_provided/);
-  assert.match(adminConsole, /Signup: Clan member/);
-  assert.match(adminConsole, /Verified clan/);
+  assert.match(adminConsole, /Player selected/);
+  assert.match(adminConsole, /Legacy — not asked/);
+  assert.match(adminConsole, /Clan status/);
   assert.match(migration, /signup_affiliation in \('not_provided', 'clan', 'individual'\)/);
   assert.match(migration, /Admin verification remains in clan_member/);
 });
