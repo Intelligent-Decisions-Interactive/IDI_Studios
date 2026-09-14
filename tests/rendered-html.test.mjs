@@ -467,7 +467,7 @@ test("keeps AutoBattle accounts behind the server and an append-only token ledge
 });
 
 test("protects AutoBattle release downloads by approved account status", async () => {
-  const [route, storage, database, accountPage, releaseRoute, linkRoute, releaseMigration, internalReleaseMigration, api] = await Promise.all([
+  const [route, storage, database, accountPage, releaseRoute, linkRoute, releaseMigration, internalReleaseMigration, productionReleaseMigration, api] = await Promise.all([
     readFile(new URL("../app/api/autobattle/download/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-storage.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
@@ -476,6 +476,7 @@ test("protects AutoBattle release downloads by approved account status", async (
     readFile(new URL("../app/api/autobattle/mobile/link/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260911191340_autobattle_release_channels.sql", import.meta.url), "utf8"),
     readFile(new URL("../supabase/migrations/20260912224715_autobattle_internal_release_174.sql", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260914182145_publish_autobattle_production_207.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-api.ts", import.meta.url), "utf8"),
   ]);
 
@@ -491,6 +492,12 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(internalReleaseMigration, /required_version_code = 174/);
   assert.match(internalReleaseMigration, /version_name = '1\.0\.148'/);
   assert.match(internalReleaseMigration, /where channel = 'internal'/);
+  assert.match(productionReleaseMigration, /required_version_code = 207/);
+  assert.match(productionReleaseMigration, /version_name = '1\.0\.181'/);
+  assert.match(productionReleaseMigration, /AutoBattle-1\.0\.181-207\.apk/);
+  assert.match(productionReleaseMigration, /ec355616db62f8c009ecf9c5fe9c7c43a7a4eee6d9ec1aca4dd2fef896ce7992/);
+  assert.match(productionReleaseMigration, /enforcement_enabled = true/);
+  assert.match(productionReleaseMigration, /where channel = 'production'/);
   assert.doesNotMatch(storage, /\/object\/public\/|\/object\/sign\//);
   assert.doesNotMatch(storage, /AbortSignal\.timeout/);
   assert.match(database, /status === "beta" \|\| status === "active"/);
