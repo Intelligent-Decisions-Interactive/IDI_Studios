@@ -1,6 +1,6 @@
 begin;
 
-select plan(69);
+select plan(73);
 
 select has_column('public', 'autobattle_profiles', 'clan_member', 'profiles record admin-assigned clan membership');
 select has_column('public', 'autobattle_profiles', 'signup_affiliation', 'profiles record the affiliation declared during account setup');
@@ -31,6 +31,10 @@ select ok(not has_table_privilege('anon', 'public.autobattle_device_sessions', '
 select ok(not has_table_privilege('authenticated', 'public.autobattle_device_sessions', 'select,insert,update,delete'), 'authenticated cannot access device sessions directly');
 select ok(not has_table_privilege('anon', 'public.autobattle_orders', 'select,insert,update,delete'), 'anon cannot access orders');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_orders', 'select,insert,update,delete'), 'authenticated cannot access orders directly');
+select ok(not has_table_privilege('service_role', 'public.autobattle_orders', 'delete'), 'service role cannot delete orders directly');
+select ok(not has_function_privilege('anon', 'public.autobattle_delete_account_orders(uuid)', 'execute'), 'anon cannot delete account order dependencies');
+select ok(not has_function_privilege('authenticated', 'public.autobattle_delete_account_orders(uuid)', 'execute'), 'authenticated users cannot delete account order dependencies');
+select ok(has_function_privilege('service_role', 'public.autobattle_delete_account_orders(uuid)', 'execute'), 'service role can delete one account order set through the protected admin route');
 select ok(not has_table_privilege('anon', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'anon cannot access release policy');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_release_channels', 'select,insert,update,delete'), 'authenticated cannot access release policy directly');
 select ok(has_table_privilege('service_role', 'public.autobattle_release_channels', 'select'), 'service role can read release policy through the Worker');

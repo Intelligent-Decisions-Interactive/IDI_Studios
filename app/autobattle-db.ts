@@ -768,10 +768,9 @@ export async function removeAutoBattleAccountDependencies(userId: string, email:
     .map((row) => row.id)
     .filter((id) => Number.isSafeInteger(id) && id > 0);
 
-  await serviceRequest(
-    `autobattle_orders?user_id=eq.${encodeURIComponent(userId)}`,
-    { method: "DELETE" },
-  );
+  await rpc<number>("autobattle_delete_account_orders", {
+    p_user_id: userId,
+  });
   for (const requestId of autoBattleRequestIds) {
     await serviceRequest(`beta_access_requests?id=eq.${requestId}`, { method: "DELETE" });
   }

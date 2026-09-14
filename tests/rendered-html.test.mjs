@@ -642,7 +642,7 @@ test("collects signup affiliation separately from verified clan membership", asy
 });
 
 test("requires an explicit admin confirmation before permanently deleting AutoBattle accounts", async () => {
-  const [adminConsole, route, protectedRoute, database, auth, storage] = await Promise.all([
+  const [adminConsole, route, protectedRoute, database, auth, storage, deletionMigration] = await Promise.all([
     readFile(new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../app/admin/api/autobattle/accounts/[id]/route.ts", import.meta.url),
@@ -655,6 +655,13 @@ test("requires an explicit admin confirmation before permanently deleting AutoBa
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-auth.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-cloud-storage.ts", import.meta.url), "utf8"),
+    readFile(
+      new URL(
+        "../supabase/migrations/20260914023657_allow_server_account_order_cleanup.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
   ]);
 
   assert.match(adminConsole, /Delete account/);
@@ -671,7 +678,11 @@ test("requires an explicit admin confirmation before permanently deleting AutoBa
   assert.match(route, /removeAutoBattleAccountDependencies\(id, account\.email\)/);
   assert.match(route, /deleteAutoBattleAuthUser\(id\)/);
   assert.match(protectedRoute, /DELETE, PATCH/);
-  assert.match(database, /autobattle_orders\?user_id=eq/);
+  assert.match(database, /autobattle_delete_account_orders/);
+  assert.match(deletionMigration, /security definer/);
+  assert.match(deletionMigration, /where user_id = p_user_id/);
+  assert.match(deletionMigration, /revoke all on function public\.autobattle_delete_account_orders\(uuid\)/);
+  assert.match(deletionMigration, /grant execute on function public\.autobattle_delete_account_orders\(uuid\)\s+to service_role/);
   assert.match(database, /beta_access_requests\?email=eq/);
   assert.match(database, /startsWith\("\[AutoBattle"\)/);
   assert.match(auth, /auth\/v1\/admin\/users\/\$\{encodeURIComponent\(userId\)\}/);
