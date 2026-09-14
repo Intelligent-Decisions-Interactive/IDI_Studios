@@ -87,13 +87,6 @@ function displayedPackPrice(pack: MarketplacePack, discount: Account["discount"]
   return Math.floor(pack.priceCents / 2);
 }
 
-function scrollViewportToTop() {
-  window.requestAnimationFrame(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
-  });
-}
-
 function normalizeReferralCode(value: string | null) {
   return (value || "").normalize("NFKC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
@@ -117,6 +110,19 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
   const turnstileId = useRef("");
   const turnstileToken = useRef("");
   const linkCodeNode = useRef<HTMLDivElement>(null);
+  const androidAccessNode = useRef<HTMLElement>(null);
+
+  function positionViewportAfterLogin() {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (window.matchMedia("(max-width: 860px)").matches && androidAccessNode.current) {
+          androidAccessNode.current.scrollIntoView({ block: "start", behavior: "auto" });
+          return;
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      });
+    });
+  }
 
   async function loadAccount() {
     const first = await fetch("/api/autobattle/account", { cache: "no-store" });
@@ -281,7 +287,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       } else {
         setMessage("You are signed in.");
       }
-      scrollViewportToTop();
+      positionViewportAfterLogin();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "That code could not be verified.");
     } finally {
@@ -667,7 +673,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           <button type="button" onClick={copyReferralLink} disabled={busy}>Copy invite link</button>
         </article>
 
-        <article className={styles.panel}>
+        <article className={styles.panel} ref={androidAccessNode} id="android-access">
           <p className={styles.panelLabel}>Android access</p>
           <h2 id="download">Download and link AutoBattle</h2>
           {releaseAccess ? (
