@@ -36,6 +36,7 @@ type AutoBattleAdminAccount = {
   email: string;
   playerName: string;
   accessStatus: AutoBattleAccessStatus;
+  clanMember: boolean;
   purchasedTokens: number;
   bonusTokens: number;
   promotionalTokens: number;
@@ -192,6 +193,7 @@ export function BetaAdminConsole({
   const [adminNotes, setAdminNotes] = useState("");
   const [clanCode, setClanCode] = useState("");
   const [autoBattleAction, setAutoBattleAction] = useState("");
+  const [clanMembershipAction, setClanMembershipAction] = useState("");
   const [redemptionCodeAction, setRedemptionCodeAction] = useState("");
   const [testCreditAction, setTestCreditAction] = useState("");
   const [testCreditAmount, setTestCreditAmount] = useState("100");
@@ -549,6 +551,44 @@ export function BetaAdminConsole({
     }
   }
 
+  async function updateAutoBattleClanMembership(account: AutoBattleAdminAccount) {
+    const clanMember = !account.clanMember;
+    setClanMembershipAction(account.userId);
+    setAutoBattleMessage(
+      clanMember
+        ? `Marking ${account.email} as a clan member…`
+        : `Removing ${account.email} from the clan list…`,
+    );
+    setAutoBattleMessageState("");
+    try {
+      const result = await apiRequest<{ account: AutoBattleAdminAccount }>(
+        `/beta/admin/api/autobattle/accounts/${account.userId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ clanMember }),
+        },
+      );
+      setAutoBattleAccounts((current) =>
+        current.map((item) =>
+          item.userId === result.account.userId ? result.account : item,
+        ),
+      );
+      setAutoBattleMessage(
+        result.account.clanMember
+          ? `${result.account.email} is now marked as a clan member.`
+          : `${result.account.email} is now marked as a non-clan account.`,
+      );
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "Clan membership could not be updated.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setClanMembershipAction("");
+    }
+  }
+
   async function addAutoBattleTestCredits(account: AutoBattleAdminAccount) {
     const amount = Number(testCreditAmount);
     if (!Number.isSafeInteger(amount) || amount < 1 || amount > 10_000) {
@@ -678,12 +718,16 @@ export function BetaAdminConsole({
               <h2 id="autobattle-accounts-title">Account approvals.</h2>
               <p>
                 These are users who created an AutoBattle account. Approving a pending
-                account enables Android device linking. Founding codes add 30 starting
-                tokens and the permanent 50% clan price when redeemed. Your own account
-                also has a protected test-credit control for exercising token flow without payment.
+                account enables Android device linking. Mark clan members before sending
+                their founding code; the classification does not revoke an offer that was
+                already redeemed. Your own account also has a protected test-credit control
+                for exercising token flow without payment.
               </p>
             </div>
-            <span>{autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending</span>
+            <span>
+              {autoBattleAccounts.filter((account) => account.accessStatus === "pending").length} pending ·{" "}
+              {autoBattleAccounts.filter((account) => account.clanMember).length} clan
+            </span>
           </div>
           {autoBattleMessage ? (
             <p className="admin-autobattle-message" data-state={autoBattleMessageState} role="status">
@@ -703,12 +747,35 @@ export function BetaAdminConsole({
                   </div>
                   <div className="admin-autobattle-meta">
                     <StatusPill status={account.accessStatus} />
+                    <span className="admin-clan-member-pill" data-member={account.clanMember}>
+                      {account.clanMember ? "Clan member" : "Not clan member"}
+                    </span>
                     <small>
                       {account.totalTokens.toLocaleString()} tokens · {account.promotionalTokens.toLocaleString()} test
                     </small>
                     <small>Created {formatDate(account.createdAt, false)}</small>
                   </div>
                   <div className="admin-autobattle-actions">
+                    <div className="admin-clan-membership-control">
+                      <span>Clan membership</span>
+                      <button
+                        className={account.clanMember ? "admin-secondary-button" : "admin-primary-button"}
+                        type="button"
+                        disabled={
+                          clanMembershipAction !== "" ||
+                          autoBattleAction !== "" ||
+                          redemptionCodeAction !== "" ||
+                          testCreditAction !== ""
+                        }
+                        onClick={() => void updateAutoBattleClanMembership(account)}
+                      >
+                        {clanMembershipAction === account.userId
+                          ? "Saving…"
+                          : account.clanMember
+                            ? "Mark non-clan"
+                            : "Mark clan member"}
+                      </button>
+                    </div>
                     {account.canGrantTestCredits ? (
                       <div className="admin-test-credit-control">
                       <label htmlFor={`test-credit-${account.userId}`}>Test credits</label>
@@ -725,7 +792,12 @@ export function BetaAdminConsole({
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={testCreditAction !== "" || autoBattleAction !== "" || redemptionCodeAction !== ""}
+                        disabled={
+                          testCreditAction !== "" ||
+                          autoBattleAction !== "" ||
+                          clanMembershipAction !== "" ||
+                          redemptionCodeAction !== ""
+                        }
                         onClick={() => void addAutoBattleTestCredits(account)}
                       >
                         {testCreditAction === account.userId ? "Adding…" : "Add test credits"}
@@ -737,14 +809,18 @@ export function BetaAdminConsole({
                       type="button"
                       disabled={
                         autoBattleAction !== "" ||
+                        clanMembershipAction !== "" ||
                         redemptionCodeAction !== "" ||
                         testCreditAction !== "" ||
-                        account.accessStatus === "suspended"
+                        account.accessStatus === "suspended" ||
+                        !account.clanMember
                       }
                       onClick={() => void sendAutoBattleRedemptionCode(account)}
                       title={
                         account.accessStatus === "suspended"
                           ? "Restore this account before sending a redemption code."
+                          : !account.clanMember
+                            ? "Mark this account as a clan member before sending a founding code."
                           : "Email a single-use code for 30 tokens and the permanent 50% clan price."
                       }
                     >
@@ -756,7 +832,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Approving…" : "Approve beta access"}
@@ -765,7 +841,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Restoring…" : "Restore beta access"}
@@ -774,7 +850,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
                         onClick={() => void updateAutoBattleAccess(account, "suspended")}
                       >
                         {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}

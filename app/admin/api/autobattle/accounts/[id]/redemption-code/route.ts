@@ -57,6 +57,12 @@ export async function POST(request: Request, context: RouteContext) {
         409,
       );
     }
+    if (!account.clanMember) {
+      return noStoreJson(
+        { success: false, message: "Mark this account as a clan member before sending a founding code." },
+        409,
+      );
+    }
     if (await hasAutoBattleCampaignRedemption(id, CAMPAIGN_KEY)) {
       return noStoreJson(
         { success: false, message: "This account has already redeemed its founding code." },

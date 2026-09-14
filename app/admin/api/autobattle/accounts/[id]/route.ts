@@ -2,6 +2,7 @@ import { getAdminActorFromHeaders } from "@/app/beta-admin";
 import {
   type AutoBattleAdminAccount,
   updateAutoBattleAccessStatus,
+  updateAutoBattleClanMembership,
 } from "@/app/autobattle-db";
 import { requireSameOrigin } from "@/app/autobattle-auth";
 
@@ -41,31 +42,53 @@ export async function PATCH(request: Request, context: RouteContext) {
     );
   }
 
-  const body = (await request.json()) as { accessStatus?: unknown };
+  const body = (await request.json()) as {
+    accessStatus?: unknown;
+    clanMember?: unknown;
+  };
+  const changesAccessStatus = Object.prototype.hasOwnProperty.call(body, "accessStatus");
+  const changesClanMembership = Object.prototype.hasOwnProperty.call(body, "clanMember");
+  if (changesAccessStatus === changesClanMembership) {
+    return Response.json(
+      { success: false, message: "Change one AutoBattle account setting at a time." },
+      { status: 400 },
+    );
+  }
   if (
-    typeof body.accessStatus !== "string" ||
-    !ALLOWED_STATUSES.has(body.accessStatus as AutoBattleAdminAccount["accessStatus"])
+    changesAccessStatus &&
+    (
+      typeof body.accessStatus !== "string" ||
+      !ALLOWED_STATUSES.has(body.accessStatus as AutoBattleAdminAccount["accessStatus"])
+    )
   ) {
     return Response.json(
       { success: false, message: "Choose a valid AutoBattle access status." },
       { status: 400 },
     );
   }
+  if (changesClanMembership && typeof body.clanMember !== "boolean") {
+    return Response.json(
+      { success: false, message: "Choose whether this account is a clan member." },
+      { status: 400 },
+    );
+  }
 
   try {
-    const account = await updateAutoBattleAccessStatus(
-      id,
-      body.accessStatus as AutoBattleAdminAccount["accessStatus"],
-    );
+    const account = changesClanMembership
+      ? await updateAutoBattleClanMembership(id, body.clanMember as boolean)
+      : await updateAutoBattleAccessStatus(
+          id,
+          body.accessStatus as AutoBattleAdminAccount["accessStatus"],
+        );
     return Response.json({
       success: true,
       account,
       changedBy: actor.email,
     });
   } catch (error) {
-    console.error("AutoBattle admin access update failed", error);
+    console.error("AutoBattle admin account update failed", error);
     return Response.json(
-      { success: false, message: "The AutoBattle access status could not be updated." },
+      { success: false, message: "The AutoBattle account setting could not be updated." },
       { status: 503 },
     );
   }

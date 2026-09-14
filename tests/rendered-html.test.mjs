@@ -132,6 +132,7 @@ test("protects and operates the beta administration console", async () => {
     autoBattleAccessRoute,
     supabaseHelper,
     autoBattleDatabase,
+    clanMembershipMigration,
   ] =
     await Promise.all([
       readFile(new URL("../app/admin/beta/page.tsx", import.meta.url), "utf8"),
@@ -174,6 +175,13 @@ test("protects and operates the beta administration console", async () => {
       ),
       readFile(new URL("../app/supabase.ts", import.meta.url), "utf8"),
       readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+      readFile(
+        new URL(
+          "../supabase/migrations/20260914001855_autobattle_clan_membership.sql",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
     ]);
 
   assert.match(legacyPage, /redirect\("\/beta\/admin\/conquest"\)/);
@@ -191,6 +199,9 @@ test("protects and operates the beta administration console", async () => {
   assert.match(consoleSource, /Activity history/);
   assert.match(consoleSource, /Account approvals/);
   assert.match(consoleSource, /Approve beta access/);
+  assert.match(consoleSource, /Mark clan member/);
+  assert.match(consoleSource, /Mark non-clan/);
+  assert.match(consoleSource, /account\.clanMember/);
   assert.match(consoleSource, /\/beta\/admin\/api\/autobattle\/accounts/);
   assert.doesNotMatch(consoleSource, /["`]\/admin\/api/);
   assert.match(consoleSource, /Promise\.allSettled/);
@@ -214,10 +225,15 @@ test("protects and operates the beta administration console", async () => {
   assert.match(autoBattleListRoute, /listAutoBattleAdminAccounts/);
   assert.match(autoBattleAccessRoute, /getAdminActorFromHeaders/);
   assert.match(autoBattleAccessRoute, /updateAutoBattleAccessStatus/);
+  assert.match(autoBattleAccessRoute, /updateAutoBattleClanMembership/);
+  assert.match(autoBattleAccessRoute, /typeof body\.clanMember !== "boolean"/);
   assert.match(supabaseHelper, /limit=250/);
   assert.match(supabaseHelper, /beta_access_request_events/);
   assert.match(autoBattleDatabase, /listAutoBattleAdminAccounts/);
   assert.match(autoBattleDatabase, /access_status: accessStatus/);
+  assert.match(autoBattleDatabase, /clan_member: clanMember/);
+  assert.match(clanMembershipMigration, /add column if not exists clan_member boolean not null default false/);
+  assert.match(clanMembershipMigration, /redemption\.campaign_key = 'founding-clan'/);
 });
 
 test("protects mapped test-credit grants and records them as promotional ledger entries", async () => {
@@ -304,6 +320,8 @@ test("emails account-bound single-use AutoBattle founding codes", async () => {
   assert.match(consoleSource, /30 starting tokens and the permanent 50% clan price/);
   assert.match(route, /requireSameOrigin/);
   assert.match(route, /getAdminActorFromHeaders/);
+  assert.match(route, /if \(!account\.clanMember\)/);
+  assert.match(route, /Mark this account as a clan member/);
   assert.match(route, /assigned_user_id: id/);
   assert.match(route, /sendAutoBattleRedemptionCodeEmail/);
   assert.match(route, /deactivateAutoBattleInviteCode/);

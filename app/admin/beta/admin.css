@@ -356,11 +356,44 @@ body:has(.beta-admin-denied) {
   font-size: 0.64rem;
 }
 
+.admin-clan-member-pill {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--admin-line);
+  color: var(--admin-slate);
+  font-size: 0.62rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-clan-member-pill[data-member="true"] {
+  border-color: rgba(210, 173, 101, 0.48);
+  background: rgba(210, 173, 101, 0.08);
+  color: var(--admin-gold);
+}
+
 .admin-autobattle-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.admin-clan-membership-control {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.admin-clan-membership-control > span {
+  color: var(--admin-slate);
+  font-size: 0.68rem;
 }
 
 .admin-test-credit-control {

@@ -1,6 +1,8 @@
 begin;
 
-select plan(61);
+select plan(62);
+
+select has_column('public', 'autobattle_profiles', 'clan_member', 'profiles record admin-assigned clan membership');
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');
