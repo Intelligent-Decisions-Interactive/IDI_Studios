@@ -187,6 +187,8 @@
 .linkCode { display: grid; gap: 10px; margin-top: 30px; padding: 22px; border: 1px dashed var(--gold); background: rgba(5, 7, 9, .55); text-align: center; }
 .linkCode strong { color: var(--gold-hot); font-family: "Arial Narrow", "Segoe UI", sans-serif; font-size: clamp(1.7rem, 3vw, 2.6rem); letter-spacing: .1em; }
 .linkCode span { color: var(--ash); font-size: .62rem; }
+.linkCode button { min-height: 38px; justify-content: center; margin-top: 5px; border-color: rgba(240, 199, 101, .48); background: transparent; color: var(--gold-hot); }
+.linkCode button:hover:not(:disabled) { border-color: var(--gold-hot); background: rgba(201, 156, 54, .1); }
 .referralNotice,
 .referralStats { display: grid; gap: 7px; margin-top: 22px; padding: 16px; border-left: 3px solid var(--gold-hot); background: rgba(201, 156, 54, .08); }
 .referralNotice strong { color: var(--gold-hot); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; }

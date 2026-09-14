@@ -663,7 +663,13 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           )}
           <p>Generate a one-time code, then enter it in AutoBattle under Settings → Account. It expires after 10 minutes.</p>
           {linkCode ? (
-            <div className={styles.linkCode}><strong>{linkCode.code}</strong><span>Expires {formatDate(linkCode.expiresAt)}</span></div>
+            <div className={styles.linkCode}>
+              <strong>{linkCode.code}</strong>
+              <span>Expires {formatDate(linkCode.expiresAt)}</span>
+              <button type="button" onClick={generateLinkCode} disabled={busy}>
+                {busy ? "Refreshing…" : "Refresh code"}
+              </button>
+            </div>
           ) : (
             <button onClick={generateLinkCode} disabled={busy || !account.playerName || !releaseAccess}>Generate device code</button>
           )}

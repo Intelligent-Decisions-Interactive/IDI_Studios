@@ -891,6 +891,12 @@ export async function claimAutoBattleReferral(userId: string, normalizedCode: st
 }
 
 export async function createDeviceLinkCode(userId: string, codeHash: string, expiresAt: string) {
+  // A refreshed code replaces every unused code for this account so an older
+  // value cannot remain valid alongside the one currently shown to the user.
+  await serviceRequest(
+    `autobattle_device_link_codes?user_id=eq.${encodeURIComponent(userId)}&redeemed_at=is.null`,
+    { method: "DELETE" },
+  );
   await serviceRequest(
     "autobattle_device_link_codes",
     { method: "POST", body: JSON.stringify({ user_id: userId, code_hash: codeHash, expires_at: expiresAt }) },
