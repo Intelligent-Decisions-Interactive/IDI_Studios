@@ -690,3 +690,30 @@ test("requires an explicit admin confirmation before permanently deleting AutoBa
   assert.match(storage, /deleteAutoBattleCloudBackupObjects/);
   assert.match(storage, /JSON\.stringify\(\{ prefixes: objectPaths \}\)/);
 });
+
+test("rewards larger AutoBattle purchases without a featured hero pack", async () => {
+  const [products, landingPage, accountPage, migration] = await Promise.all([
+    readFile(new URL("../app/autobattle-products.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL(
+        "../supabase/migrations/20260914063315_autobattle_progressive_credit_payouts.sql",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ]);
+
+  assert.match(products, /tokens_25", paidTokens: 25, bonusTokens: 5, priceCents: 499/);
+  assert.match(products, /tokens_50", paidTokens: 60, bonusTokens: 10, priceCents: 999/);
+  assert.match(products, /tokens_100", paidTokens: 135, bonusTokens: 25, priceCents: 1999/);
+  assert.match(products, /tokens_250", paidTokens: 360, bonusTokens: 90, priceCents: 4999/);
+  assert.match(products, /tokens_500", paidTokens: 750, bonusTokens: 250, priceCents: 9999/);
+  assert.doesNotMatch(products, /featured/);
+  assert.doesNotMatch(landingPage, /Best value|featuredPack/);
+  assert.doesNotMatch(accountPage, /Best value|storePackFeatured/);
+  assert.match(migration, /when 'tokens_500' then 750/);
+  assert.match(migration, /when 'tokens_500' then 250/);
+  assert.match(migration, /featured = false/);
+});

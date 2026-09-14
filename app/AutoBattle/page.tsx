@@ -379,11 +379,7 @@ export default function AutoBattlePage() {
 
             <div className={styles.packShelf}>
               {AUTOBATTLE_PRODUCTS.map((pack) => (
-                <article
-                  className={pack.featured ? `${styles.pack} ${styles.featuredPack}` : styles.pack}
-                  key={pack.sku}
-                >
-                  {pack.featured && <p className={styles.bestValue}>Best value</p>}
+                <article className={styles.pack} key={pack.sku}>
                   <div className={styles.packAmount}>
                     <strong>{pack.paidTokens}</strong>
                     <span>Tokens</span>

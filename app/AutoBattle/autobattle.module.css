@@ -417,14 +417,6 @@
 .packPrice small { color: rgba(230, 224, 211, .38); font-size: .53rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .packAction { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(230, 224, 211, .12); color: var(--ab-gold-hot); font-size: .56rem; font-weight: 900; letter-spacing: .13em; text-decoration: none; text-transform: uppercase; }
 .packAction:hover { color: var(--ab-teal); }
-.featuredPack { min-height: 370px; border: 2px solid var(--ab-gold); background: linear-gradient(155deg, #1d1a12, #10161a 68%); color: var(--ab-bone); box-shadow: 0 26px 65px rgba(0, 0, 0, .42); }
-.featuredPack::before { width: 100%; height: 5px; background: var(--ab-gold-hot); }
-.featuredPack .packAmount span,
-.featuredPack .packPrice small { color: rgba(230, 224, 211, .52); }
-.featuredPack .bonus { border-color: var(--ab-gold-hot); color: var(--ab-gold-hot); }
-.featuredPack .packPrice { border-color: rgba(230, 224, 211, .14); }
-.bestValue { position: absolute; top: -35px; right: -2px; left: -2px; margin: 0; padding: 9px 12px; background: var(--ab-gold-hot); color: var(--ab-black); font-size: .58rem; font-weight: 900; letter-spacing: .16em; text-align: center; text-transform: uppercase; }
-
 .clanAccess { position: relative; padding: 144px 0; overflow: hidden; background: linear-gradient(116deg, #151b1d, #07090b 64%); }
 .clanAccess::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 78% 50%, rgba(201, 156, 54, .12), transparent 28%); }
 .clanNoise { position: absolute; right: -10%; bottom: -64%; width: min(70vw, 920px); aspect-ratio: 1; border: 1px solid rgba(201, 156, 54, .13); border-radius: 50%; }
@@ -466,7 +458,6 @@
   .overlay .shell { gap: 54px; }
   .overlayDemo { min-height: 590px; }
   .packShelf { grid-template-columns: repeat(3, 1fr); gap: 18px; row-gap: 52px; }
-  .featuredPack { min-height: 350px; }
   .evidenceGrid { grid-template-columns: 1fr 1fr; }
   .secondaryEvidence { grid-column: 2; margin-top: 0; }
   .proofLedger { align-self: end; }
@@ -539,7 +530,6 @@
   .rulesCopy { padding-left: 19px; }
   .packShelf { grid-template-columns: repeat(2, 1fr); gap: 12px; row-gap: 48px; }
   .pack { min-height: 286px; padding: 20px 16px 18px; }
-  .featuredPack { min-height: 326px; }
   .packAmount strong { font-size: 3.4rem; }
   .ticketBody { padding-inline: 14px; }
   .ticketBody strong { font-size: 4rem; }
@@ -556,8 +546,7 @@
   .controlRail { gap: 0; }
   .controlRail .wordControl { font-size: .47rem; }
   .packShelf { grid-template-columns: 1fr; }
-  .pack,
-  .featuredPack { min-height: 260px; }
+  .pack { min-height: 260px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

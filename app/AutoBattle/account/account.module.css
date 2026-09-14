@@ -136,8 +136,6 @@
 .storePack button { display: flex; min-height: 46px; align-items: center; justify-content: space-between; gap: 14px; padding: 0 15px; border: 1px solid var(--gold-hot); background: transparent; color: var(--gold-hot); cursor: pointer; font-size: .57rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .storePack button:hover { background: var(--gold-hot); color: var(--ink); }
 .storePack button:disabled { cursor: not-allowed; filter: grayscale(.5); opacity: .45; }
-.storePackFeatured { border-color: var(--gold); background: linear-gradient(145deg, rgba(201, 156, 54, .15), rgba(16, 22, 26, .72)); }
-.storeFlag { position: absolute; top: 0; right: 0; padding: 7px 10px; background: var(--gold-hot); color: var(--ink); font-size: .5rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .storeNote { margin: 16px 0 0; color: rgba(230, 224, 211, .35); font-size: .63rem; line-height: 1.55; }
 
 .checkoutBackdrop { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; padding: 28px; overflow-y: auto; background: rgba(2, 4, 5, .88); backdrop-filter: blur(10px); }

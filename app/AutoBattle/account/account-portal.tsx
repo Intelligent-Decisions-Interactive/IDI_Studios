@@ -617,8 +617,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
         {AUTOBATTLE_PRODUCTS.map((pack) => {
           const discountedPrice = displayedPackPrice(pack, account.discount);
           return (
-            <article className={pack.featured ? `${styles.storePack} ${styles.storePackFeatured}` : styles.storePack} key={pack.sku}>
-              {pack.featured && <span className={styles.storeFlag}>Best value</span>}
+            <article className={styles.storePack} key={pack.sku}>
               <div><strong>{pack.paidTokens}</strong><span>Purchased tokens</span></div>
               <p>{pack.bonusTokens ? `+ ${pack.bonusTokens} bonus tokens` : "Starter pack"}</p>
               <div className={styles.storePrice}>
