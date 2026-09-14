@@ -542,7 +542,7 @@ export function BetaAdminConsole({
         { method: "POST", body: JSON.stringify({}) },
       );
       setAutoBattleMessage(
-        `${account.email} was emailed a single-use founding code for 30 starting tokens and the permanent 50% clan price.`,
+        `${account.email} was emailed a single-use founding code for 30 starting tokens and permanent clan pricing on eligible packs.`,
       );
       setAutoBattleMessageState("success");
     } catch (error) {
@@ -871,7 +871,7 @@ export function BetaAdminConsole({
                         onClick={() => void sendAutoBattleRedemptionCode(account)}
                         title={account.accessStatus === "suspended"
                           ? "Restore this account before sending a redemption code."
-                          : "Email a single-use code for 30 tokens and the permanent 50% clan price."}
+                          : "Email a single-use code for 30 tokens and permanent clan pricing on packs above the $0.99 starter pack."}
                       >
                         {redemptionCodeAction === account.userId
                           ? "Emailing code…"
@@ -1238,7 +1238,7 @@ export function BetaAdminConsole({
                         >
                           {action === "clan-code" ? "Issuing…" : "Issue clan code"}
                         </button>
-                        <small>Grants 30 promotional tokens and a permanent 50% clan discount.</small>
+                        <small>Grants 30 promotional tokens and permanent 50% clan pricing on packs above the $0.99 starter pack.</small>
                       </div>
                     ) : null}
                   </div>

@@ -421,7 +421,7 @@ export default function AutoBattlePage() {
               <p>
                 Clan members will redeem one launch code on an individual AutoBattle
                 account. The account receives 30 starting tokens and permanently pays
-                50% of the listed price for every token pack.
+                50% of the listed price for every token pack above the $0.99 starter pack.
               </p>
               <Link className={styles.primaryButton} href="/AutoBattle/account">
                 Open your account <span aria-hidden="true">↗</span>
@@ -442,13 +442,13 @@ export default function AutoBattlePage() {
                 <i aria-hidden="true">+</i>
                 <div>
                   <strong>50%</strong>
-                  <span>Off every pack</span>
+                  <span>Off packs above $0.99</span>
                 </div>
               </div>
               <ul>
                 <li>The clan price stays on your account.</li>
                 <li>Every pack keeps its normal bonus tokens.</li>
-                <li>The discount applies whenever you purchase.</li>
+                <li>The $0.99 starter pack stays at its minimum price.</li>
               </ul>
               <p>Founding access / Limited clan release</p>
             </aside>

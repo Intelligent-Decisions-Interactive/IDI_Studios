@@ -80,6 +80,20 @@ function activityLabel(type: string) {
   } as Record<string, string>)[type] || "Account activity";
 }
 
+function displayedPackPrice(pack: MarketplacePack, discount: Account["discount"]) {
+  if (discount?.percentOff !== 50) return pack.priceCents;
+  if (!discount.unlimited) return Math.ceil(pack.priceCents / 2);
+  if (pack.sku === "tokens_5") return pack.priceCents;
+  return Math.floor(pack.priceCents / 2);
+}
+
+function scrollViewportToTop() {
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
+  });
+}
+
 function normalizeReferralCode(value: string | null) {
   return (value || "").normalize("NFKC").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
@@ -102,6 +116,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
   const turnstileNode = useRef<HTMLDivElement>(null);
   const turnstileId = useRef("");
   const turnstileToken = useRef("");
+  const linkCodeNode = useRef<HTMLDivElement>(null);
 
   async function loadAccount() {
     const first = await fetch("/api/autobattle/account", { cache: "no-store" });
@@ -266,6 +281,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       } else {
         setMessage("You are signed in.");
       }
+      scrollViewportToTop();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "That code could not be verified.");
     } finally {
@@ -356,6 +372,9 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       ));
       setLinkCode(data);
       setMessage("Enter this code in AutoBattle on the device you want to link.");
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => linkCodeNode.current?.scrollIntoView({ block: "center", behavior: "smooth" }));
+      });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "A link code could not be created.");
     } finally {
@@ -581,7 +600,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
         </div>
         <p>
           {account.discount?.unlimited && account.discount.percentOff === 50
-            ? "Your permanent founding-clan price is applied below. Every pack keeps its normal bonus."
+            ? "Your permanent founding-clan price is applied to every pack above the $0.99 starter pack. Every pack keeps its normal bonus."
             : account.discount?.percentOff === 50
               ? "Your one-time referral price is applied below. Every pack keeps its normal bonus."
               : "Pay without leaving AutoBattle. Your billing address and included tax are reviewed before you confirm."}
@@ -589,9 +608,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
       </div>
       <div className={styles.storeGrid}>
         {AUTOBATTLE_PRODUCTS.map((pack) => {
-          const discountedPrice = account.discount?.percentOff === 50
-            ? Math.ceil(pack.priceCents / 2)
-            : pack.priceCents;
+          const discountedPrice = displayedPackPrice(pack, account.discount);
           return (
             <article className={pack.featured ? `${styles.storePack} ${styles.storePackFeatured}` : styles.storePack} key={pack.sku}>
               {pack.featured && <span className={styles.storeFlag}>Best value</span>}
@@ -663,7 +680,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
           )}
           <p>Generate a one-time code, then enter it in AutoBattle under Settings → Account. It expires after 10 minutes.</p>
           {linkCode ? (
-            <div className={styles.linkCode}>
+            <div className={styles.linkCode} ref={linkCodeNode} aria-live="polite">
               <strong>{linkCode.code}</strong>
               <span>Expires {formatDate(linkCode.expiresAt)}</span>
               <button type="button" onClick={generateLinkCode} disabled={busy}>
@@ -671,7 +688,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
               </button>
             </div>
           ) : (
-            <button onClick={generateLinkCode} disabled={busy || !account.playerName || !releaseAccess}>Generate device code</button>
+            <button type="button" onClick={generateLinkCode} disabled={busy || !account.playerName || !releaseAccess}>Generate device code</button>
           )}
         </article>
       </div>
