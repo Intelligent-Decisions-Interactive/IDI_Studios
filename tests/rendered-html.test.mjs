@@ -322,7 +322,7 @@ test("emails account-bound single-use AutoBattle founding codes", async () => {
 
   assert.match(consoleSource, /Email founding code/);
   assert.match(consoleSource, /\/beta\/admin\/api\/autobattle\/accounts\/\$\{account\.userId\}\/redemption-code/);
-  assert.match(consoleSource, /30 starting tokens and the permanent 50% clan price/);
+  assert.match(consoleSource, /30 starting tokens and permanent clan pricing/);
   assert.match(route, /requireSameOrigin/);
   assert.match(route, /getAdminActorFromHeaders/);
   assert.match(route, /if \(!account\.clanMember\)/);

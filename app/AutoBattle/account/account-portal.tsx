@@ -84,6 +84,7 @@ function displayedPackPrice(pack: MarketplacePack, discount: Account["discount"]
   if (discount?.percentOff !== 50) return pack.priceCents;
   if (!discount.unlimited) return Math.ceil(pack.priceCents / 2);
   if (pack.sku === "tokens_5") return pack.priceCents;
+  if (pack.sku === "tokens_25") return 299;
   return Math.floor(pack.priceCents / 2);
 }
 
@@ -624,7 +625,7 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
                 {discountedPrice < pack.priceCents && <del>{formatUsd(pack.priceCents)}</del>}
                 <strong>{formatUsd(discountedPrice)}</strong>
                 <small>{discountedPrice < pack.priceCents
-                  ? account.discount?.unlimited ? "Founding clan · 50% off" : "Referral offer · 50% off once"
+                  ? account.discount?.unlimited ? "Founding clan price" : "Referral offer · 50% off once"
                   : "Tax calculated and included"}</small>
               </div>
               <button

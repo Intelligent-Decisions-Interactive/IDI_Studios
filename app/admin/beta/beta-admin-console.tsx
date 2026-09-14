@@ -1238,7 +1238,7 @@ export function BetaAdminConsole({
                         >
                           {action === "clan-code" ? "Issuing…" : "Issue clan code"}
                         </button>
-                        <small>Grants 30 promotional tokens and permanent 50% clan pricing on packs above the $0.99 starter pack.</small>
+                        <small>Grants 30 promotional tokens and permanent founding-clan pricing on eligible packs.</small>
                       </div>
                     ) : null}
                   </div>

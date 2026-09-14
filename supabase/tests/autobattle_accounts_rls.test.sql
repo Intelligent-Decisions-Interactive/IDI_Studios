@@ -1,6 +1,6 @@
 begin;
 
-select plan(73);
+select plan(75);
 
 select has_column('public', 'autobattle_profiles', 'clan_member', 'profiles record admin-assigned clan membership');
 select has_column('public', 'autobattle_profiles', 'signup_affiliation', 'profiles record the affiliation declared during account setup');
@@ -86,6 +86,18 @@ select results_eq(
     $$select count(*)::bigint from public.autobattle_products where active$$,
     array[6::bigint],
     'all six token packs are seeded'
+);
+
+select is(
+    autobattle_private.discounted_pack_price_cents(499, 'tokens_25', 50, true),
+    299,
+    'the permanent clan price for the 25-token pack is $2.99'
+);
+
+select is(
+    autobattle_private.discounted_pack_price_cents(999, 'tokens_50', 50, true),
+    499,
+    'larger permanent clan packs retain their existing half-price calculation'
 );
 
 select * from finish();

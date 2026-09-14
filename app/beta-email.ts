@@ -224,8 +224,8 @@ export async function sendBetaInvitation(
       subject: clan
         ? "Your AutoBattle founding clan access is ready"
         : "Your AutoBattle public beta access is ready",
-      html: `<h1>Your AutoBattle access is ready.</h1><p>Hi ${safeName},</p><p>Your Android beta request has been approved.</p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Sign in with this email address, save your player name, and follow the account instructions to link your Android device.${clan ? " Your single-use clan code will add 30 starting tokens and unlock permanent 50% clan pricing on every token pack above the $0.99 starter pack." : ""}</p><p>— IDI Studios</p>`,
-      text: `Hi ${applicant.name},\n\nYour AutoBattle Android beta request has been approved.\n\nOpen your AutoBattle account: ${inviteUrl}\n\nSign in with this email address, save your player name, and follow the account instructions to link your Android device.${clan ? " Your single-use clan code will add 30 starting tokens and unlock permanent 50% clan pricing on every token pack above the $0.99 starter pack." : ""}\n\n— IDI Studios`,
+      html: `<h1>Your AutoBattle access is ready.</h1><p>Hi ${safeName},</p><p>Your Android beta request has been approved.</p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Sign in with this email address, save your player name, and follow the account instructions to link your Android device.${clan ? " Your single-use clan code will add 30 starting tokens and unlock permanent founding-clan pricing on eligible token packs." : ""}</p><p>— IDI Studios</p>`,
+      text: `Hi ${applicant.name},\n\nYour AutoBattle Android beta request has been approved.\n\nOpen your AutoBattle account: ${inviteUrl}\n\nSign in with this email address, save your player name, and follow the account instructions to link your Android device.${clan ? " Your single-use clan code will add 30 starting tokens and unlock permanent founding-clan pricing on eligible token packs." : ""}\n\n— IDI Studios`,
       tags: [{
         name: "request_type",
         value: clan ? "autobattle_clan_invitation" : "autobattle_beta_invitation",
@@ -261,8 +261,8 @@ export async function sendAutoBattleRedemptionCodeEmail(
     to: [recipient.email],
     reply_to: config.notify,
     subject: "Your AutoBattle founding code",
-    html: `<h1>Your AutoBattle founding code is ready.</h1><p>Hi ${safeName},</p><p>Enter this single-use code in your AutoBattle account:</p><p style="font-size:24px;font-weight:700;letter-spacing:0.08em"><code>${safeCode}</code></p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Redeeming it adds 30 starting tokens and unlocks permanent 50% founding-clan pricing on every token pack above the $0.99 starter pack.</p><p>If you did not expect this email, you can ignore it.</p><p>— IDI Studios</p>`,
-    text: `Hi ${recipient.playerName || "AutoBattle player"},\n\nEnter this single-use code in your AutoBattle account:\n\n${recipient.code}\n\nOpen your account: ${accountUrl}\n\nRedeeming it adds 30 starting tokens and unlocks permanent 50% founding-clan pricing on every token pack above the $0.99 starter pack.\n\nIf you did not expect this email, you can ignore it.\n\n— IDI Studios`,
+    html: `<h1>Your AutoBattle founding code is ready.</h1><p>Hi ${safeName},</p><p>Enter this single-use code in your AutoBattle account:</p><p style="font-size:24px;font-weight:700;letter-spacing:0.08em"><code>${safeCode}</code></p><p><a href="${safeUrl}">Open your AutoBattle account</a></p><p>Redeeming it adds 30 starting tokens and unlocks permanent founding-clan pricing on eligible token packs.</p><p>If you did not expect this email, you can ignore it.</p><p>— IDI Studios</p>`,
+    text: `Hi ${recipient.playerName || "AutoBattle player"},\n\nEnter this single-use code in your AutoBattle account:\n\n${recipient.code}\n\nOpen your account: ${accountUrl}\n\nRedeeming it adds 30 starting tokens and unlocks permanent founding-clan pricing on eligible token packs.\n\nIf you did not expect this email, you can ignore it.\n\n— IDI Studios`,
     tags: [{ name: "request_type", value: "autobattle_redemption_code" }],
   });
 }
