@@ -516,9 +516,95 @@ body:has(.beta-admin-denied) {
 }
 
 .admin-autobattle-actions .admin-primary-button,
-.admin-autobattle-actions .admin-secondary-button {
+.admin-autobattle-actions .admin-secondary-button,
+.admin-autobattle-actions .admin-danger-button {
   min-height: 40px;
   font-size: 0.875rem;
+}
+
+.admin-danger-button {
+  min-height: 37px;
+  padding: 8px 12px;
+  border: 1px solid rgba(212, 128, 128, 0.52);
+  border-radius: 2px;
+  background: rgba(212, 128, 128, 0.07);
+  color: var(--admin-danger);
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.admin-danger-button:hover:not(:disabled) {
+  border-color: var(--admin-danger);
+  background: rgba(212, 128, 128, 0.14);
+}
+
+.admin-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.admin-account-delete-confirmation {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) minmax(280px, 1fr) auto;
+  align-items: end;
+  gap: 18px;
+  padding: 18px;
+  border-top: 1px solid rgba(212, 128, 128, 0.32);
+  background: rgba(86, 31, 35, 0.13);
+}
+
+.admin-account-delete-confirmation h3 {
+  margin: 0 0 6px;
+  color: var(--admin-danger);
+  font-size: 0.92rem;
+}
+
+.admin-account-delete-confirmation p {
+  max-width: 720px;
+  margin: 0;
+  color: var(--admin-slate);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.admin-account-delete-confirmation label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.admin-account-delete-confirmation label > span {
+  overflow-wrap: anywhere;
+  color: var(--admin-white);
+  font-size: 0.72rem;
+}
+
+.admin-account-delete-confirmation input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--admin-line);
+  border-radius: 2px;
+  outline: none;
+  background: #080b0f;
+  color: var(--admin-white);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.admin-account-delete-confirmation input:focus {
+  border-color: var(--admin-danger);
+  box-shadow: 0 0 0 3px rgba(212, 128, 128, 0.1);
+}
+
+.admin-account-delete-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-account-delete-buttons button {
+  min-height: 40px;
+  white-space: nowrap;
 }
 
 .admin-test-credit-control input:focus-visible {
@@ -1078,6 +1164,15 @@ body:has(.beta-admin-denied) {
     justify-content: stretch;
   }
 
+  .admin-account-delete-confirmation {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .admin-account-delete-buttons {
+    justify-content: flex-end;
+  }
+
   .admin-payment-review-resolution button {
     width: 100%;
   }
@@ -1170,6 +1265,15 @@ body:has(.beta-admin-denied) {
   }
 
   .admin-autobattle-account-buttons button {
+    width: 100%;
+  }
+
+  .admin-account-delete-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-account-delete-buttons button {
     width: 100%;
   }
 
@@ -1272,6 +1376,10 @@ body:has(.beta-admin-denied) {
   }
 
   .admin-autobattle-account-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-account-delete-buttons {
     grid-template-columns: 1fr;
   }
 

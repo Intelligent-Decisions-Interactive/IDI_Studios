@@ -627,3 +627,42 @@ test("collects signup affiliation separately from verified clan membership", asy
   assert.match(migration, /signup_affiliation in \('not_provided', 'clan', 'individual'\)/);
   assert.match(migration, /Admin verification remains in clan_member/);
 });
+
+test("requires an explicit admin confirmation before permanently deleting AutoBattle accounts", async () => {
+  const [adminConsole, route, protectedRoute, database, auth, storage] = await Promise.all([
+    readFile(new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../app/admin/api/autobattle/accounts/[id]/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../app/beta/admin/api/autobattle/accounts/[id]/route.ts", import.meta.url),
+      "utf8",
+    ),
+    readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-auth.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/autobattle-cloud-storage.ts", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(adminConsole, /Delete account/);
+  assert.match(adminConsole, /Type \{account\.email\} to confirm/);
+  assert.match(adminConsole, /method: "DELETE"/);
+  assert.match(adminConsole, /confirmEmail: deleteAccountConfirmation/);
+  assert.match(adminConsole, /Payment records retained for accounting or disputes are detached/);
+  assert.match(route, /export async function DELETE/);
+  assert.match(route, /requireSameOrigin/);
+  assert.match(route, /getAdminActorFromHeaders/);
+  assert.match(route, /normalizeEmail\(body\.confirmEmail\) !== account\.email/);
+  assert.match(route, /updateAutoBattleAccessStatus\(id, "suspended"\)/);
+  assert.match(route, /deleteAutoBattleCloudBackupObjects\(objectPaths\)/);
+  assert.match(route, /removeAutoBattleAccountDependencies\(id, account\.email\)/);
+  assert.match(route, /deleteAutoBattleAuthUser\(id\)/);
+  assert.match(protectedRoute, /DELETE, PATCH/);
+  assert.match(database, /autobattle_orders\?user_id=eq/);
+  assert.match(database, /beta_access_requests\?email=eq/);
+  assert.match(database, /startsWith\("\[AutoBattle"\)/);
+  assert.match(auth, /auth\/v1\/admin\/users\/\$\{encodeURIComponent\(userId\)\}/);
+  assert.match(auth, /method: "DELETE"/);
+  assert.match(storage, /deleteAutoBattleCloudBackupObjects/);
+  assert.match(storage, /JSON\.stringify\(\{ prefixes: objectPaths \}\)/);
+});

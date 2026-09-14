@@ -1,10 +1,18 @@
 import { getAdminActorFromHeaders } from "@/app/beta-admin";
 import {
+  getAutoBattleAdminAccount,
+  listAutoBattleCloudBackupObjectPaths,
+  removeAutoBattleAccountDependencies,
   type AutoBattleAdminAccount,
   updateAutoBattleAccessStatus,
   updateAutoBattleClanMembership,
 } from "@/app/autobattle-db";
-import { requireSameOrigin } from "@/app/autobattle-auth";
+import {
+  deleteAutoBattleAuthUser,
+  normalizeEmail,
+  requireSameOrigin,
+} from "@/app/autobattle-auth";
+import { deleteAutoBattleCloudBackupObjects } from "@/app/autobattle-cloud-storage";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +97,75 @@ export async function PATCH(request: Request, context: RouteContext) {
     console.error("AutoBattle admin account update failed", error);
     return Response.json(
       { success: false, message: "The AutoBattle account setting could not be updated." },
+      { status: 503 },
+    );
+  }
+}
+
+export async function DELETE(request: Request, context: RouteContext) {
+  if (!requireSameOrigin(request)) {
+    return Response.json(
+      { success: false, message: "Invalid request origin." },
+      { status: 403 },
+    );
+  }
+  const actor = await getAdminActorFromHeaders(request.headers);
+  if (!actor) {
+    return Response.json(
+      { success: false, message: "A verified admin session is required." },
+      { status: 403 },
+    );
+  }
+
+  const id = (await context.params).id.trim();
+  if (!USER_ID_PATTERN.test(id)) {
+    return Response.json(
+      { success: false, message: "Invalid AutoBattle account." },
+      { status: 400 },
+    );
+  }
+
+  const body = (await request.json()) as { confirmEmail?: unknown };
+  const account = await getAutoBattleAdminAccount(id);
+  if (!account) {
+    return Response.json(
+      { success: false, message: "The AutoBattle account was not found." },
+      { status: 404 },
+    );
+  }
+  if (
+    typeof body.confirmEmail !== "string" ||
+    normalizeEmail(body.confirmEmail) !== account.email
+  ) {
+    return Response.json(
+      { success: false, message: "Type the account email exactly to confirm deletion." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    await updateAutoBattleAccessStatus(id, "suspended");
+    const objectPaths = await listAutoBattleCloudBackupObjectPaths(id);
+    await deleteAutoBattleCloudBackupObjects(objectPaths);
+    await removeAutoBattleAccountDependencies(id, account.email);
+    await deleteAutoBattleAuthUser(id);
+    if (await getAutoBattleAdminAccount(id)) {
+      throw new Error("AutoBattle account still exists after Auth deletion.");
+    }
+    return Response.json({
+      success: true,
+      deletedUserId: id,
+      email: account.email,
+      deletedBackupCount: objectPaths.length,
+      changedBy: actor.email,
+    });
+  } catch (error) {
+    console.error("AutoBattle admin account deletion failed", error);
+    return Response.json(
+      {
+        success: false,
+        message: "Account deletion could not be completed. The account has been locked; retry deletion.",
+      },
       { status: 503 },
     );
   }

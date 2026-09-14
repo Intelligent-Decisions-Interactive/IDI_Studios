@@ -96,6 +96,11 @@ type BetaRequestRow = {
   testing_focus: string;
 };
 
+type AccountDeletionBetaRequestRow = {
+  id: number;
+  testing_focus: string;
+};
+
 export type AutoBattleDeviceSession = DeviceRow & {
   user_id: string;
   release_channel: "production" | "internal";
@@ -735,6 +740,41 @@ export async function getAutoBattleAdminAccount(userId: string) {
     ),
   ]);
   return rows?.[0] ? mapAutoBattleAdminAccount(rows[0], balances?.[0]) : null;
+}
+
+export async function listAutoBattleCloudBackupObjectPaths(userId: string) {
+  const rows = await serviceRequest<Array<{ object_path: string }>>(
+    `autobattle_cloud_backups?user_id=eq.${encodeURIComponent(userId)}&select=object_path&limit=1000`,
+  );
+  const expectedPrefix = `${userId}/`;
+  return (rows || []).map((row) => {
+    const objectPath = typeof row.object_path === "string" ? row.object_path.trim() : "";
+    if (
+      !objectPath.startsWith(expectedPrefix) ||
+      !/^([0-9a-f-]{36})\/([0-9a-f-]{36})\.abprofile$/i.test(objectPath)
+    ) {
+      throw new Error("AutoBattle cloud backup path is invalid.");
+    }
+    return objectPath;
+  });
+}
+
+export async function removeAutoBattleAccountDependencies(userId: string, email: string) {
+  const betaRequests = await serviceRequest<AccountDeletionBetaRequestRow[]>(
+    `beta_access_requests?email=eq.${encodeURIComponent(email)}&select=id,testing_focus&limit=10`,
+  );
+  const autoBattleRequestIds = (betaRequests || [])
+    .filter((row) => row.testing_focus?.startsWith("[AutoBattle"))
+    .map((row) => row.id)
+    .filter((id) => Number.isSafeInteger(id) && id > 0);
+
+  await serviceRequest(
+    `autobattle_orders?user_id=eq.${encodeURIComponent(userId)}`,
+    { method: "DELETE" },
+  );
+  for (const requestId of autoBattleRequestIds) {
+    await serviceRequest(`beta_access_requests?id=eq.${requestId}`, { method: "DELETE" });
+  }
 }
 
 export async function hasAutoBattleCampaignRedemption(

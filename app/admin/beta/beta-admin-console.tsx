@@ -198,6 +198,9 @@ export function BetaAdminConsole({
   const [redemptionCodeAction, setRedemptionCodeAction] = useState("");
   const [testCreditAction, setTestCreditAction] = useState("");
   const [testCreditAmount, setTestCreditAmount] = useState("100");
+  const [deleteAccountId, setDeleteAccountId] = useState("");
+  const [deleteAccountConfirmation, setDeleteAccountConfirmation] = useState("");
+  const [deleteAccountAction, setDeleteAccountAction] = useState("");
   const [autoBattleMessage, setAutoBattleMessage] = useState("");
   const [autoBattleMessageState, setAutoBattleMessageState] = useState<"" | "error" | "success">("");
 
@@ -627,6 +630,42 @@ export function BetaAdminConsole({
     }
   }
 
+  async function deleteAutoBattleAccount(account: AutoBattleAdminAccount) {
+    if (deleteAccountConfirmation.trim().toLowerCase() !== account.email) {
+      setAutoBattleMessage("Type the account email exactly to confirm deletion.");
+      setAutoBattleMessageState("error");
+      return;
+    }
+    setDeleteAccountAction(account.userId);
+    setAutoBattleMessage(`Permanently deleting ${account.email}…`);
+    setAutoBattleMessageState("");
+    try {
+      const result = await apiRequest<{
+        email: string;
+        deletedBackupCount: number;
+      }>(`/beta/admin/api/autobattle/accounts/${account.userId}`, {
+        method: "DELETE",
+        body: JSON.stringify({ confirmEmail: deleteAccountConfirmation }),
+      });
+      setAutoBattleAccounts((current) =>
+        current.filter((item) => item.userId !== account.userId),
+      );
+      setDeleteAccountId("");
+      setDeleteAccountConfirmation("");
+      setAutoBattleMessage(
+        `${result.email} was deleted permanently, including ${result.deletedBackupCount.toLocaleString()} cloud backup${result.deletedBackupCount === 1 ? "" : "s"}.`,
+      );
+      setAutoBattleMessageState("success");
+    } catch (error) {
+      setAutoBattleMessage(
+        error instanceof Error ? error.message : "The account could not be deleted.",
+      );
+      setAutoBattleMessageState("error");
+    } finally {
+      setDeleteAccountAction("");
+    }
+  }
+
   async function resolvePaymentReview(review: AutoBattlePaymentReview) {
     const resolution = (paymentReviewResolutions[review.id] || "").trim();
     if (!resolution) {
@@ -659,6 +698,14 @@ export function BetaAdminConsole({
       setPaymentReviewAction("");
     }
   }
+
+  const autoBattleAccountBusy = Boolean(
+    autoBattleAction ||
+    clanMembershipAction ||
+    redemptionCodeAction ||
+    testCreditAction ||
+    deleteAccountAction,
+  );
 
   return (
     <div className="beta-admin-root">
@@ -782,12 +829,7 @@ export function BetaAdminConsole({
                       <button
                         className={account.clanMember ? "admin-secondary-button" : "admin-primary-button"}
                         type="button"
-                        disabled={
-                          clanMembershipAction !== "" ||
-                          autoBattleAction !== "" ||
-                          redemptionCodeAction !== "" ||
-                          testCreditAction !== ""
-                        }
+                        disabled={autoBattleAccountBusy}
                         onClick={() => void updateAutoBattleClanMembership(account)}
                       >
                         {clanMembershipAction === account.userId
@@ -813,12 +855,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={
-                          testCreditAction !== "" ||
-                          autoBattleAction !== "" ||
-                          clanMembershipAction !== "" ||
-                          redemptionCodeAction !== ""
-                        }
+                        disabled={autoBattleAccountBusy}
                         onClick={() => void addAutoBattleTestCredits(account)}
                       >
                         {testCreditAction === account.userId ? "Adding…" : "Add test credits"}
@@ -830,13 +867,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={
-                          autoBattleAction !== "" ||
-                          clanMembershipAction !== "" ||
-                          redemptionCodeAction !== "" ||
-                          testCreditAction !== "" ||
-                          account.accessStatus === "suspended"
-                        }
+                        disabled={autoBattleAccountBusy || account.accessStatus === "suspended"}
                         onClick={() => void sendAutoBattleRedemptionCode(account)}
                         title={account.accessStatus === "suspended"
                           ? "Restore this account before sending a redemption code."
@@ -851,7 +882,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-primary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAccountBusy}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Approving…" : "Approve beta access"}
@@ -860,7 +891,7 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAccountBusy}
                         onClick={() => void updateAutoBattleAccess(account, "beta")}
                       >
                         {autoBattleAction === account.userId ? "Restoring…" : "Restore beta access"}
@@ -869,14 +900,81 @@ export function BetaAdminConsole({
                       <button
                         className="admin-secondary-button"
                         type="button"
-                        disabled={autoBattleAction !== "" || clanMembershipAction !== "" || redemptionCodeAction !== "" || testCreditAction !== ""}
+                        disabled={autoBattleAccountBusy}
                         onClick={() => void updateAutoBattleAccess(account, "suspended")}
                       >
                         {autoBattleAction === account.userId ? "Suspending…" : "Suspend access"}
                       </button>
                     )}
+                    <button
+                      className="admin-danger-button"
+                      type="button"
+                      aria-expanded={deleteAccountId === account.userId}
+                      aria-controls={`delete-account-${account.userId}`}
+                      disabled={autoBattleAccountBusy}
+                      onClick={() => {
+                        setDeleteAccountId(account.userId);
+                        setDeleteAccountConfirmation("");
+                        setAutoBattleMessage("");
+                        setAutoBattleMessageState("");
+                      }}
+                    >
+                      Delete account
+                    </button>
                     </div>
                   </div>
+                  {deleteAccountId === account.userId ? (
+                    <div
+                      className="admin-account-delete-confirmation"
+                      id={`delete-account-${account.userId}`}
+                    >
+                      <div>
+                        <h3>Delete this account permanently?</h3>
+                        <p>
+                          This removes the AutoBattle login, player profile, credits and activity,
+                          linked devices, saved cloud backups, and any AutoBattle access request.
+                          Payment records retained for accounting or disputes are detached from the account.
+                        </p>
+                      </div>
+                      <label htmlFor={`delete-account-email-${account.userId}`}>
+                        <span>Type {account.email} to confirm</span>
+                        <input
+                          id={`delete-account-email-${account.userId}`}
+                          type="email"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={deleteAccountConfirmation}
+                          onChange={(event) => setDeleteAccountConfirmation(event.target.value)}
+                        />
+                      </label>
+                      <div className="admin-account-delete-buttons">
+                        <button
+                          className="admin-secondary-button"
+                          type="button"
+                          disabled={deleteAccountAction === account.userId}
+                          onClick={() => {
+                            setDeleteAccountId("");
+                            setDeleteAccountConfirmation("");
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="admin-danger-button"
+                          type="button"
+                          disabled={
+                            deleteAccountAction === account.userId ||
+                            deleteAccountConfirmation.trim().toLowerCase() !== account.email
+                          }
+                          onClick={() => void deleteAutoBattleAccount(account)}
+                        >
+                          {deleteAccountAction === account.userId
+                            ? "Deleting permanently…"
+                            : "Delete permanently"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </article>
               ))
             ) : (

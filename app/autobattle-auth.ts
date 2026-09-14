@@ -210,6 +210,41 @@ export async function revokeSession(accessToken: string) {
   await authRequest("logout?scope=local", {}, { accessToken });
 }
 
+export async function deleteAutoBattleAuthUser(userId: string) {
+  const { url, secret } = adminConfiguration();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    apikey: secret,
+    "X-Client-Info": "idi-autobattle-worker/1.0",
+  };
+  if (!secret.startsWith("sb_")) {
+    headers.Authorization = `Bearer ${secret}`;
+  }
+
+  const response = await fetch(
+    `${url}/auth/v1/admin/users/${encodeURIComponent(userId)}`,
+    {
+      method: "DELETE",
+      headers,
+      signal: AbortSignal.timeout(12_000),
+    },
+  );
+  if (!response.ok) {
+    const responseText = await response.text();
+    let message = responseText.slice(0, 500) || "Authentication account deletion failed.";
+    try {
+      const parsed = JSON.parse(responseText) as { msg?: string; message?: string };
+      message = parsed.msg || parsed.message || message;
+    } catch {
+      // Preserve the bounded response text.
+    }
+    const error = new Error(message) as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+  await response.body?.cancel();
+}
+
 export function readCookie(request: Request, name: string) {
   const cookies = request.headers.get("cookie") || "";
   for (const part of cookies.split(";")) {
