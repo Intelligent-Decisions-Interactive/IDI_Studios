@@ -1,9 +1,15 @@
 begin;
 
-select plan(63);
+select plan(69);
 
 select has_column('public', 'autobattle_profiles', 'clan_member', 'profiles record admin-assigned clan membership');
 select has_column('public', 'autobattle_profiles', 'signup_affiliation', 'profiles record the affiliation declared during account setup');
+select ok(has_column_privilege('service_role', 'public.autobattle_profiles', 'clan_member', 'update'), 'service role can update verified clan membership through the Worker');
+select ok(has_column_privilege('service_role', 'public.autobattle_profiles', 'signup_affiliation', 'update'), 'service role can record signup affiliation through the Worker');
+select ok(not has_column_privilege('anon', 'public.autobattle_profiles', 'clan_member', 'update'), 'anon cannot update verified clan membership');
+select ok(not has_column_privilege('authenticated', 'public.autobattle_profiles', 'clan_member', 'update'), 'authenticated cannot update verified clan membership directly');
+select ok(not has_column_privilege('anon', 'public.autobattle_profiles', 'signup_affiliation', 'update'), 'anon cannot update signup affiliation');
+select ok(not has_column_privilege('authenticated', 'public.autobattle_profiles', 'signup_affiliation', 'update'), 'authenticated cannot update signup affiliation directly');
 
 select ok(not has_table_privilege('anon', 'public.autobattle_profiles', 'select,insert,update,delete'), 'anon cannot access profiles');
 select ok(not has_table_privilege('authenticated', 'public.autobattle_profiles', 'select,insert,update,delete'), 'authenticated cannot access profiles directly');

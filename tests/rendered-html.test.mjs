@@ -609,13 +609,17 @@ test("uses one AutoBattle account flow and collapses the header before actions o
 });
 
 test("collects signup affiliation separately from verified clan membership", async () => {
-  const [accountPage, accountRoute, database, adminConsole, migration] = await Promise.all([
+  const [accountPage, accountRoute, database, adminConsole, migration, permissionMigration] = await Promise.all([
     readFile(new URL("../app/AutoBattle/account/account-portal.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/autobattle/account/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/autobattle-db.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/admin/beta/beta-admin-console.tsx", import.meta.url), "utf8"),
     readFile(
       new URL("../supabase/migrations/20260914003244_autobattle_signup_affiliation.sql", import.meta.url),
+      "utf8",
+    ),
+    readFile(
+      new URL("../supabase/migrations/20260914021018_grant_autobattle_profile_classification_updates.sql", import.meta.url),
       "utf8",
     ),
   ]);
@@ -631,6 +635,10 @@ test("collects signup affiliation separately from verified clan membership", asy
   assert.match(adminConsole, /Clan status/);
   assert.match(migration, /signup_affiliation in \('not_provided', 'clan', 'individual'\)/);
   assert.match(migration, /Admin verification remains in clan_member/);
+  assert.match(permissionMigration, /grant update \(clan_member, signup_affiliation\)/);
+  assert.match(permissionMigration, /to service_role/);
+  assert.match(permissionMigration, /revoke update \(clan_member, signup_affiliation\)/);
+  assert.match(permissionMigration, /from anon, authenticated/);
 });
 
 test("requires an explicit admin confirmation before permanently deleting AutoBattle accounts", async () => {
