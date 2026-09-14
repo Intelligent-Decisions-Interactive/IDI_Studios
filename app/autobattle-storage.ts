@@ -29,7 +29,12 @@ function releaseArtifact(policy: AutoBattleReleasePolicy) {
   };
 }
 
-export async function streamAutoBattleRelease(request: Request, policy: AutoBattleReleasePolicy) {
+type SignedUrlResponse = {
+  signedURL?: unknown;
+  signedUrl?: unknown;
+};
+
+export async function redirectAutoBattleRelease(request: Request, policy: AutoBattleReleasePolicy) {
   const { url, secret } = storageConfiguration();
   const artifact = releaseArtifact(policy);
   const range = request.headers.get("range")?.trim() || "";
@@ -44,42 +49,51 @@ export async function streamAutoBattleRelease(request: Request, policy: AutoBatt
   }
 
   const headers: Record<string, string> = {
-    Accept: "application/vnd.android.package-archive",
+    Accept: "application/json",
+    "Content-Type": "application/json",
     apikey: secret,
   };
   if (!secret.startsWith("sb_")) headers.Authorization = `Bearer ${secret}`;
-  if (range) headers.Range = range;
 
   const response = await fetch(
-    `${url}/storage/v1/object/authenticated/${encodeURIComponent(artifact.bucket)}/${artifact.object.split("/").map(encodeURIComponent).join("/")}`,
+    `${url}/storage/v1/object/sign/${encodeURIComponent(artifact.bucket)}/${artifact.object.split("/").map(encodeURIComponent).join("/")}`,
     {
-      method: request.method === "HEAD" ? "HEAD" : "GET",
+      method: "POST",
       headers,
-      signal: request.signal,
+      body: JSON.stringify({ expiresIn: 120 }),
     },
   );
 
-  if (![200, 206, 416].includes(response.status)) {
-    await response.body?.cancel();
+  if (!response.ok) {
     throw new Error(`AutoBattle release storage returned ${response.status}.`);
   }
 
-  const outputHeaders = new Headers({
-    "Accept-Ranges": "bytes",
-    "Cache-Control": "private, no-store, max-age=0",
-    "Content-Disposition": `attachment; filename="${artifact.filename}"`,
-    "Content-Type": "application/vnd.android.package-archive",
-    "Referrer-Policy": "no-referrer",
-    "X-AutoBattle-SHA256": artifact.sha256,
-    "X-Content-Type-Options": "nosniff",
-  });
-  for (const name of ["content-length", "content-range", "etag", "last-modified"]) {
-    const value = response.headers.get(name);
-    if (value) outputHeaders.set(name, value);
-  }
+  const payload = await response.json() as SignedUrlResponse;
+  const rawSignedUrl = typeof payload.signedURL === "string"
+    ? payload.signedURL
+    : typeof payload.signedUrl === "string"
+      ? payload.signedUrl
+      : "";
+  if (!rawSignedUrl) throw new Error("AutoBattle release storage returned an invalid signed URL.");
 
-  return new Response(request.method === "HEAD" ? null : response.body, {
-    status: response.status,
-    headers: outputHeaders,
+  const signedUrl = /^https?:\/\//i.test(rawSignedUrl)
+    ? new URL(rawSignedUrl)
+    : rawSignedUrl.startsWith("/storage/v1/")
+      ? new URL(`${url}${rawSignedUrl}`)
+      : new URL(`${url}/storage/v1${rawSignedUrl.startsWith("/") ? "" : "/"}${rawSignedUrl}`);
+  if (signedUrl.origin !== new URL(url).origin || !signedUrl.pathname.startsWith("/storage/v1/object/sign/")) {
+    throw new Error("AutoBattle release storage returned an unsafe signed URL.");
+  }
+  signedUrl.searchParams.set("download", artifact.filename);
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      "Cache-Control": "private, no-store, max-age=0",
+      Location: signedUrl.toString(),
+      "Referrer-Policy": "no-referrer",
+      "X-AutoBattle-SHA256": artifact.sha256,
+      "X-Content-Type-Options": "nosniff",
+    },
   });
 }

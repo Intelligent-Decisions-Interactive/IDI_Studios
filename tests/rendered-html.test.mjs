@@ -482,8 +482,12 @@ test("protects AutoBattle release downloads by approved account status", async (
 
   assert.match(route, /webIdentity/);
   assert.match(route, /getAutoBattleReleaseAccessStatus/);
-  assert.match(route, /streamAutoBattleRelease/);
-  assert.match(storage, /\/storage\/v1\/object\/authenticated\//);
+  assert.match(route, /redirectAutoBattleRelease/);
+  assert.match(storage, /\/storage\/v1\/object\/sign\//);
+  assert.match(storage, /expiresIn: 120/);
+  assert.match(storage, /rawSignedUrl\.startsWith\("\/storage\/v1\/"\)/);
+  assert.match(storage, /`\$\{url\}\/storage\/v1\$\{rawSignedUrl\.startsWith\("\/"\)/);
+  assert.match(storage, /signedUrl\.searchParams\.set\("download", artifact\.filename\)/);
   assert.match(storage, /SUPABASE_SECRET_KEY/);
   assert.match(route, /getAutoBattleReleasePolicy\("production"\)/);
   assert.match(releaseMigration, /autobattle-releases/);
@@ -498,7 +502,7 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(productionReleaseMigration, /ec355616db62f8c009ecf9c5fe9c7c43a7a4eee6d9ec1aca4dd2fef896ce7992/);
   assert.match(productionReleaseMigration, /enforcement_enabled = true/);
   assert.match(productionReleaseMigration, /where channel = 'production'/);
-  assert.doesNotMatch(storage, /\/object\/public\/|\/object\/sign\//);
+  assert.doesNotMatch(storage, /\/object\/public\/|return new Response\(request\.method === "HEAD" \? null : response\.body/);
   assert.doesNotMatch(storage, /AbortSignal\.timeout/);
   assert.match(database, /status === "beta" \|\| status === "active"/);
   assert.match(database, /release_channel/);
@@ -518,6 +522,9 @@ test("protects AutoBattle release downloads by approved account status", async (
   assert.match(releaseMigration, /revoke all on table public\.autobattle_release_channels from public, anon, authenticated/);
   assert.match(accountPage, /href="\/api\/autobattle\/download"/);
   assert.match(accountPage, /Version \{release\.versionName\}/);
+  assert.match(accountPage, /\["#download", "#android-access"\]\.includes\(window\.location\.hash\)/);
+  assert.match(accountPage, /androidAccessNode\.current\?\.scrollIntoView\(\{ block: "start", behavior \}\)/);
+  assert.match(accountPage, /id="android-access"/);
 });
 
 test("keeps new AutoBattle purchases in-page and creates only Payment Intents", async () => {

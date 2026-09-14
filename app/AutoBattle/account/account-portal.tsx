@@ -112,17 +112,22 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
   const turnstileToken = useRef("");
   const linkCodeNode = useRef<HTMLDivElement>(null);
   const androidAccessNode = useRef<HTMLElement>(null);
+  const downloadFocusHandled = useRef(false);
 
-  function positionViewportAfterLogin() {
+  function positionDownloadSection(behavior: ScrollBehavior = "auto") {
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        if (window.matchMedia("(max-width: 860px)").matches && androidAccessNode.current) {
-          androidAccessNode.current.scrollIntoView({ block: "start", behavior: "auto" });
-          return;
-        }
-        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        androidAccessNode.current?.scrollIntoView({ block: "start", behavior });
       });
     });
+  }
+
+  function positionViewportAfterLogin() {
+    if (window.matchMedia("(max-width: 860px)").matches) {
+      positionDownloadSection();
+      return;
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }
 
   async function loadAccount() {
@@ -189,6 +194,13 @@ export function AutoBattleAccountPortal({ release }: { release: ReleaseArtifact 
         if (paymentReturn) window.history.replaceState({}, "", "/AutoBattle/account");
       });
   }, []);
+
+  useEffect(() => {
+    if (loading || !account || downloadFocusHandled.current) return;
+    if (!["#download", "#android-access"].includes(window.location.hash)) return;
+    downloadFocusHandled.current = true;
+    positionDownloadSection();
+  }, [account, loading]);
 
   useEffect(() => {
     if (loading || account || codeSent || !turnstileNode.current) return;
