@@ -4,6 +4,7 @@ import {
 } from "@/app/beta-admin";
 import {
   listAutoBattleAdminAccounts,
+  listAutoBattleAdminSupportTickets,
   listAutoBattlePaymentReviews,
 } from "@/app/autobattle-db";
 
@@ -19,9 +20,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [accounts, paymentReviews] = await Promise.all([
+    const [accounts, paymentReviews, supportTickets] = await Promise.all([
       listAutoBattleAdminAccounts(),
       listAutoBattlePaymentReviews(),
+      listAutoBattleAdminSupportTickets(),
     ]);
     return Response.json({
       success: true,
@@ -33,6 +35,7 @@ export async function GET(request: Request) {
         }),
       })),
       paymentReviews,
+      supportTickets,
       actorEmail: actor.email,
       actorProvider: actor.provider,
     });

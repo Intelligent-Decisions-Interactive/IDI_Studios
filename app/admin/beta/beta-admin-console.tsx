@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  AutoBattleSupportInbox,
+  type AutoBattleSupportTicket,
+} from "./autobattle-support-inbox";
 
 type BetaStatus = "pending" | "approved" | "invited" | "active" | "declined";
 
@@ -83,6 +87,7 @@ type ListResponse = {
 type AutoBattleListResponse = {
   accounts: AutoBattleAdminAccount[];
   paymentReviews: AutoBattlePaymentReview[];
+  supportTickets: AutoBattleSupportTicket[];
   actorEmail: string;
   actorProvider: string;
 };
@@ -175,6 +180,7 @@ export function BetaAdminConsole({
   const [applications, setApplications] = useState<BetaApplication[]>([]);
   const [autoBattleAccounts, setAutoBattleAccounts] = useState<AutoBattleAdminAccount[]>([]);
   const [paymentReviews, setPaymentReviews] = useState<AutoBattlePaymentReview[]>([]);
+  const [supportTickets, setSupportTickets] = useState<AutoBattleSupportTicket[]>([]);
   const [paymentReviewAction, setPaymentReviewAction] = useState("");
   const [paymentReviewResolutions, setPaymentReviewResolutions] = useState<Record<string, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -293,11 +299,13 @@ export function BetaAdminConsole({
       if (accountsResult.status === "fulfilled" && accountsResult.value) {
         setAutoBattleAccounts(accountsResult.value.accounts || []);
         setPaymentReviews(accountsResult.value.paymentReviews || []);
+        setSupportTickets(accountsResult.value.supportTickets || []);
         setActorEmail(accountsResult.value.actorEmail || initialActorEmail);
         setActorProvider(accountsResult.value.actorProvider || initialActorProvider);
       } else if (accountsResult.status === "rejected") {
         setAutoBattleAccounts([]);
         setPaymentReviews([]);
+        setSupportTickets([]);
         setAutoBattleMessage(
           accountsResult.reason instanceof Error
             ? accountsResult.reason.message
@@ -308,6 +316,7 @@ export function BetaAdminConsole({
     } else {
       setAutoBattleAccounts([]);
       setPaymentReviews([]);
+      setSupportTickets([]);
     }
 
     setLoading(false);
@@ -340,9 +349,11 @@ export function BetaAdminConsole({
       }
       result.total += paymentReviews.length;
       result.pending += paymentReviews.length;
+      result.total += supportTickets.length;
+      result.pending += supportTickets.filter((ticket) => !["resolved", "closed"].includes(ticket.status)).length;
     }
     return result;
-  }, [applications, autoBattleAccounts, paymentReviews, product]);
+  }, [applications, autoBattleAccounts, paymentReviews, product, supportTickets]);
 
   const sortedAutoBattleAccounts = useMemo(
     () => [...autoBattleAccounts].sort((left, right) => {
@@ -759,6 +770,15 @@ export function BetaAdminConsole({
 
         {product === "autobattle" ? (
           <>
+          <AutoBattleSupportInbox
+            tickets={supportTickets}
+            loading={loading}
+            onTicketUpdated={(ticket) => setSupportTickets((current) =>
+              current
+                .map((item) => item.id === ticket.id ? ticket : item)
+                .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+            )}
+          />
           <section className="admin-autobattle" aria-labelledby="autobattle-accounts-title">
           <div className="admin-section-heading">
             <div>

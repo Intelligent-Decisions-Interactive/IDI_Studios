@@ -111,9 +111,12 @@ async function enforceAutoBattleRateLimit(request: Request, env: Env) {
     limiter = env.AUTOBATTLE_PAYMENT_RATE_LIMITER;
     category = "payment";
     credential = request.headers.get("authorization") || request.headers.get("cookie") || "";
-  } else if (path.startsWith("/api/autobattle/mobile/cycles/")) {
+  } else if (
+    path.startsWith("/api/autobattle/mobile/cycles/") ||
+    path.startsWith("/api/autobattle/mobile/support")
+  ) {
     limiter = env.AUTOBATTLE_CYCLE_RATE_LIMITER;
-    category = "cycle";
+    category = path.startsWith("/api/autobattle/mobile/support") ? "support" : "cycle";
     credential = request.headers.get("authorization") || "";
   }
 
@@ -142,7 +145,11 @@ async function boundAutoBattleRequestBody(request: Request) {
 
   const contentLengthHeader = request.headers.get("content-length");
   const declaredLength = Number(contentLengthHeader || "0");
-  const maxBytes = url.pathname === "/api/autobattle/stripe/webhook" ? 1_048_576 : 16_384;
+  const maxBytes = url.pathname === "/api/autobattle/stripe/webhook"
+    ? 1_048_576
+    : url.pathname.startsWith("/api/autobattle/mobile/support")
+      ? 131_072
+      : 16_384;
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
     return { response: jsonError("Request body is too large.", 413) };
   }

@@ -64,7 +64,7 @@ function boundedVersionName(value: string | null) {
   return normalized.length >= 1 && normalized.length <= 40 ? normalized : null;
 }
 
-function clientVersion(request: Request) {
+export function autoBattleClientVersion(request: Request) {
   const rawCode = request.headers.get("x-autobattle-version-code")?.trim() || "";
   const parsedCode = /^\d{1,10}$/.test(rawCode) ? Number(rawCode) : null;
   const code = parsedCode != null && Number.isSafeInteger(parsedCode) && parsedCode > 0
@@ -90,7 +90,7 @@ export async function requireCurrentAutoBattleRelease(
   }
   const policy = await getAutoBattleReleasePolicy(session.release_channel);
   if (!policy.enforcementEnabled) return policy;
-  const version = clientVersion(request);
+  const version = autoBattleClientVersion(request);
   const supportsRelease = version.code != null
     ? version.code >= policy.requiredVersionCode
     : version.name === policy.versionName;

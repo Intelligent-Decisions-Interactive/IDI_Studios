@@ -51,6 +51,76 @@ export type AutoBattlePaymentReview = {
   accessStatus: AutoBattleAdminAccount["accessStatus"];
 };
 
+export type AutoBattleSupportStatus =
+  | "open"
+  | "in_progress"
+  | "waiting_on_user"
+  | "resolved"
+  | "closed";
+
+type AutoBattleSupportTicketRow = {
+  id: string;
+  user_id: string;
+  contact_email: string;
+  player_name: string;
+  category: string;
+  subject: string;
+  initial_message: string;
+  status: AutoBattleSupportStatus;
+  release_channel: "production" | "internal";
+  application_id: string;
+  app_version_name: string;
+  app_version_code: number | string;
+  device_manufacturer: string;
+  device_model: string;
+  android_version: string;
+  diagnostics_excerpt: string | null;
+  created_at: string;
+  updated_at: string;
+  last_user_message_at: string;
+  last_admin_message_at: string | null;
+};
+
+type AutoBattleSupportMessageRow = {
+  id: string;
+  ticket_id: string;
+  author_type: "user" | "admin";
+  author_email: string;
+  body: string;
+  created_at: string;
+};
+
+export type AutoBattleSupportTicket = {
+  id: string;
+  userId: string;
+  contactEmail: string;
+  playerName: string;
+  category: string;
+  subject: string;
+  initialMessage: string;
+  status: AutoBattleSupportStatus;
+  releaseChannel: "production" | "internal";
+  applicationId: string;
+  appVersionName: string;
+  appVersionCode: number;
+  deviceManufacturer: string;
+  deviceModel: string;
+  androidVersion: string;
+  diagnosticsIncluded: boolean;
+  diagnosticsExcerpt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastUserMessageAt: string;
+  lastAdminMessageAt: string | null;
+  messages: Array<{
+    id: string;
+    authorType: "user" | "admin";
+    authorEmail: string;
+    body: string;
+    createdAt: string;
+  }>;
+};
+
 type BalanceRow = {
   purchased_balance: number | string;
   bonus_balance: number | string;
@@ -666,6 +736,228 @@ export async function resolveAutoBattlePaymentReview(eventId: string, resolution
     p_resolution: resolution,
     p_actor: actor,
   });
+}
+
+function mapAutoBattleSupportTicket(
+  row: AutoBattleSupportTicketRow,
+  messages: AutoBattleSupportMessageRow[],
+  exposeDiagnostics: boolean,
+): AutoBattleSupportTicket {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    contactEmail: row.contact_email,
+    playerName: row.player_name,
+    category: row.category,
+    subject: row.subject,
+    initialMessage: row.initial_message,
+    status: row.status,
+    releaseChannel: row.release_channel,
+    applicationId: row.application_id,
+    appVersionName: row.app_version_name,
+    appVersionCode: integer(row.app_version_code),
+    deviceManufacturer: row.device_manufacturer,
+    deviceModel: row.device_model,
+    androidVersion: row.android_version,
+    diagnosticsIncluded: Boolean(row.diagnostics_excerpt),
+    diagnosticsExcerpt: exposeDiagnostics ? row.diagnostics_excerpt : null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    lastUserMessageAt: row.last_user_message_at,
+    lastAdminMessageAt: row.last_admin_message_at,
+    messages: messages.map((message) => ({
+      id: message.id,
+      authorType: message.author_type,
+      authorEmail: message.author_email,
+      body: message.body,
+      createdAt: message.created_at,
+    })),
+  };
+}
+
+async function hydrateAutoBattleSupportTickets(
+  rows: AutoBattleSupportTicketRow[],
+  exposeDiagnostics: boolean,
+) {
+  if (!rows.length) return [];
+  const ticketIds = rows.map((row) => row.id);
+  const messages = await serviceRequest<AutoBattleSupportMessageRow[]>(
+    `autobattle_support_messages?ticket_id=in.(${ticketIds.join(",")})&select=id,ticket_id,author_type,author_email,body,created_at&order=created_at.asc&limit=2000`,
+  );
+  const messagesByTicket = new Map<string, AutoBattleSupportMessageRow[]>();
+  for (const message of messages || []) {
+    const current = messagesByTicket.get(message.ticket_id) || [];
+    current.push(message);
+    messagesByTicket.set(message.ticket_id, current);
+  }
+  return rows.map((row) => mapAutoBattleSupportTicket(
+    row,
+    messagesByTicket.get(row.id) || [],
+    exposeDiagnostics,
+  ));
+}
+
+const AUTOBATTLE_SUPPORT_TICKET_SELECT = [
+  "id",
+  "user_id",
+  "contact_email",
+  "player_name",
+  "category",
+  "subject",
+  "initial_message",
+  "status",
+  "release_channel",
+  "application_id",
+  "app_version_name",
+  "app_version_code",
+  "device_manufacturer",
+  "device_model",
+  "android_version",
+  "diagnostics_excerpt",
+  "created_at",
+  "updated_at",
+  "last_user_message_at",
+  "last_admin_message_at",
+].join(",");
+
+export async function listAutoBattleSupportTicketsForUser(userId: string) {
+  const rows = await serviceRequest<AutoBattleSupportTicketRow[]>(
+    `autobattle_support_tickets?user_id=eq.${encodeURIComponent(userId)}&select=${AUTOBATTLE_SUPPORT_TICKET_SELECT}&order=updated_at.desc&limit=25`,
+  );
+  return hydrateAutoBattleSupportTickets(rows || [], false);
+}
+
+export async function createAutoBattleSupportTicket(input: {
+  userId: string;
+  category: string;
+  subject: string;
+  message: string;
+  releaseChannel: "production" | "internal";
+  applicationId: string;
+  appVersionName: string;
+  appVersionCode: number;
+  deviceManufacturer: string;
+  deviceModel: string;
+  androidVersion: string;
+  diagnosticsExcerpt: string | null;
+}) {
+  const profiles = await serviceRequest<Pick<ProfileRow, "email" | "player_name">[]>(
+    `autobattle_profiles?user_id=eq.${encodeURIComponent(input.userId)}&select=email,player_name&limit=1`,
+  );
+  const profile = profiles?.[0];
+  if (!profile) throw new Error("AutoBattle account was not found.");
+  const now = new Date().toISOString();
+  const rows = await serviceRequest<AutoBattleSupportTicketRow[]>(
+    "autobattle_support_tickets",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        user_id: input.userId,
+        contact_email: profile.email,
+        player_name: profile.player_name || "",
+        category: input.category,
+        subject: input.subject,
+        initial_message: input.message,
+        status: "open",
+        release_channel: input.releaseChannel,
+        application_id: input.applicationId,
+        app_version_name: input.appVersionName,
+        app_version_code: input.appVersionCode,
+        device_manufacturer: input.deviceManufacturer,
+        device_model: input.deviceModel,
+        android_version: input.androidVersion,
+        diagnostics_excerpt: input.diagnosticsExcerpt,
+        created_at: now,
+        updated_at: now,
+        last_user_message_at: now,
+      }),
+    },
+    "return=representation",
+  );
+  if (!rows?.[0]) throw new Error("The support report was not created.");
+  return mapAutoBattleSupportTicket(rows[0], [], false);
+}
+
+export async function addAutoBattleSupportUserReply(
+  userId: string,
+  ticketId: string,
+  body: string,
+) {
+  const rows = await serviceRequest<AutoBattleSupportTicketRow[]>(
+    `autobattle_support_tickets?id=eq.${encodeURIComponent(ticketId)}&user_id=eq.${encodeURIComponent(userId)}&select=${AUTOBATTLE_SUPPORT_TICKET_SELECT}&limit=1`,
+  );
+  const ticket = rows?.[0];
+  if (!ticket || ticket.status === "closed") return null;
+  const now = new Date().toISOString();
+  await serviceRequest(
+    "autobattle_support_messages",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        ticket_id: ticket.id,
+        author_type: "user",
+        author_email: ticket.contact_email,
+        body,
+        created_at: now,
+      }),
+    },
+  );
+  await serviceRequest(
+    `autobattle_support_tickets?id=eq.${encodeURIComponent(ticket.id)}&user_id=eq.${encodeURIComponent(userId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ status: "open", updated_at: now, last_user_message_at: now }),
+    },
+  );
+  return (await listAutoBattleSupportTicketsForUser(userId)).find((item) => item.id === ticket.id) || null;
+}
+
+export async function listAutoBattleAdminSupportTickets() {
+  const rows = await serviceRequest<AutoBattleSupportTicketRow[]>(
+    `autobattle_support_tickets?select=${AUTOBATTLE_SUPPORT_TICKET_SELECT}&order=updated_at.desc&limit=100`,
+  );
+  return hydrateAutoBattleSupportTickets(rows || [], true);
+}
+
+export async function updateAutoBattleAdminSupportTicket(input: {
+  ticketId: string;
+  status: AutoBattleSupportStatus;
+  reply: string;
+  actorEmail: string;
+}) {
+  const rows = await serviceRequest<AutoBattleSupportTicketRow[]>(
+    `autobattle_support_tickets?id=eq.${encodeURIComponent(input.ticketId)}&select=${AUTOBATTLE_SUPPORT_TICKET_SELECT}&limit=1`,
+  );
+  const ticket = rows?.[0];
+  if (!ticket) return null;
+  const now = new Date().toISOString();
+  if (input.reply) {
+    await serviceRequest(
+      "autobattle_support_messages",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ticket_id: ticket.id,
+          author_type: "admin",
+          author_email: input.actorEmail,
+          body: input.reply,
+          created_at: now,
+        }),
+      },
+    );
+  }
+  await serviceRequest(
+    `autobattle_support_tickets?id=eq.${encodeURIComponent(ticket.id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        status: input.status,
+        updated_at: now,
+        ...(input.reply ? { last_admin_message_at: now } : {}),
+      }),
+    },
+  );
+  return (await listAutoBattleAdminSupportTickets()).find((item) => item.id === ticket.id) || null;
 }
 
 export async function updateAutoBattlePlayerName(userId: string, playerName: string) {
