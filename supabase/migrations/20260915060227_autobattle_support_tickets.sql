@@ -1,3 +1,4 @@
+-- Applied to the linked production project as migration 20260915060227.
 create table public.autobattle_support_tickets (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
