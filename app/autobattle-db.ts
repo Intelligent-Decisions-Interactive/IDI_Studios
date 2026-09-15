@@ -768,7 +768,9 @@ function mapAutoBattleSupportTicket(
     messages: messages.map((message) => ({
       id: message.id,
       authorType: message.author_type,
-      authorEmail: message.author_email,
+      authorEmail: exposeDiagnostics || message.author_type === "user"
+        ? message.author_email
+        : "support@idistudios.io",
       body: message.body,
       createdAt: message.created_at,
     })),
